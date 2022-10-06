@@ -35,9 +35,11 @@ endif()
 project(${APP_NAME})
 add_executable(${PROJECT_NAME} src/Application.cpp
 		src/World.cpp src/World.h
+		src/Chunk.cpp src/Chunk.h
 		src/Block.cpp src/Block.h
 		src/GlStructure.cpp src/GlStructure.h
-		src/Vertices.h)
+		src/Vertices.h
+		src/GameDefinitions.h)
 
 target_link_libraries(${PROJECT_NAME} ${C7ENGINE_OPENGL_LIB} ${C7ENGINE_DEPENDENCIES} ${C7ENGINE_LIB_PATH})
 
@@ -55,10 +57,7 @@ if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
 endif()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/assets/shaders)
-#Copies the assets to the project workspace
+file(COPY assets/textures DESTINATION assets)
 file(COPY assets/shaders DESTINATION assets)
-file(COPY assets/skyboxes DESTINATION assets)
-file(COPY assets/images DESTINATION assets)
-file(COPY assets/models DESTINATION assets)
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)

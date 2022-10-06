@@ -1,33 +1,49 @@
 //Header which handles all the OpenGL-related stuff
 #pragma once
 #include <iostream>
+#include <memory>
 #include "MainIncl.h"
+#include "GameDefinitions.h"
 
-namespace GlCore {
+class Block;
+class World;
 
-    enum class BlockType {
-        GRASS = 0
-    };
-
-    struct CubeData {
-        std::vector<float> VertexData;
-        Layout Lyt;
-    };
-
-    class BlockStructure {
+namespace GlCore 
+{
+    class WorldStructure
+    {
     public:
-        BlockStructure(const BlockType &bt);
+        WorldStructure(Camera& world_camera);
+        void SetShaderCameraMVP(Shader& shd) const;
+        void UpdateCamera();
+
+        const Camera& GetGameCamera() const;
+    private:
+        Camera& m_GameCamera;
+        friend class World;
+    };
+
+
+    class BlockStructure 
+    {
+    public:
+        BlockStructure();
+
+        const std::vector<Texture>& GetBlockTextures() const;
+        void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt) const;
 
     private:
-        void InitVM();
+        void InitEntity();
+        void InitShader();
         void InitTextures();
 
         //Cube geometry
-        static VertexManager m_VertexManager;
+        //The core OpenGL structures which is designed to do actual drawing/rendering
+        static std::shared_ptr<Entity> m_EntityPtr;
+        //Instructions on how to draw the cube
+        static std::shared_ptr<Shader> m_ShaderPtr;
         //Various cube textures
         static std::vector<Texture> m_Textures;
-        //For first initialization
-        static bool bLoadedAssets;
-        Texture* m_UsedTexture;
+        friend class Block;
     };
 }
