@@ -24,23 +24,14 @@ void Application::OnUserCreate()
 
 void Application::OnUserRun()
 {
-
-    m_Camera.SetVectors(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-    float fAspectRatio = float(m_Window.Width()) / float(m_Window.Height());
-    m_Camera.SetPerspectiveValues(glm::radians(45.0f), fAspectRatio, 0.1f, 100.0f);
-    m_Camera.SetKeyboardFunction(KeyboardForCameraFun);
-    m_Camera.SetMouseFunction(MouseForCameraFun);
-
-    World WorldGameInstance(m_Camera);
+    World WorldGameInstance(m_Window);
 
     m_Window.SetVsync(true);
     glEnable(GL_DEPTH_TEST);
     while (!m_Window.ShouldClose())
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        m_Camera.ProcessInput(m_Window, 1.0f);
-
+        WorldGameInstance.UpdateScene();
         WorldGameInstance.DrawRenderable();
         m_Window.Update();
     }

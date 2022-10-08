@@ -54,6 +54,16 @@ namespace Utils
 
     };
 
+    static const std::vector<float> vertices_crossaim = {
+        -0.5f, -0.5f,
+         0.5f, -0.5f,
+         0.5f,  0.5f,
+
+         0.5f,  0.5f,
+        -0.5f,  0.5f,
+        -0.5f, -0.5f,
+    };
+
     enum class VertexProps{POS_AND_TEX_COORDS = 0};
 
     VertexData Cube(const VertexProps& ip)
@@ -70,5 +80,12 @@ namespace Utils
         default:
             return {};
         }
+    }
+
+    VertexData CrossAim()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0 });
+        return { vertices_crossaim, lyt };
     }
 }

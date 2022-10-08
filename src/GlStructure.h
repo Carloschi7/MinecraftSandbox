@@ -2,7 +2,6 @@
 #pragma once
 #include <iostream>
 #include <memory>
-#include "MainIncl.h"
 #include "GameDefinitions.h"
 
 class Block;
@@ -13,16 +12,27 @@ namespace GlCore
     class WorldStructure
     {
     public:
-        WorldStructure(Camera& world_camera);
-        void SetShaderCameraMVP(Shader& shd) const;
+        WorldStructure(const Window& window);
+        GameDefs::RenderData GetRenderFrameInfo() const;
         void UpdateCamera();
+        void RenderCrossaim() const;
 
         const Camera& GetGameCamera() const;
     private:
-        Camera& m_GameCamera;
+        const Window& m_GameWindow;
+        Camera m_GameCamera;
+
+        static std::shared_ptr<Shader> m_CrossaimShaderPtr;
+        VertexManager m_CrossaimVm;
         friend class World;
     };
 
+    class ChunkStructure
+    {
+    public:
+        ChunkStructure();
+        void BlockRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const;
+    };
 
     class BlockStructure 
     {
@@ -30,7 +40,7 @@ namespace GlCore
         BlockStructure();
 
         const std::vector<Texture>& GetBlockTextures() const;
-        void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt) const;
+        void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, bool is_block_selected) const;
 
     private:
         void InitEntity();

@@ -1,18 +1,21 @@
 #include "World.h"
 
 //Initializing a single block for now
-World::World(Camera& world_cam)
-	:m_Block(glm::vec3(0.0f), GameDefs::BlockType::DIRT), m_WorldStructure(world_cam)
+World::World(const Window& game_window)
+	:m_WorldStructure(game_window)
 {
-	
+	m_Chunks.emplace_back(glm::vec3(0.0f));
 }
 
 void World::DrawRenderable() const
 {
-	//Loading camera MVP to the shader
-	m_WorldStructure.SetShaderCameraMVP(*m_Block.GetBlockShader());
+	GameDefs::RenderData draw_data = m_WorldStructure.GetRenderFrameInfo();
 
-	m_Block.Draw();
+	for (const auto& chunk : m_Chunks)
+		chunk.Draw(draw_data);
+
+	//Drawing crossaim
+	m_WorldStructure.RenderCrossaim();
 }
 
 void World::UpdateScene()

@@ -1,7 +1,8 @@
 #include "GlStructure.h"
 #include "Vertices.h"
 #include "Block.h"
-#include "MainIncl.h"
+
+std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
 
 std::shared_ptr<Entity> GlCore::BlockStructure::m_EntityPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
@@ -10,10 +11,41 @@ std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 namespace GlCore
 {
     //World definitions
-    WorldStructure::WorldStructure(Camera& world_camera)
-        :m_GameCamera(world_camera)
+    WorldStructure::WorldStructure(const Window& window)
+        :m_GameWindow(window)
     {
-        
+        m_GameCamera.SetVectors(glm::vec3(-5.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+        m_GameCamera.SetPerspectiveValues(glm::radians(45.0f),
+            float(m_GameWindow.Width()) / float(m_GameWindow.Height()),
+            0.1f,
+            100.0f);
+
+        m_GameCamera.SetKeyboardFunction(GameDefs::KeyboardFunction);
+        m_GameCamera.SetMouseFunction(GameDefs::MouseFunction);
+
+        //Loading every crossaim asset needed
+        if (m_CrossaimShaderPtr.get() == nullptr)
+        {
+            m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
+            //We set the crossaim model matrix here, for now this shader is used only 
+            //for drawing this
+            m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
+
+            Utils::VertexData rd = Utils::CrossAim();
+            //VM init only the first time
+            m_CrossaimVm.SendDataToOpenGLArray(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        }
+    }
+
+    GameDefs::RenderData WorldStructure::GetRenderFrameInfo() const
+    {
+        GameDefs::RenderData rd;
+        rd.camera_position = m_GameCamera.GetPosition();
+        rd.camera_direction = m_GameCamera.GetFront();
+        rd.proj_matrix = m_GameCamera.GetProjMatrix();
+        rd.view_matrix = m_GameCamera.GetViewMatrix();
+        return rd;
     }
 
     const Camera& WorldStructure::GetGameCamera() const
@@ -21,15 +53,27 @@ namespace GlCore
         return m_GameCamera;
     }
 
-    void WorldStructure::SetShaderCameraMVP(Shader& shd) const
-    {
-        shd.UniformMat4f(m_GameCamera.GetProjMatrix(), "proj");
-        shd.UniformMat4f(m_GameCamera.GetViewMatrix(), "view");
-        //Model matrix gets set when the model is being drawn
-    }
-
     void WorldStructure::UpdateCamera()
     {
+        m_GameCamera.ProcessInput(m_GameWindow, 1.0f);
+    }
+
+    void WorldStructure::RenderCrossaim() const
+    {
+        m_CrossaimVm.BindVertexArray();
+        m_CrossaimShaderPtr->Use();
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    ChunkStructure::ChunkStructure()
+    {
+    }
+
+    void ChunkStructure::BlockRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const
+    {
+        //Uniforming VP matrices
+        block_shader->UniformMat4f(rd.proj_matrix, "proj");
+        block_shader->UniformMat4f(rd.view_matrix, "view");
     }
 
 
@@ -51,9 +95,12 @@ namespace GlCore
         return m_Textures;
     }
 
-    void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt) const
+    void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, bool is_block_selected) const
     {
-        Texture* current_texture;
+        Texture* current_texture = nullptr;
+
+        if (is_block_selected)
+            m_ShaderPtr->Uniform1i(true, "entity_selected");
 
         switch (bt)
         {
@@ -70,6 +117,9 @@ namespace GlCore
         m_EntityPtr->ResetPosition();
         m_EntityPtr->Translate(pos);
         m_EntityPtr->Draw(*m_ShaderPtr);
+
+        if (is_block_selected)
+            m_ShaderPtr->Uniform1i(false, "entity_selected");
     }
 
     void BlockStructure::InitEntity()
@@ -88,6 +138,4 @@ namespace GlCore
     {
         m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
     }
-
-
 }

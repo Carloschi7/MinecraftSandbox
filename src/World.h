@@ -4,13 +4,13 @@
 
 class World {
 public:
-    World(Camera& world_cam);
+    World(const Window& game_window);
     //Draws the number of chunks visible to the player
     void DrawRenderable() const;
     void UpdateScene();
 
 private:
-    Block m_Block;
+    std::vector<Chunk> m_Chunks;
     //Responsible for camera, skybox & other stuff
     GlCore::WorldStructure m_WorldStructure;
 };
