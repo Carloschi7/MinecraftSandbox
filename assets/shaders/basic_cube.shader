@@ -20,11 +20,15 @@ void main()
 #version 330 core
 
 uniform sampler2D diffuse_texture;
+uniform bool entity_selected;
 
 in vec2 TexCoords;
 out vec4 OutColor;
 
 void main()
 {
-	OutColor = texture(diffuse_texture, TexCoords);
+	if (entity_selected)
+		OutColor = texture(diffuse_texture, TexCoords) + vec4(vec3(0.2f), 1.0f);
+	else
+		OutColor = texture(diffuse_texture, TexCoords);
 }
