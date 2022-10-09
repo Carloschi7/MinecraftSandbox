@@ -17,7 +17,7 @@ const glm::vec3& Block::GetPosition() const
 
 std::shared_ptr<Shader> Block::GetBlockShader() const
 {
-    return m_BlockStructure.m_ShaderPtr;
+    return m_BlockStructure.GetShader();
 }
 
 std::vector<glm::vec3>& Block::ExposedNormals()

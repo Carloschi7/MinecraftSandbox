@@ -13,9 +13,11 @@ namespace GlCore
     {
     public:
         WorldStructure(const Window& window);
-        GameDefs::RenderData GetRenderFrameInfo() const;
         void UpdateCamera();
         void RenderCrossaim() const;
+        
+        GameDefs::RenderData GetRenderFrameInfo() const;
+        GameDefs::ChunkBlockLogicData GetChunkBlockLogicData() const;
 
         const Camera& GetGameCamera() const;
     private:
@@ -23,7 +25,7 @@ namespace GlCore
         Camera m_GameCamera;
 
         static std::shared_ptr<Shader> m_CrossaimShaderPtr;
-        VertexManager m_CrossaimVm;
+        static std::shared_ptr<VertexManager> m_CrossaimVmPtr;
         friend class World;
     };
 
@@ -38,9 +40,10 @@ namespace GlCore
     {
     public:
         BlockStructure();
-
-        const std::vector<Texture>& GetBlockTextures() const;
         void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, bool is_block_selected) const;
+        
+        const std::vector<Texture>& GetBlockTextures() const;
+        std::shared_ptr<Shader> GetShader() const;
 
     private:
         void InitEntity();
@@ -49,7 +52,7 @@ namespace GlCore
 
         //Cube geometry
         //The core OpenGL structures which is designed to do actual drawing/rendering
-        static std::shared_ptr<Entity> m_EntityPtr;
+        static std::shared_ptr<VertexManager> m_VertexManagerPtr;
         //Instructions on how to draw the cube
         static std::shared_ptr<Shader> m_ShaderPtr;
         //Various cube textures

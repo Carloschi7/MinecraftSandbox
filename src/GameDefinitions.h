@@ -8,13 +8,25 @@ namespace GameDefs
         DIRT = 0
     };
 
+	struct MouseInput
+	{
+		bool right_click;
+		bool left_click;
+	};
+
     struct RenderData
     {
 		glm::vec3 camera_position;
-		glm::vec3 camera_direction;
         glm::mat4 proj_matrix;
         glm::mat4 view_matrix;
     };
+
+	struct ChunkBlockLogicData
+	{
+		MouseInput mouse_input;
+		glm::vec3 camera_position;
+		glm::vec3 camera_direction;
+	};
 
 	inline void KeyboardFunction(const Window& window, Camera* camera)
 	{

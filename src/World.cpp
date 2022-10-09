@@ -13,12 +13,17 @@ void World::DrawRenderable() const
 
 	for (const auto& chunk : m_Chunks)
 		chunk.Draw(draw_data);
-
+	
+	
 	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
 }
 
 void World::UpdateScene()
 {
+	GameDefs::ChunkBlockLogicData chunk_logic_data = m_WorldStructure.GetChunkBlockLogicData();
+	for (auto& chunk : m_Chunks)
+		chunk.BlockCollisionLogic(chunk_logic_data);
+
 	m_WorldStructure.UpdateCamera();
 }

@@ -38,6 +38,7 @@ add_executable(${PROJECT_NAME} src/Application.cpp
 		src/Chunk.cpp src/Chunk.h
 		src/Block.cpp src/Block.h
 		src/GlStructure.cpp src/GlStructure.h
+		src/Renderer.h src/Renderer.cpp
 		src/Vertices.h
 		src/GameDefinitions.h)
 

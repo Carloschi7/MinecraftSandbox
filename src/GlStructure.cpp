@@ -1,10 +1,12 @@
 #include "GlStructure.h"
 #include "Vertices.h"
 #include "Block.h"
+#include "Renderer.h"
 
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::WorldStructure::m_CrossaimVmPtr = nullptr;
 
-std::shared_ptr<Entity> GlCore::BlockStructure::m_EntityPtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
 std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 
@@ -34,7 +36,7 @@ namespace GlCore
 
             Utils::VertexData rd = Utils::CrossAim();
             //VM init only the first time
-            m_CrossaimVm.SendDataToOpenGLArray(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+            m_CrossaimVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
         }
     }
 
@@ -42,10 +44,19 @@ namespace GlCore
     {
         GameDefs::RenderData rd;
         rd.camera_position = m_GameCamera.GetPosition();
-        rd.camera_direction = m_GameCamera.GetFront();
         rd.proj_matrix = m_GameCamera.GetProjMatrix();
         rd.view_matrix = m_GameCamera.GetViewMatrix();
         return rd;
+    }
+
+    GameDefs::ChunkBlockLogicData WorldStructure::GetChunkBlockLogicData() const
+    {
+        GameDefs::ChunkBlockLogicData ld;
+        ld.mouse_input.left_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+        ld.mouse_input.right_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
+        ld.camera_position = m_GameCamera.GetPosition();
+        ld.camera_direction = m_GameCamera.GetFront();
+        return ld;
     }
 
     const Camera& WorldStructure::GetGameCamera() const
@@ -60,9 +71,7 @@ namespace GlCore
 
     void WorldStructure::RenderCrossaim() const
     {
-        m_CrossaimVm.BindVertexArray();
-        m_CrossaimShaderPtr->Use();
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+        Renderer::Render(nullptr, m_CrossaimVmPtr, m_CrossaimShaderPtr, {});
     }
 
     ChunkStructure::ChunkStructure()
@@ -80,7 +89,7 @@ namespace GlCore
     BlockStructure::BlockStructure()
     {
         //Just need to be loaded once, every block shares this properies
-        if(m_EntityPtr.get() == nullptr)
+        if(m_VertexManagerPtr.get() == nullptr)
             InitEntity();
         
         if (m_ShaderPtr.get() == nullptr)
@@ -93,6 +102,11 @@ namespace GlCore
     const std::vector<Texture>& BlockStructure::GetBlockTextures() const
     {
         return m_Textures;
+    }
+
+    std::shared_ptr<Shader> BlockStructure::GetShader() const
+    {
+        return m_ShaderPtr;
     }
 
     void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, bool is_block_selected) const
@@ -111,12 +125,9 @@ namespace GlCore
             throw std::runtime_error("Texture preset for this block not found!");
         }
 
-        current_texture->Bind(0);
-        m_ShaderPtr->Uniform1i(0, "diffuse_texture");
-        
-        m_EntityPtr->ResetPosition();
-        m_EntityPtr->Translate(pos);
-        m_EntityPtr->Draw(*m_ShaderPtr);
+        //Actual block rendering
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
+        Renderer::Render(&model, m_VertexManagerPtr, m_ShaderPtr, { { current_texture, "diffuse_texture" } });
 
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(false, "entity_selected");
@@ -125,8 +136,7 @@ namespace GlCore
     void BlockStructure::InitEntity()
     {
         Utils::VertexData cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORDS);
-        VertexManager vm_ptr(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-        m_EntityPtr = std::make_shared<Entity>(std::move(vm_ptr));
+        m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
     }
 
     void BlockStructure::InitShader()
