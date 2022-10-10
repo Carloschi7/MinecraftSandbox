@@ -71,7 +71,7 @@ namespace GlCore
 
     void WorldStructure::RenderCrossaim() const
     {
-        Renderer::Render(nullptr, m_CrossaimVmPtr, m_CrossaimShaderPtr, {});
+        Renderer::Render({}, m_CrossaimVmPtr, m_CrossaimShaderPtr, {});
     }
 
     ChunkStructure::ChunkStructure()
@@ -127,7 +127,7 @@ namespace GlCore
 
         //Actual block rendering
         glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-        Renderer::Render(&model, m_VertexManagerPtr, m_ShaderPtr, { { current_texture, "diffuse_texture" } });
+        Renderer::Render(model, m_VertexManagerPtr, m_ShaderPtr, { { current_texture, "diffuse_texture" } });
 
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(false, "entity_selected");

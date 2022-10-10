@@ -14,7 +14,7 @@ class Renderer
 public:
 
 	static Renderer* GetInstance();
-	static void Render(const glm::mat4* model,
+	static void Render(const glm::mat4& model,
 		std::shared_ptr<VertexManager> vm,
 		std::shared_ptr<Shader> shd,
 		const std::vector<RendererTextureRef>& tex_ref);
@@ -22,7 +22,7 @@ public:
 private:
 	Renderer();
 
-	void IRender(const glm::mat4* model,
+	void IRender(const glm::mat4& model,
 		std::shared_ptr<VertexManager> vm,
 		std::shared_ptr<Shader> shd,
 		const std::vector<RendererTextureRef>& tex_ref);

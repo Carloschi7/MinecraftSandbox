@@ -6,7 +6,7 @@ Renderer* Renderer::GetInstance()
 	return instance;
 }
 
-void Renderer::Render(const glm::mat4* model,
+void Renderer::Render(const glm::mat4& model,
 	std::shared_ptr<VertexManager> vm,
 	std::shared_ptr<Shader> shd,
 	const std::vector<RendererTextureRef>& tex_ref)
@@ -14,7 +14,7 @@ void Renderer::Render(const glm::mat4* model,
 	GetInstance()->IRender(model, vm, shd, tex_ref);
 }
 
-void Renderer::IRender(const glm::mat4* model,
+void Renderer::IRender(const glm::mat4& model,
 	std::shared_ptr<VertexManager> vm,
 	std::shared_ptr<Shader> shd,
 	const std::vector<RendererTextureRef>& tex_ref)
@@ -28,8 +28,9 @@ void Renderer::IRender(const glm::mat4* model,
 		shd->Uniform1i(i, tex_ref[i].tex_uniform_name);
 	}
 
-	if(model)
-		shd->UniformMat4f(*model, "model");
+    //If the matrix is different from the null matrix
+	if(model != glm::mat4())
+		shd->UniformMat4f(model, "model");
 	
 	glDrawArrays(GL_TRIANGLES, 0, vm->GetIndicesCount());
 }
