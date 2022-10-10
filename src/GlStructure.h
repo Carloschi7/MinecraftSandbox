@@ -46,7 +46,7 @@ namespace GlCore
         std::shared_ptr<Shader> GetShader() const;
 
     private:
-        void InitEntity();
+        void InitVertexManager();
         void InitShader();
         void InitTextures();
 

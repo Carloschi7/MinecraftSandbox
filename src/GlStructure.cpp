@@ -90,7 +90,7 @@ namespace GlCore
     {
         //Just need to be loaded once, every block shares this properies
         if(m_VertexManagerPtr.get() == nullptr)
-            InitEntity();
+            InitVertexManager();
         
         if (m_ShaderPtr.get() == nullptr)
             InitShader();
@@ -133,7 +133,7 @@ namespace GlCore
             m_ShaderPtr->Uniform1i(false, "entity_selected");
     }
 
-    void BlockStructure::InitEntity()
+    void BlockStructure::InitVertexManager()
     {
         Utils::VertexData cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORDS);
         m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
