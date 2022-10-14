@@ -9,6 +9,10 @@ public:
     void DrawRenderable() const;
     void UpdateScene();
 
+    //Returns the corresponding chunk iterator if exists
+    std::vector<Chunk>::iterator IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl);
+    std::vector<Chunk>::iterator ChunkCend();
+
 private:
     std::vector<Chunk> m_Chunks;
     //Responsible for camera, skybox & other stuff

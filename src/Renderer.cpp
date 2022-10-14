@@ -1,36 +1,56 @@
 #include "Renderer.h"
+#include "Vertices.h"
 
-Renderer* Renderer::GetInstance()
+Renderer::Renderer() 
 {
-	static Renderer* instance;
+}
+
+Renderer& Renderer::GetInstance()
+{
+	static Renderer instance;
 	return instance;
 }
 
 void Renderer::Render(const glm::mat4& model,
-	std::shared_ptr<VertexManager> vm,
-	std::shared_ptr<Shader> shd,
-	const std::vector<RendererTextureRef>& tex_ref)
+	const VertexManager& vm,
+	Shader& shd)
 {
-	GetInstance()->IRender(model, vm, shd, tex_ref);
+	GetInstance().IRender(model, vm, shd);
+}
+
+void Renderer::RenderVisible(const glm::mat4& model,
+	const VertexManager& vm,
+	Shader& shd,
+	const std::vector<glm::vec3>& exp_norms)
+{
+	GetInstance().IRenderVisible(model, vm, shd, exp_norms);
 }
 
 void Renderer::IRender(const glm::mat4& model,
-	std::shared_ptr<VertexManager> vm,
-	std::shared_ptr<Shader> shd,
-	const std::vector<RendererTextureRef>& tex_ref)
+	const VertexManager& vm,
+	Shader& shd)
 {
-	vm->BindVertexArray();
-	shd->Use();
-
-	for (uint32_t i = 0; i < tex_ref.size(); i++)
-	{
-		tex_ref[i].tex->Bind(i);
-		shd->Uniform1i(i, tex_ref[i].tex_uniform_name);
-	}
+	vm.BindVertexArray();
+	shd.Use();
 
     //If the matrix is different from the null matrix
 	if(model != glm::mat4())
-		shd->UniformMat4f(model, "model");
+		shd.UniformMat4f(model, "model");
 	
-	glDrawArrays(GL_TRIANGLES, 0, vm->GetIndicesCount());
+	glDrawArrays(GL_TRIANGLES, 0, vm.GetIndicesCount());
+}
+
+void Renderer::IRenderVisible(const glm::mat4& model,
+	const VertexManager& vm,
+	Shader& shd,
+	const std::vector<glm::vec3>& exp_norms)
+{
+	vm.BindVertexArray();
+	shd.Use();
+
+	if (model != glm::mat4())
+		shd.UniformMat4f(model, "model");
+
+	for (const auto& vec : exp_norms)
+		glDrawArrays(GL_TRIANGLES, Utils::GetNormVertexBegin(vec), 6);
 }

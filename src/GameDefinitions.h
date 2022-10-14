@@ -5,7 +5,7 @@ namespace GameDefs
 {
     enum class BlockType
     {
-        DIRT = 0
+        DIRT = 0, GRASS
     };
 
 	struct MouseInput
@@ -19,14 +19,18 @@ namespace GameDefs
 		glm::vec3 camera_position;
         glm::mat4 proj_matrix;
         glm::mat4 view_matrix;
+		//Debug purposes
+		bool p_key;
     };
-
+	//Logic for chunk updating
 	struct ChunkBlockLogicData
 	{
 		MouseInput mouse_input;
 		glm::vec3 camera_position;
 		glm::vec3 camera_direction;
 	};
+
+	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};
 
 	inline void KeyboardFunction(const Window& window, Camera* camera)
 	{

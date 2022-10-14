@@ -3,10 +3,13 @@
 #include "Block.h"
 #include "Renderer.h"
 
+std::shared_ptr<CubeMap> GlCore::WorldStructure::m_CubemapPtr = nullptr;
+std::shared_ptr<Shader> GlCore::WorldStructure::m_CubemapShaderPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
 std::shared_ptr<VertexManager> GlCore::WorldStructure::m_CrossaimVmPtr = nullptr;
 
-std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerPtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerSinglePtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerSidedPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
 std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 
@@ -16,19 +19,37 @@ namespace GlCore
     WorldStructure::WorldStructure(const Window& window)
         :m_GameWindow(window)
     {
+        static constexpr float fRenderDistance = 1000.0f;
         m_GameCamera.SetVectors(glm::vec3(-5.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
         m_GameCamera.SetPerspectiveValues(glm::radians(45.0f),
             float(m_GameWindow.Width()) / float(m_GameWindow.Height()),
             0.1f,
-            100.0f);
+            fRenderDistance);
 
         m_GameCamera.SetKeyboardFunction(GameDefs::KeyboardFunction);
         m_GameCamera.SetMouseFunction(GameDefs::MouseFunction);
 
-        //Loading every crossaim asset needed
+        
+        //Loading static members
         if (m_CrossaimShaderPtr.get() == nullptr)
         {
+            //Loading cubemap data
+            std::vector<std::string> skybox_files =
+            {
+                "assets/textures/ShadedBackground.png",
+                "assets/textures/ShadedBackground.png",
+                "assets/textures/BotBackground.png",
+                "assets/textures/TopBackground.png",
+                "assets/textures/ShadedBackground.png",
+                "assets/textures/ShadedBackground.png",
+            };
+            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, fRenderDistance / 2.0f);
+
+            m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
+            m_CubemapShaderPtr->UniformMat4f(m_GameCamera.GetProjMatrix(), "proj");
+
+            //Loading crossaim data
             m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
             //We set the crossaim model matrix here, for now this shader is used only 
             //for drawing this
@@ -46,6 +67,7 @@ namespace GlCore
         rd.camera_position = m_GameCamera.GetPosition();
         rd.proj_matrix = m_GameCamera.GetProjMatrix();
         rd.view_matrix = m_GameCamera.GetViewMatrix();
+        rd.p_key = m_GameWindow.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
         return rd;
     }
 
@@ -69,9 +91,21 @@ namespace GlCore
         m_GameCamera.ProcessInput(m_GameWindow, 1.0f);
     }
 
+    void WorldStructure::RenderSkybox() const
+    {
+        m_CubemapPtr->BindTexture();
+        m_CubemapShaderPtr->Uniform1i(0, "skybox");
+
+        //SetViewMatrix with no translation
+        glm::mat4 view = glm::mat4(glm::mat3(m_GameCamera.GetViewMatrix()));
+        m_CubemapShaderPtr->UniformMat4f(view, "view");
+
+        Renderer::Render({}, m_CubemapPtr->GetVertexManager(), *m_CubemapShaderPtr);
+    }
+
     void WorldStructure::RenderCrossaim() const
     {
-        Renderer::Render({}, m_CrossaimVmPtr, m_CrossaimShaderPtr, {});
+        Renderer::Render({}, *m_CrossaimVmPtr, *m_CrossaimShaderPtr);
     }
 
     ChunkStructure::ChunkStructure()
@@ -86,17 +120,38 @@ namespace GlCore
     }
 
 
-    BlockStructure::BlockStructure()
+    BlockStructure::BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt)
+        :m_CurrentTexture(nullptr), m_CurrentVertexManager(nullptr)
     {
-        //Just need to be loaded once, every block shares this properies
-        if(m_VertexManagerPtr.get() == nullptr)
-            InitVertexManager();
-        
-        if (m_ShaderPtr.get() == nullptr)
-            InitShader();
+        //Load static data
+        if (m_VertexManagerSinglePtr.get() == nullptr)
+        {
+            Utils::VertexData cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORDS_SINGLE);
+            m_VertexManagerSinglePtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
+            cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORD_SIDED);
+            m_VertexManagerSidedPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
 
-        if(m_Textures.empty())
-            InitTextures();
+            m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
+
+            m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
+            m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+        }
+
+        m_ModelMatrix = glm::translate(glm::mat4(1.0f), pos);
+
+        switch (bt)
+        {
+        case GameDefs::BlockType::DIRT:
+            m_CurrentTexture = &m_Textures[0];
+            m_CurrentVertexManager = m_VertexManagerSinglePtr.get();
+            break;
+        case GameDefs::BlockType::GRASS:
+            m_CurrentTexture = &m_Textures[1];
+            m_CurrentVertexManager = m_VertexManagerSidedPtr.get();
+            break;
+        default:
+            throw std::runtime_error("Texture preset for this block not found!");
+        }
     }
 
     const std::vector<Texture>& BlockStructure::GetBlockTextures() const
@@ -109,43 +164,17 @@ namespace GlCore
         return m_ShaderPtr;
     }
 
-    void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, bool is_block_selected) const
+    void BlockStructure::Draw(const std::vector<glm::vec3>& exp_norms, bool is_block_selected) const
     {
-        Texture* current_texture = nullptr;
-
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(true, "entity_selected");
 
-        switch (bt)
-        {
-        case GameDefs::BlockType::DIRT:
-            current_texture = &m_Textures[0];
-            break;
-        default:
-            throw std::runtime_error("Texture preset for this block not found!");
-        }
+        m_CurrentTexture->Bind(0);
+        m_ShaderPtr->Uniform1i(0, "diffuse_texture");
 
-        //Actual block rendering
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), pos);
-        Renderer::Render(model, m_VertexManagerPtr, m_ShaderPtr, { { current_texture, "diffuse_texture" } });
+        Renderer::RenderVisible(m_ModelMatrix, *m_CurrentVertexManager, *m_ShaderPtr, exp_norms);
 
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(false, "entity_selected");
-    }
-
-    void BlockStructure::InitVertexManager()
-    {
-        Utils::VertexData cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORDS);
-        m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-    }
-
-    void BlockStructure::InitShader()
-    {
-        m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
-    }
-
-    void BlockStructure::InitTextures()
-    {
-        m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
     }
 }

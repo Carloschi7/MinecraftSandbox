@@ -12,18 +12,25 @@ struct RendererTextureRef
 class Renderer
 {
 public:
-
-	static Renderer* GetInstance();
+	static Renderer& GetInstance();
 	static void Render(const glm::mat4& model,
-		std::shared_ptr<VertexManager> vm,
-		std::shared_ptr<Shader> shd,
-		const std::vector<RendererTextureRef>& tex_ref);
+		const VertexManager& vm,
+		Shader& shd);
+
+	static void RenderVisible(const glm::mat4& model,
+		const VertexManager& vm,
+		Shader& shd,
+		const std::vector<glm::vec3>& exp_norms);
 
 private:
 	Renderer();
 
 	void IRender(const glm::mat4& model,
-		std::shared_ptr<VertexManager> vm,
-		std::shared_ptr<Shader> shd,
-		const std::vector<RendererTextureRef>& tex_ref);
+		const VertexManager& vm,
+		Shader& shd);
+
+	void IRenderVisible(const glm::mat4& model,
+		const VertexManager& vm,
+		Shader& shd,
+		const std::vector<glm::vec3>& exp_norms);
 };

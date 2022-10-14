@@ -7,10 +7,12 @@ class Block
 public:
     Block(const glm::vec3 position, const GameDefs::BlockType& bt);
     void Draw(bool bIsBlockSelected = false) const;
+    void UpdateRenderableSides(const glm::vec3& camera_pos);
 
     const glm::vec3& GetPosition() const;
     std::shared_ptr<Shader> GetBlockShader() const;
     std::vector<glm::vec3>& ExposedNormals();
+    const std::vector<glm::vec3>& DrawableNormals() const;
     const std::vector<glm::vec3>& ExposedNormals() const;
     bool HasNormals() const;
 private:
@@ -18,6 +20,8 @@ private:
     //Used to determine which sides are exposed, thus
     //determining if the cube can be drawn
     std::vector<glm::vec3> m_ExposedNormals;
+    //Drawable sides of a cube(max 3 in 3d space obv)
+    std::vector<glm::vec3> m_DrawableNormals;
     GameDefs::BlockType m_BlockType;
     GlCore::BlockStructure m_BlockStructure;
 };
