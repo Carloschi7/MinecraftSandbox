@@ -18,8 +18,8 @@ if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
 	set(C7ENGINE_OPENGL_LIB opengl32.lib)
 
 	set(C7ENGINE_DEPENDENCIES 
-		${ENGINE_PATH}/Dependencies/ASSIMP/bin/assimp-vc143-mtd.lib
-		${ENGINE_PATH}/Dependencies/GLEW/lib/Release/Win32/glew32s.lib
+		${ENGINE_PATH}/Dependencies/ASSIMP/lib/assimp-vc143-mtd.lib
+		${ENGINE_PATH}/Dependencies/GLEW/lib/Release/x64/glew32sd.lib
 		${ENGINE_PATH}/Dependencies/GLFW/lib-vc2019/glfw3.lib)
 
 	set(C7ENGINE_LIB_PATH ${ENGINE_BUILD_PATH}/$(Configuration)/C7Engine.lib)
@@ -54,7 +54,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
 	#Pasting shared library into build dir, necessary on Windows for our current setup
-	file(COPY ${PROJECT_SOURCE_DIR}/assimpdll/assimp-vc143-mtd.dll DESTINATION ${PROJECT_BINARY_DIR})
+	file(COPY ${ENGINE_PATH}/Dependencies/ASSIMP/bin/assimp-vc143-mtd.dll DESTINATION ${PROJECT_BINARY_DIR})
 endif()
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/assets/shaders)
