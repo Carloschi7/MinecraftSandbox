@@ -115,8 +115,8 @@ namespace GlCore
     void ChunkStructure::BlockRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const
     {
         //Uniforming VP matrices
-        block_shader->UniformMat4f(rd.proj_matrix, "proj");
-        block_shader->UniformMat4f(rd.view_matrix, "view");
+        block_shader->UniformMat4f(rd.proj_matrix, g_ProjUniformName);
+        block_shader->UniformMat4f(rd.view_matrix, g_ViewUniformName);
     }
 
 
@@ -167,14 +167,14 @@ namespace GlCore
     void BlockStructure::Draw(const std::vector<glm::vec3>& exp_norms, bool is_block_selected) const
     {
         if (is_block_selected)
-            m_ShaderPtr->Uniform1i(true, "entity_selected");
+            m_ShaderPtr->Uniform1i(true, g_EntitySelectedUniformName);
 
         m_CurrentTexture->Bind(0);
-        m_ShaderPtr->Uniform1i(0, "diffuse_texture");
+        m_ShaderPtr->Uniform1i(0, g_DiffuseTextureUniformName);
 
         Renderer::RenderVisible(m_ModelMatrix, *m_CurrentVertexManager, *m_ShaderPtr, exp_norms);
 
         if (is_block_selected)
-            m_ShaderPtr->Uniform1i(false, "entity_selected");
+            m_ShaderPtr->Uniform1i(false, g_EntitySelectedUniformName);
     }
 }

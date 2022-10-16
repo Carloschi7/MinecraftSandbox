@@ -53,9 +53,10 @@ void Chunk::BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld)
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
 	m_SelectedBlock = m_LocalBlocks.cend();
+	auto iter_end = m_LocalBlocks.end();
 
 	//Checking selection
-	for (auto iter = m_LocalBlocks.begin(); iter != m_LocalBlocks.end(); ++iter)
+	for (auto iter = m_LocalBlocks.begin(); iter != iter_end; ++iter)
 	{
 		auto& block = *iter;
 		//Discard automatically blocks which cant be selected
@@ -95,8 +96,9 @@ void Chunk::Draw(const GameDefs::RenderData& rd) const
 	m_ChunkStructure.BlockRenderInit(rd, m_LocalBlocks[0].GetBlockShader());
 
 	auto tp1 = std::chrono::steady_clock::now();
+	auto iter_end = m_LocalBlocks.end();
 
-	for (auto iter = m_LocalBlocks.begin(); iter != m_LocalBlocks.end(); ++iter)
+	for (auto iter = m_LocalBlocks.begin(); iter != iter_end; ++iter)
 	{
 		auto& block = *iter;
 		//Discard automatically blocks which cant be drawn
