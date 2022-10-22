@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "MainIncl.h"
+#include "GameDefinitions.h"
 
 //Preferred singleton implementation
 namespace GlCore
@@ -11,6 +12,7 @@ namespace GlCore
 	const std::string g_DiffuseTextureUniformName = "diffuse_texture";
 	const std::string g_ViewUniformName = "view";
 	const std::string g_ProjUniformName = "proj";
+	const std::string g_SkyboxUniformName = "skybox";
 	const glm::mat4 g_NullMatrix{};
 
 	class Renderer
@@ -24,7 +26,7 @@ namespace GlCore
 		static void RenderVisible(const glm::mat4& model,
 			const VertexManager& vm,
 			Shader& shd,
-			const std::vector<glm::vec3>& exp_norms);
+			const GameDefs::DrawableData& exp_norms);
 
 	private:
 		Renderer();
@@ -36,6 +38,6 @@ namespace GlCore
 		void IRenderVisible(const glm::mat4& model,
 			const VertexManager& vm,
 			Shader& shd,
-			const std::vector<glm::vec3>& exp_norms);
+			const GameDefs::DrawableData& exp_norms);
 	};
 }

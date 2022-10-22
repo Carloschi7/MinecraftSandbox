@@ -20,6 +20,7 @@ namespace GlCore
         void UpdateCamera();
         void RenderSkybox() const;
         void RenderCrossaim() const;
+        void UniformRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const;
         
         GameDefs::RenderData GetRenderFrameInfo() const;
         GameDefs::ChunkBlockLogicData GetChunkBlockLogicData() const;
@@ -43,17 +44,16 @@ namespace GlCore
     {
     public:
         ChunkStructure();
-        void BlockRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const;
     };
 
     class BlockStructure 
     {
     public:
         BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt);
-        void Draw(const std::vector<glm::vec3>& exp_norms, bool is_block_selected) const;
+        void Draw(const GameDefs::DrawableData& exp_norms, bool is_block_selected) const;
         
         const std::vector<Texture>& GetBlockTextures() const;
-        std::shared_ptr<Shader> GetShader() const;
+        static std::shared_ptr<Shader> GetShader();
 
     private:
         //Handles the position of the block in the world;

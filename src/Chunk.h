@@ -10,16 +10,21 @@ public:
 	//For now the chunk generates 16x16x16 blocks in the world
 	//Origin specifies the front-bottom-left coordinate from which
 	//generating blocks(only dirt generated for now)
-	Chunk(World* father, glm::vec3 origin);
+	//the y axis is not considered, so the y component of the origin vector
+	//will be used as an alias of z
+	Chunk(World* father, glm::vec2 origin);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&&) = default;
 
 	//All the chunks need to be loaded in order to use this function
 	void InitBlockNormals();
-	void BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld);
-	const glm::vec3& GetChunkOrigin() const;
+	void SetBlockSelected(bool selected) const;
+	[[nodiscard]] float BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld);
+	void UpdateBlocks(const GameDefs::ChunkBlockLogicData& ld);
+
+	const glm::vec2& GetChunkOrigin() const;
 	void Draw(const GameDefs::RenderData& rd) const;
-	void AddNewExposedNormals(std::vector<Block>::const_iterator iter, bool side_chunk_check = false);
+	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 private:
 	//Father
 	World* m_RelativeWorld;
@@ -27,11 +32,13 @@ private:
 	std::vector<Block> m_LocalBlocks;
 	GlCore::ChunkStructure m_ChunkStructure;
 	//front-bottom-left block position
-	glm::vec3 m_ChunkOrigin;
+	glm::vec2 m_ChunkOrigin;
 	//Block aimed by the player
-	std::vector<Block>::const_iterator m_SelectedBlock;
+	uint32_t m_SelectedBlock;
 	//determining if side chunk exists
 	std::vector<Chunk>::iterator m_PlusX, m_MinusX, m_PlusZ, m_MinusZ;
+	//Determines whether the block selection belongs to this chunk
+	mutable bool m_IsSelectionHere;
 	static constexpr uint32_t m_ChunkWidthAndHeight = 16;
 	static constexpr uint32_t m_ChunkDepth = 50;
 };

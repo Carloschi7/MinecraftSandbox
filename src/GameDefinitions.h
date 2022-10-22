@@ -1,5 +1,6 @@
 #pragma once
 #include "MainIncl.h"
+#include <array>
 
 namespace GameDefs
 {
@@ -99,4 +100,9 @@ namespace GameDefs
 
 		return true;
 	}
+
+	//Pair consisting of an array of integers which represents the initial data
+	//vertex for each cube face, and an integer which denotes how many faces
+	//are being rendered
+	using DrawableData = std::pair<std::array<uint32_t, 3>, uint32_t>;
 }

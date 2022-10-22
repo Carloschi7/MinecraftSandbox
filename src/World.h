@@ -15,6 +15,7 @@ public:
 
 private:
     std::vector<Chunk> m_Chunks;
+    glm::vec3 m_LastPos;
     //Responsible for camera, skybox & other stuff
     GlCore::WorldStructure m_WorldStructure;
 };

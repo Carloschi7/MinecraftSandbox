@@ -20,7 +20,7 @@ namespace GlCore
         :m_GameWindow(window)
     {
         static constexpr float fRenderDistance = 1000.0f;
-        m_GameCamera.SetVectors(glm::vec3(-5.0f, 0.0f, 20.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+        m_GameCamera.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
         m_GameCamera.SetPerspectiveValues(glm::radians(45.0f),
             float(m_GameWindow.Width()) / float(m_GameWindow.Height()),
@@ -47,13 +47,13 @@ namespace GlCore
             m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, fRenderDistance / 2.0f);
 
             m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
-            m_CubemapShaderPtr->UniformMat4f(m_GameCamera.GetProjMatrix(), "proj");
+            m_CubemapShaderPtr->UniformMat4f(m_GameCamera.GetProjMatrix(), g_ProjUniformName);
 
             //Loading crossaim data
             m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
             //We set the crossaim model matrix here, for now this shader is used only 
             //for drawing this
-            m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
+            m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), g_ModelUniformName);
 
             Utils::VertexData rd = Utils::CrossAim();
             //VM init only the first time
@@ -94,11 +94,11 @@ namespace GlCore
     void WorldStructure::RenderSkybox() const
     {
         m_CubemapPtr->BindTexture();
-        m_CubemapShaderPtr->Uniform1i(0, "skybox");
+        m_CubemapShaderPtr->Uniform1i(0, g_SkyboxUniformName);
 
         //SetViewMatrix with no translation
         glm::mat4 view = glm::mat4(glm::mat3(m_GameCamera.GetViewMatrix()));
-        m_CubemapShaderPtr->UniformMat4f(view, "view");
+        m_CubemapShaderPtr->UniformMat4f(view, g_ViewUniformName);
 
         Renderer::Render({}, m_CubemapPtr->GetVertexManager(), *m_CubemapShaderPtr);
     }
@@ -108,15 +108,14 @@ namespace GlCore
         Renderer::Render({}, *m_CrossaimVmPtr, *m_CrossaimShaderPtr);
     }
 
-    ChunkStructure::ChunkStructure()
+    void WorldStructure::UniformRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const
     {
-    }
-
-    void ChunkStructure::BlockRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const
-    {
-        //Uniforming VP matrices
         block_shader->UniformMat4f(rd.proj_matrix, g_ProjUniformName);
         block_shader->UniformMat4f(rd.view_matrix, g_ViewUniformName);
+    }
+
+    ChunkStructure::ChunkStructure()
+    {
     }
 
 
@@ -159,12 +158,12 @@ namespace GlCore
         return m_Textures;
     }
 
-    std::shared_ptr<Shader> BlockStructure::GetShader() const
+    std::shared_ptr<Shader> BlockStructure::GetShader()
     {
         return m_ShaderPtr;
     }
 
-    void BlockStructure::Draw(const std::vector<glm::vec3>& exp_norms, bool is_block_selected) const
+    void BlockStructure::Draw(const GameDefs::DrawableData& exp_norms, bool is_block_selected) const
     {
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(true, g_EntitySelectedUniformName);

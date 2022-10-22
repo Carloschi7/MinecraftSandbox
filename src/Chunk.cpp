@@ -4,13 +4,13 @@
 #include <algorithm>
 #include <chrono>
 
-Chunk::Chunk(World* father, glm::vec3 origin)
-	:m_RelativeWorld(father), m_ChunkOrigin(origin)
+Chunk::Chunk(World* father, glm::vec2 origin)
+	:m_RelativeWorld(father), m_ChunkOrigin(origin), m_IsSelectionHere(false)
 {
 	for (int32_t i = origin.x; i < origin.x + m_ChunkWidthAndHeight; i++)
-		for (int32_t j = origin.y; j < origin.y + m_ChunkDepth; j++)
-			for (int32_t k = origin.z; k < origin.z + m_ChunkWidthAndHeight; k++)
-				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == origin.y + m_ChunkDepth -1) ?
+		for (int32_t j = 0; j < m_ChunkDepth; j++)
+			for (int32_t k = origin.y; k < origin.y + m_ChunkWidthAndHeight; k++)
+				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == m_ChunkDepth -1) ?
 					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);		
 }
 
@@ -37,30 +37,35 @@ void Chunk::InitBlockNormals()
 			block.ExposedNormals().emplace_back(-1.0f, 0.0f, 0.0f);
 		if (m_PlusX == end_iter && i == m_ChunkOrigin.x + m_ChunkWidthAndHeight - 1)
 			norm_vec.emplace_back(1.0f, 0.0f, 0.0f);
-		if (j == m_ChunkOrigin.y)
+		if (j == 0.0f)
 			norm_vec.emplace_back(0.0f, -1.0f, 0.0f);
-		if (j == m_ChunkOrigin.y + m_ChunkDepth - 1)
+		if (j == m_ChunkDepth - 1)
 			norm_vec.emplace_back(0.0f, 1.0f, 0.0f);
-		if (m_MinusZ == end_iter && k == m_ChunkOrigin.z)
+		if (m_MinusZ == end_iter && k == m_ChunkOrigin.y)
 			norm_vec.emplace_back(0.0f, 0.0f, -1.0f);
-		if (m_PlusZ == end_iter && k == m_ChunkOrigin.z + m_ChunkWidthAndHeight - 1)
+		if (m_PlusZ == end_iter && k == m_ChunkOrigin.y + m_ChunkWidthAndHeight - 1)
 			norm_vec.emplace_back(0.0f, 0.0f, 1.0f);
 	}
 }
 
-void Chunk::BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld)
+void Chunk::SetBlockSelected(bool selected) const
+{
+	m_IsSelectionHere = selected;
+}
+
+float Chunk::BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
-	m_SelectedBlock = m_LocalBlocks.cend();
-	auto iter_end = m_LocalBlocks.end();
+	std::size_t vec_size = m_LocalBlocks.size();
+	m_SelectedBlock = static_cast<uint32_t>(-1);
 
 	//Checking selection
-	for (auto iter = m_LocalBlocks.begin(); iter != iter_end; ++iter)
+	for (std::size_t i = 0; i < vec_size; ++i)
 	{
-		auto& block = *iter;
-		//Discard automatically blocks which cant be selected
-		if (!block.HasNormals())
+		auto& block = m_LocalBlocks[i];
+		//Discard automatically blocks which cant be selected or seen
+		if (!block.IsDrawable())
 			continue;
 
 		float dist = 0.0f;
@@ -69,43 +74,45 @@ void Chunk::BlockCollisionLogic(const GameDefs::ChunkBlockLogicData& ld)
 		if (bSelected && dist < closest_selected_block_dist)
 		{
 			closest_selected_block_dist = dist;
-			m_SelectedBlock = iter;
+			m_SelectedBlock = i;
 		}
 	}
 
-	if (m_SelectedBlock != m_LocalBlocks.cend() && ld.mouse_input.left_click)
+	if (m_SelectedBlock != static_cast<uint32_t>(-1) && ld.mouse_input.left_click)
 	{
-		AddNewExposedNormals(m_SelectedBlock);
-		m_LocalBlocks.erase(m_SelectedBlock);
-		m_SelectedBlock = m_LocalBlocks.cend();
+		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].GetPosition());
+		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
+		m_SelectedBlock = static_cast<uint32_t>(-1);
 	}
 
+	return closest_selected_block_dist;
+}
+
+void Chunk::UpdateBlocks(const GameDefs::ChunkBlockLogicData& ld)
+{
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
 		block.UpdateRenderableSides(ld.camera_position);
 }
 
-const glm::vec3& Chunk::GetChunkOrigin() const
+const glm::vec2& Chunk::GetChunkOrigin() const
 {
 	return m_ChunkOrigin;
 }
 
 void Chunk::Draw(const GameDefs::RenderData& rd) const
 {
-	//For now blocks all share the same shader
-	m_ChunkStructure.BlockRenderInit(rd, m_LocalBlocks[0].GetBlockShader());
-
 	auto tp1 = std::chrono::steady_clock::now();
-	auto iter_end = m_LocalBlocks.end();
+	std::size_t vec_size = m_LocalBlocks.size();
 
-	for (auto iter = m_LocalBlocks.begin(); iter != iter_end; ++iter)
+	for (std::size_t i = 0; i < vec_size; ++i)
 	{
-		auto& block = *iter;
+		auto& block = m_LocalBlocks[i];
 		//Discard automatically blocks which cant be drawn
-		if (!block.HasNormals())
+		if (!block.IsDrawable())
 			continue;
 
-		block.Draw(iter == m_SelectedBlock);
+		block.Draw(m_IsSelectionHere && i == m_SelectedBlock);
 	}
 
 	if (rd.p_key)
@@ -115,7 +122,7 @@ void Chunk::Draw(const GameDefs::RenderData& rd) const
 	}
 }
 
-void Chunk::AddNewExposedNormals(std::vector<Block>::const_iterator iter, bool side_chunk_check)
+void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check)
 {
 	auto compute_new_normals = [&](const glm::vec3& pos, const glm::vec3& norm)
 	{
@@ -129,13 +136,13 @@ void Chunk::AddNewExposedNormals(std::vector<Block>::const_iterator iter, bool s
 			if (!side_chunk_check)
 			{
 				if (norm == glm::vec3(1.0f, 0.0f, 0.0f) && m_PlusX != m_RelativeWorld->ChunkCend())
-					m_PlusX->AddNewExposedNormals(iter, true);
+					m_PlusX->AddNewExposedNormals(pos, true);
 				if (norm == glm::vec3(-1.0f, 0.0f, 0.0f) && m_MinusX != m_RelativeWorld->ChunkCend())
-					m_MinusX->AddNewExposedNormals(iter, true);
+					m_MinusX->AddNewExposedNormals(pos, true);
 				if (norm == glm::vec3(0.0f, 0.0f, 1.0f) && m_PlusZ != m_RelativeWorld->ChunkCend())
-					m_PlusZ->AddNewExposedNormals(iter, true);
+					m_PlusZ->AddNewExposedNormals(pos, true);
 				if (norm == glm::vec3(0.0f, 0.0f, -1.0f) && m_MinusZ != m_RelativeWorld->ChunkCend())
-					m_MinusZ->AddNewExposedNormals(iter, true);
+					m_MinusZ->AddNewExposedNormals(pos, true);
 			}
 		}
 		else
@@ -144,11 +151,10 @@ void Chunk::AddNewExposedNormals(std::vector<Block>::const_iterator iter, bool s
 		}
 	};
 
-	const glm::vec3& pos = iter->GetPosition();
-	compute_new_normals(pos, glm::vec3(1.0f, 0.0f, 0.0f));
-	compute_new_normals(pos, glm::vec3(-1.0f, 0.0f, 0.0f));
-	compute_new_normals(pos, glm::vec3(0.0f, 1.0f, 0.0f));
-	compute_new_normals(pos, glm::vec3(0.0f, -1.0f, 0.0f));
-	compute_new_normals(pos, glm::vec3(0.0f, 0.0f, 1.0f));
-	compute_new_normals(pos, glm::vec3(0.0f, 0.0f, -1.0f));
+	compute_new_normals(block_pos, glm::vec3(1.0f, 0.0f, 0.0f));
+	compute_new_normals(block_pos, glm::vec3(-1.0f, 0.0f, 0.0f));
+	compute_new_normals(block_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+	compute_new_normals(block_pos, glm::vec3(0.0f, -1.0f, 0.0f));
+	compute_new_normals(block_pos, glm::vec3(0.0f, 0.0f, 1.0f));
+	compute_new_normals(block_pos, glm::vec3(0.0f, 0.0f, -1.0f));
 }

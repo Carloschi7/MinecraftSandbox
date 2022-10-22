@@ -24,7 +24,7 @@ namespace GlCore
 	void Renderer::RenderVisible(const glm::mat4& model,
 		const VertexManager& vm,
 		Shader& shd,
-		const std::vector<glm::vec3>& exp_norms)
+		const GameDefs::DrawableData& exp_norms)
 	{
 		GetInstance().IRenderVisible(model, vm, shd, exp_norms);
 	}
@@ -33,10 +33,10 @@ namespace GlCore
 		const VertexManager& vm,
 		Shader& shd)
 	{
-		vm.BindVertexArray();
 		shd.Use();
+		vm.BindVertexArray();
 
-		//If the matrix is different from the null matrix
+		//If we uniform something the shader gets bound automatically
 		if (model != g_NullMatrix)
 			shd.UniformMat4f(model, g_ModelUniformName);
 
@@ -46,15 +46,15 @@ namespace GlCore
 	void Renderer::IRenderVisible(const glm::mat4& model,
 		const VertexManager& vm,
 		Shader& shd,
-		const std::vector<glm::vec3>& exp_norms)
+		const GameDefs::DrawableData& exp_norms)
 	{
-		vm.BindVertexArray();
 		shd.Use();
+		vm.BindVertexArray();
 
 		if (model != g_NullMatrix)
 			shd.UniformMat4f(model, g_ModelUniformName);
 
-		for (const auto& vec : exp_norms)
-			glDrawArrays(GL_TRIANGLES, Utils::GetNormVertexBegin(vec), 6);
+		for (uint32_t i = 0; i < exp_norms.second; i++)
+			glDrawArrays(GL_TRIANGLES, exp_norms.first[i], 6);
 	}
 }
