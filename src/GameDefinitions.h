@@ -4,6 +4,12 @@
 
 namespace GameDefs
 {
+	//Game global variables
+	extern float g_ChunkSpawningDistance;
+	extern int32_t g_SpawnerBegin;
+	extern int32_t g_SpawnerEnd;
+	extern int32_t g_SpawnerIncrement;
+
     enum class BlockType
     {
         DIRT = 0, GRASS
@@ -24,7 +30,7 @@ namespace GameDefs
 		bool p_key;
     };
 	//Logic for chunk updating
-	struct ChunkBlockLogicData
+	struct ChunkLogicData
 	{
 		MouseInput mouse_input;
 		glm::vec3 camera_position;
@@ -100,9 +106,4 @@ namespace GameDefs
 
 		return true;
 	}
-
-	//Pair consisting of an array of integers which represents the initial data
-	//vertex for each cube face, and an integer which denotes how many faces
-	//are being rendered
-	using DrawableData = std::pair<std::array<uint32_t, 3>, uint32_t>;
 }

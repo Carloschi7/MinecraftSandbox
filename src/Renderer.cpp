@@ -24,7 +24,7 @@ namespace GlCore
 	void Renderer::RenderVisible(const glm::mat4& model,
 		const VertexManager& vm,
 		Shader& shd,
-		const GameDefs::DrawableData& exp_norms)
+		const GlCore::DrawableData& exp_norms)
 	{
 		GetInstance().IRenderVisible(model, vm, shd, exp_norms);
 	}
@@ -46,7 +46,7 @@ namespace GlCore
 	void Renderer::IRenderVisible(const glm::mat4& model,
 		const VertexManager& vm,
 		Shader& shd,
-		const GameDefs::DrawableData& exp_norms)
+		const GlCore::DrawableData& exp_norms)
 	{
 		shd.Use();
 		vm.BindVertexArray();

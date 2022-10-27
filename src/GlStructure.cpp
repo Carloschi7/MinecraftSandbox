@@ -55,7 +55,7 @@ namespace GlCore
             //for drawing this
             m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), g_ModelUniformName);
 
-            Utils::VertexData rd = Utils::CrossAim();
+            VertexData rd = CrossAim();
             //VM init only the first time
             m_CrossaimVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
         }
@@ -71,9 +71,9 @@ namespace GlCore
         return rd;
     }
 
-    GameDefs::ChunkBlockLogicData WorldStructure::GetChunkBlockLogicData() const
+    GameDefs::ChunkLogicData WorldStructure::GetChunkLogicData() const
     {
-        GameDefs::ChunkBlockLogicData ld;
+        GameDefs::ChunkLogicData ld;
         ld.mouse_input.left_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
         ld.mouse_input.right_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
         ld.camera_position = m_GameCamera.GetPosition();
@@ -125,9 +125,9 @@ namespace GlCore
         //Load static data
         if (m_VertexManagerSinglePtr.get() == nullptr)
         {
-            Utils::VertexData cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORDS_SINGLE);
+            VertexData cd = Cube(VertexProps::POS_AND_TEX_COORDS_SINGLE);
             m_VertexManagerSinglePtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-            cd = Utils::Cube(Utils::VertexProps::POS_AND_TEX_COORD_SIDED);
+            cd = Cube(VertexProps::POS_AND_TEX_COORD_SIDED);
             m_VertexManagerSidedPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
 
             m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
@@ -163,7 +163,7 @@ namespace GlCore
         return m_ShaderPtr;
     }
 
-    void BlockStructure::Draw(const GameDefs::DrawableData& exp_norms, bool is_block_selected) const
+    void BlockStructure::Draw(const DrawableData& exp_norms, bool is_block_selected) const
     {
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(true, g_EntitySelectedUniformName);

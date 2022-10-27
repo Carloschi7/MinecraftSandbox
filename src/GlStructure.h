@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include "GameDefinitions.h"
+#include "Vertices.h"
 
 class Block;
 class World;
@@ -23,7 +24,7 @@ namespace GlCore
         void UniformRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const;
         
         GameDefs::RenderData GetRenderFrameInfo() const;
-        GameDefs::ChunkBlockLogicData GetChunkBlockLogicData() const;
+        GameDefs::ChunkLogicData GetChunkLogicData() const;
 
         const Camera& GetGameCamera() const;
     private:
@@ -50,7 +51,7 @@ namespace GlCore
     {
     public:
         BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt);
-        void Draw(const GameDefs::DrawableData& exp_norms, bool is_block_selected) const;
+        void Draw(const DrawableData& exp_norms, bool is_block_selected) const;
         
         const std::vector<Texture>& GetBlockTextures() const;
         static std::shared_ptr<Shader> GetShader();

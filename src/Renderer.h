@@ -2,6 +2,7 @@
 #include <memory>
 #include "MainIncl.h"
 #include "GameDefinitions.h"
+#include "Vertices.h"
 
 //Preferred singleton implementation
 namespace GlCore
@@ -26,7 +27,7 @@ namespace GlCore
 		static void RenderVisible(const glm::mat4& model,
 			const VertexManager& vm,
 			Shader& shd,
-			const GameDefs::DrawableData& exp_norms);
+			const GlCore::DrawableData& exp_norms);
 
 	private:
 		Renderer();
@@ -38,6 +39,6 @@ namespace GlCore
 		void IRenderVisible(const glm::mat4& model,
 			const VertexManager& vm,
 			Shader& shd,
-			const GameDefs::DrawableData& exp_norms);
+			const GlCore::DrawableData& exp_norms);
 	};
 }

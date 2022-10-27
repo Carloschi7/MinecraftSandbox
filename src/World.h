@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <optional>
 #include "Chunk.h"
 
 class World {
@@ -10,11 +11,15 @@ public:
     void UpdateScene();
 
     //Returns the corresponding chunk iterator if exists
-    std::vector<Chunk>::iterator IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl);
-    std::vector<Chunk>::iterator ChunkCend();
+    std::optional<uint32_t> IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl);
+    Chunk& GetChunk(uint32_t index);
 
 private:
     std::vector<Chunk> m_Chunks;
+    //Non existing chunk which are near existing ones. They can spawn if the
+    //player gets near enough
+    std::vector<glm::vec3> m_SpawnableChunks;
+    //Last player pos
     glm::vec3 m_LastPos;
     //Responsible for camera, skybox & other stuff
     GlCore::WorldStructure m_WorldStructure;
