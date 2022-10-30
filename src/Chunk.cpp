@@ -27,6 +27,10 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);		
 }
 
+Chunk::~Chunk()
+{
+}
+
 void Chunk::InitBlockNormals()
 {
 	//Determining if side chunk exist

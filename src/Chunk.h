@@ -17,6 +17,7 @@ public:
 	Chunk(World* father, glm::vec2 origin);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&&) = default;
+	~Chunk();
 
 	//All the chunks need to be loaded in order to use this function
 	void InitBlockNormals();

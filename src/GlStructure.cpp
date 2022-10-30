@@ -120,7 +120,7 @@ namespace GlCore
 
 
     BlockStructure::BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt)
-        :m_CurrentTexture(nullptr), m_CurrentVertexManager(nullptr)
+        :m_CurrentTexture(nullptr), m_CurrentVertexManager(nullptr), m_ModelPos(pos)
     {
         //Load static data
         if (m_VertexManagerSinglePtr.get() == nullptr)
@@ -134,9 +134,7 @@ namespace GlCore
 
             m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
-        }
-
-        m_ModelMatrix = glm::translate(glm::mat4(1.0f), pos);
+        } 
 
         switch (bt)
         {
@@ -171,7 +169,7 @@ namespace GlCore
         m_CurrentTexture->Bind(0);
         m_ShaderPtr->Uniform1i(0, g_DiffuseTextureUniformName);
 
-        Renderer::RenderVisible(m_ModelMatrix, *m_CurrentVertexManager, *m_ShaderPtr, exp_norms);
+        Renderer::RenderVisible(glm::translate(g_IdentityMatrix, m_ModelPos), *m_CurrentVertexManager, *m_ShaderPtr, exp_norms);
 
         if (is_block_selected)
             m_ShaderPtr->Uniform1i(false, g_EntitySelectedUniformName);

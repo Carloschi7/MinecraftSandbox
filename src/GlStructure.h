@@ -58,7 +58,7 @@ namespace GlCore
 
     private:
         //Handles the position of the block in the world;
-        glm::mat4 m_ModelMatrix;
+        glm::vec3 m_ModelPos;
         //Texture of the current block
         Texture* m_CurrentTexture;
         VertexManager* m_CurrentVertexManager;

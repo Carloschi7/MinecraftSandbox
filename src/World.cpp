@@ -59,15 +59,6 @@ void World::UpdateScene()
 {
 	GameDefs::ChunkLogicData chunk_logic_data = m_WorldStructure.GetChunkLogicData();
 
-	//Lambda which handles spawnable chunk pushing conditions
-	auto is_pushable = [&](const GameDefs::ChunkLocation& cl, const glm::vec3& vec) -> bool
-	{
-		auto internal_pred = [&](const glm::vec3& internal_vec) {return internal_vec == vec; };
-
-		return !IsChunk(m_Chunks.back(), cl).has_value() &&
-			std::find_if(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), internal_pred) == m_SpawnableChunks.end();
-	};
-
 	//Chunk dynamic spawning
 	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
 	{
@@ -110,13 +101,13 @@ void World::UpdateScene()
 			}
 
 			//Pushing new spawnable vectors
-			if (is_pushable(GameDefs::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
+			if (IsPushable(this_chunk, GameDefs::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
-			if (is_pushable(GameDefs::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
+			if (IsPushable(this_chunk, GameDefs::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
-			if (is_pushable(GameDefs::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
+			if (IsPushable(this_chunk, GameDefs::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
-			if (is_pushable(GameDefs::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
+			if (IsPushable(this_chunk, GameDefs::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
 
 			//Remove the just spawned chunk from the spawnable list
@@ -191,5 +182,13 @@ Chunk& World::GetChunk(uint32_t index)
 		throw std::runtime_error("Vector index out of bounds");
 
 	return m_Chunks[index];
+}
+
+bool World::IsPushable(const Chunk& chunk, const GameDefs::ChunkLocation& cl, const glm::vec3& vec)
+{
+	auto internal_pred = [&](const glm::vec3& internal_vec) {return internal_vec == vec; };
+
+	return !IsChunk(chunk, cl).has_value() && 
+		std::find_if(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), internal_pred) == m_SpawnableChunks.end();
 }
 

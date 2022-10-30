@@ -15,6 +15,7 @@ namespace GlCore
 	const std::string g_ProjUniformName = "proj";
 	const std::string g_SkyboxUniformName = "skybox";
 	const glm::mat4 g_NullMatrix{};
+	const glm::mat4 g_IdentityMatrix{ 1.0f };
 
 	class Renderer
 	{

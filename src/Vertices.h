@@ -13,7 +13,7 @@ namespace GlCore
     //Pair consisting of an array of integers which represents the initial data
     //vertex for each cube face, and an integer which denotes how many faces
     //are being rendered
-    using DrawableData = std::pair<std::array<uint32_t, 3>, uint32_t>;
+    using DrawableData = std::pair<std::array<uint8_t, 3>, uint8_t>;
 
     static constexpr float one_third = 1.0f / 3.0f;
 

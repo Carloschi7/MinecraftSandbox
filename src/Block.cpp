@@ -1,7 +1,7 @@
 #include "Block.h"
 #include "Vertices.h"
 
-Block::Block(const glm::vec3 position, const GameDefs::BlockType &bt)
+Block::Block(const glm::vec3& position, const GameDefs::BlockType &bt)
     :m_Position(position), m_BlockType(bt), m_BlockStructure(position, bt)
 {
 }
@@ -13,7 +13,7 @@ void Block::Draw(bool bIsBlockSelected) const
 
 void Block::UpdateRenderableSides(const glm::vec3& camera_pos)
 {
-    uint32_t& counter = m_DrawableSides.second;
+    uint8_t& counter = m_DrawableSides.second;
     counter = 0;
 
     //Can never go above 3 elements
