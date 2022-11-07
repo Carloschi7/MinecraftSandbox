@@ -10,7 +10,7 @@ public:
     void DrawRenderable() const;
     void UpdateScene();
 
-    //Returns the corresponding chunk iterator if exists
+    //Returns the corresponding chunk index if exists
     std::optional<uint32_t> IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl);
     Chunk& GetChunk(uint32_t index);
 

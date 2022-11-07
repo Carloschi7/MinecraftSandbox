@@ -150,7 +150,7 @@ namespace GlCore
     }
 
     //Starting index of respective cube face
-    inline uint32_t GetNormVertexBegin(const glm::vec3& vec)
+    inline uint8_t GetNormVertexBegin(const glm::vec3& vec)
     {
         if (vec == glm::vec3(0.0f, 0.0f, -1.0f))
             return 0;

@@ -5,10 +5,12 @@
 namespace GameDefs
 {
 	//Game global variables
-	extern float g_ChunkSpawningDistance;
-	extern int32_t g_SpawnerBegin;
-	extern int32_t g_SpawnerEnd;
-	extern int32_t g_SpawnerIncrement;
+	extern const float g_ChunkSpawningDistance;
+	extern const float g_ChunkRenderingDistance;
+	extern const float g_CameraCompensation;
+	extern const int32_t g_SpawnerBegin;
+	extern const int32_t g_SpawnerEnd;
+	extern const int32_t g_SpawnerIncrement;
 
     enum class BlockType
     {

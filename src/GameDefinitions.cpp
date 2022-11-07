@@ -2,8 +2,10 @@
 
 namespace GameDefs
 {
-	float g_ChunkSpawningDistance = 50.0f;
-	int32_t g_SpawnerBegin = -64;
-	int32_t g_SpawnerEnd = 64;
-	int32_t g_SpawnerIncrement = 16;
+	const float g_ChunkSpawningDistance = 70.0f;
+	const float g_ChunkRenderingDistance = 150.0f;
+	const float g_CameraCompensation = 5.0f;
+	const int32_t g_SpawnerBegin = -64;
+	const int32_t g_SpawnerEnd = 64;
+	const int32_t g_SpawnerIncrement = 16;
 }

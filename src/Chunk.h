@@ -43,6 +43,9 @@ public:
 private:
 	//Returns the iterator of a block exposed normal
 	std::vector<glm::vec3>::const_iterator NormalAt(const Block& b, const glm::vec3& norm);
+	//Returns if there is a block at the location pos
+	//The last two attributes can be used to make the searching faster
+	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true) const;
 private:
 	//Father World
 	World* m_RelativeWorld;

@@ -20,9 +20,11 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 		s_DiagonalLenght = glm::sqrt(lower_diag_squared + glm::pow(s_ChunkDepth, 2)) * 0.5f;
 	}
 
+	//Insert the y coordinates consecutively to allow the
+	//normal insertion algorithm later
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
-		for (int32_t j = 0; j < s_ChunkDepth; j++)
-			for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
+		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
+			for (int32_t j = 0; j < s_ChunkDepth; j++)
 				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == s_ChunkDepth -1) ?
 					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);		
 }
@@ -40,8 +42,13 @@ void Chunk::InitBlockNormals()
 	m_MinusZ = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::MINUS_Z);
 	int32_t i, j, k;
 
+	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld->GetChunk(m_PlusX.value()) : nullptr;
+	Chunk* chunk_minus_x = m_MinusX.has_value() ? &m_RelativeWorld->GetChunk(m_MinusX.value()) : nullptr;
+	Chunk* chunk_plus_z = m_PlusZ.has_value() ? &m_RelativeWorld->GetChunk(m_PlusZ.value()) : nullptr;
+	Chunk* chunk_minus_z = m_MinusZ.has_value() ? &m_RelativeWorld->GetChunk(m_MinusZ.value()) : nullptr;
+
 	//Checking also for adjacent chunks
-	for (auto& block : m_LocalBlocks)
+	/*for (auto& block : m_LocalBlocks)
 	{
 		i = block.GetPosition().x;
 		j = block.GetPosition().y;
@@ -61,6 +68,106 @@ void Chunk::InitBlockNormals()
 			norm_vec.emplace_back(0.0f, 0.0f, -1.0f);
 		if (!m_PlusZ.has_value() && k == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
 			norm_vec.emplace_back(0.0f, 0.0f, 1.0f);
+	}*/
+
+	glm::vec3 pos_x(1.0f, 0.0f, 0.0f);
+	glm::vec3 neg_x(-1.0f, 0.0f, 0.0f);
+	glm::vec3 pos_z(0.0f, 0.0f, 1.0f);
+	glm::vec3 neg_z(0.0f, 0.0f, -1.0f);
+
+	//The following algorithm determines with minimal accuracy and pretty fast speed which faces of each
+	//block of the this chunk can be seen
+	//The algorithm analyses each column of blocks in the 16x16 which can be found in the chunk and
+	//from the top block of that column an index descends assigning to each side a normal
+	//until a side block is found
+	float local_z = m_LocalBlocks[0].GetPosition().z;
+	int32_t starting_index = 0;
+	//+1 because we need to parse the last column
+	for (int32_t i = 0; i < m_LocalBlocks.size() + 1; i++)
+	{
+		if (i != m_LocalBlocks.size() && m_LocalBlocks[i].GetPosition().z == local_z)
+			continue;
+
+		if (i != m_LocalBlocks.size())
+			local_z = m_LocalBlocks[i].GetPosition().z;
+
+		uint32_t top_column_index = i - 1;
+		const glm::vec3& block_pos = m_LocalBlocks[top_column_index].GetPosition();
+		bool confines_with_other_chunk = block_pos.x == m_ChunkOrigin.x || block_pos.x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1 ||
+			block_pos.z == m_ChunkOrigin.y || block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
+
+		m_LocalBlocks[top_column_index].ExposedNormals().emplace_back(0.0f, 1.0f, 0.0f);
+
+		if (confines_with_other_chunk)
+		{
+			int32_t p = top_column_index;
+			//Checking also for neighbor chunks
+			//Right
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_x, starting_index, true) &&
+				(!chunk_plus_x || !chunk_plus_x->IsBlock(m_LocalBlocks[p].GetPosition() + pos_x)))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(pos_x);
+				p--;
+			}
+			p = top_column_index;
+			//Left
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_x, starting_index, false) &&
+				(!chunk_minus_x || !chunk_minus_x->IsBlock(m_LocalBlocks[p].GetPosition() + neg_x)))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(neg_x);
+				p--;
+			}
+			p = top_column_index;
+			//Back
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_z, starting_index, true) &&
+				(!chunk_plus_z || !chunk_plus_z->IsBlock(m_LocalBlocks[p].GetPosition() + pos_z)))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(pos_z);
+				p--;
+			}
+			p = top_column_index;
+			//Front
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_z, starting_index, false) &&
+				(!chunk_minus_z || !chunk_minus_z->IsBlock(m_LocalBlocks[p].GetPosition() + neg_z)))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(neg_z);
+				p--;
+			}
+		}
+		else
+		{
+			//A more slim implementation for the majority of the iterations
+			uint32_t p = top_column_index;
+			//Right
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_x, starting_index, true))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(pos_x);
+				p--;
+			}
+			p = top_column_index;
+			//Left
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_x, starting_index, false))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(neg_x);
+				p--;
+			}
+			p = top_column_index;
+			//Back
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_z, starting_index, true))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(pos_z);
+				p--;
+			}
+			p = top_column_index;
+			//Front
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_z, starting_index, false))
+			{
+				m_LocalBlocks[p].ExposedNormals().push_back(neg_z);
+				p--;
+			}
+		}
+
+		starting_index = i;
 	}
 }
 
@@ -116,14 +223,14 @@ bool Chunk::IsChunkRenderable(const GameDefs::ChunkLogicData& rd) const
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(rd.camera_position.x, rd.camera_position.z);
 	glm::vec2 chunk_center_pos(m_ChunkCenter.x, m_ChunkCenter.z);
-	return (glm::length(cam_pos - chunk_center_pos) < 100.0f);
+	return (glm::length(cam_pos - chunk_center_pos) < GameDefs::g_ChunkRenderingDistance);
 }
 
 bool Chunk::IsChunkVisible(const GameDefs::ChunkLogicData& rd) const
 {
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - rd.camera_position);
 	return (glm::dot(camera_to_midway, rd.camera_direction) > 0.0f ||
-		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + 5.0f);
+		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + GameDefs::g_CameraCompensation);
 
 	//The 5.0f is just an arbitrary value to fix drawing issues that would be
 	//to unnecessarily complex to fix precisely
@@ -268,4 +375,35 @@ std::vector<glm::vec3>::const_iterator Chunk::NormalAt(const Block& b, const glm
 {
 	return std::find_if(b.ExposedNormals().begin(), b.ExposedNormals().end(),
 		[&](const glm::vec3& v) {return v == norm; });
+}
+
+bool Chunk::IsBlock(const glm::vec3& pos, int32_t starting_index, bool search_towards_end) const
+{
+	if (starting_index < 0 || starting_index >= m_LocalBlocks.size())
+		throw std::runtime_error("Starting index out of bounds");
+
+	if (search_towards_end)
+	{
+		//Searching before in the defined batch
+		for (int32_t i = starting_index; i < m_LocalBlocks.size(); i++)
+		{
+			if (m_LocalBlocks[i].GetPosition() == pos)
+			{
+				return true;
+			}
+		}
+
+	}
+	else
+	{
+		for (int32_t i = starting_index; i >= 0; i--)
+		{
+			if (m_LocalBlocks[i].GetPosition() == pos)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
