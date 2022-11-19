@@ -46,6 +46,7 @@ void Application::OnUserRun()
 
     //For 3D rendering
     glEnable(GL_DEPTH_TEST);
+    std::chrono::duration<double> dur;
     while (!m_Window.ShouldClose())
     {   
         m_Window.ClearScreen();
@@ -54,9 +55,9 @@ void Application::OnUserRun()
             //No need to render every frame, while the logic thread computes,
             //sleeping every few milliseconds can save lots of performances without
             //resulting too slow
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(5ms);
+            auto tp2 = std::chrono::steady_clock::now();
             WorldGameInstance.DrawRenderable();
+            dur = std::chrono::steady_clock::now() - tp2;
         }
         else
         {
@@ -64,6 +65,7 @@ void Application::OnUserRun()
             WorldGameInstance.DrawRenderable();
         }
 
+        m_Camera.ProcessInput(m_Window, dur.count() * 60.0);
         m_Window.Update();
     }
 

@@ -20,7 +20,7 @@ private:
     //Function which handles spawnable chunk pushing conditions
     bool IsPushable(const Chunk& chunk, const GameDefs::ChunkLocation& cl, const glm::vec3& vec);
 private:
-    std::vector<Chunk> m_Chunks;
+    VecType<Chunk> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     std::vector<glm::vec3> m_SpawnableChunks;

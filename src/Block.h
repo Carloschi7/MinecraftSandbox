@@ -15,15 +15,15 @@ public:
     const glm::vec3& GetPosition() const;
 
     const GlCore::DrawableData& DrawableSides() const;
-    std::vector<glm::vec3>& ExposedNormals();
-    const std::vector<glm::vec3>& ExposedNormals() const;
+    VecType<glm::vec3>& ExposedNormals();
+    const VecType<glm::vec3>& ExposedNormals() const;
     bool HasNormals() const;
     bool IsDrawable() const;
 private:
     glm::vec3 m_Position;
     //Used to determine which sides are exposed, thus
     //determining if the cube can be drawn
-    std::vector<glm::vec3> m_ExposedNormals;
+    VecType<glm::vec3> m_ExposedNormals;
     //Drawable sides of a cube(max 3 in 3d space obv)
     GlCore::BlockStructure m_BlockStructure;
     //Determines which sides can be drawn

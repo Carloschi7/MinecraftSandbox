@@ -28,7 +28,6 @@ namespace GlCore
 
         cam.SetKeyboardFunction(GameDefs::KeyboardFunction);
         cam.SetMouseFunction(GameDefs::MouseFunction);
-
         
         //Loading static members
         if (m_CrossaimShaderPtr.get() == nullptr)

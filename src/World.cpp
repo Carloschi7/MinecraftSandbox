@@ -156,7 +156,7 @@ void World::UpdateScene()
 		m_Chunks[involved_chunk].SetBlockSelected(true);
 
 	m_LastPos = chunk_logic_data.camera_position;
-	m_WorldStructure.UpdateCamera();
+	//m_WorldStructure.UpdateCamera();
 }
 
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl)

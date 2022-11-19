@@ -26,7 +26,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 			for (int32_t j = 0; j < s_ChunkDepth; j++)
 				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == s_ChunkDepth -1) ?
-					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);		
+					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);
 }
 
 Chunk::~Chunk()
@@ -217,30 +217,43 @@ bool Chunk::IsChunkVisible(const GameDefs::ChunkLogicData& rd) const
 
 void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 {
+	//Function that determines if a block normal towards the chunk can be removed,
+	//depending on if there is a block next to him in the desired direction.
+	//If there is no block, the normal isn't going to be removed
+	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const GameDefs::ChunkLocation& loc)
+	{
+		uint32_t index = GetLoadedChunk(loc).value_or(0);
+		glm::vec3 block_pos = block.GetPosition() + vec;
+		bool is_block = m_RelativeWorld->GetChunk(index).IsBlock(block_pos);
+
+		if (is_block)
+			block.ExposedNormals().erase(NormalAt(block, norm));
+	};
+
+	//I remind you that the y component in the chunk origin is actually the world z component
 	if (norm == glm::vec3(1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.GetPosition().x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
-				block.ExposedNormals().erase(NormalAt(block, norm));
+				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_X);
 	}
 	else if (norm == glm::vec3(-1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.GetPosition().x == m_ChunkOrigin.x)
-				block.ExposedNormals().erase(NormalAt(block, norm));
+				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_X);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, 1.0f))
 	{
-		//I remind you that the y component in the chunk origin is actually the world z component
 		for (auto& block : m_LocalBlocks)
 			if (block.GetPosition().z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
-				block.ExposedNormals().erase(NormalAt(block, norm));
+				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_Z);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.GetPosition().z == m_ChunkOrigin.y)
-				block.ExposedNormals().erase(NormalAt(block, norm));
+				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_Z);
 	}
 
 }

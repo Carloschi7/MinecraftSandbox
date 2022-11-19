@@ -42,10 +42,12 @@ namespace Utils
 		}
 		T& operator[](std::size_t index)
 		{
+			std::scoped_lock lk(m_Mutex);
 			return m_Container[index];
 		}
 		const T& operator[](std::size_t index) const
 		{
+			std::scoped_lock lk(m_Mutex);
 			return m_Container[index];
 		}
 		void erase(const_iterator iter)
@@ -166,8 +168,9 @@ namespace Utils
 		mutable std::mutex m_Lock;
 	};
 
+	//For now TSVector is disabled, mutexes soak up a lot of performance
 	template<class T, bool _Cond>
-	using ConditionalVector = typename std::conditional<_Cond, Utils::TSList<T>, std::vector<T>>::type;
+	using ConditionalVector = typename std::conditional<_Cond, std::vector<T>, std::vector<T>>::type;
 	template<class T, bool _Cond>
 	using ConditionalList = typename std::conditional<_Cond, Utils::TSList<T>, std::list<T>>::type;
 }

@@ -42,22 +42,22 @@ namespace GameDefs
 
 	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};
 
-	inline void KeyboardFunction(const Window& window, Camera* camera)
+	inline void KeyboardFunction(const Window& window, Camera* camera, double time)
 	{
 		float fScalar = 0.6f;
 
 		if (window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS }))
-			camera->MoveTowardsFront(fScalar);
+			camera->MoveTowardsFront(fScalar * time);
 		if (window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS }))
-			camera->MoveTowardsFront(-fScalar);
+			camera->MoveTowardsFront(-fScalar * time);
 		if (window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS }))
-			camera->StrafeX(-fScalar);
+			camera->StrafeX(-fScalar * time);
 		if (window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS }))
-			camera->StrafeX(fScalar);
+			camera->StrafeX(fScalar * time);
 		if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
-			camera->StrafeY(fScalar);
+			camera->StrafeY(fScalar * time);
 		if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
-			camera->StrafeY(-fScalar);
+			camera->StrafeY(-fScalar * time);
 	}
 
 	inline void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time)

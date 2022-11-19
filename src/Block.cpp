@@ -28,7 +28,7 @@ const glm::vec3& Block::GetPosition() const
     return m_Position;
 }
 
-std::vector<glm::vec3>& Block::ExposedNormals()
+VecType<glm::vec3>& Block::ExposedNormals()
 {
     return m_ExposedNormals;
 }
@@ -38,7 +38,7 @@ const GlCore::DrawableData& Block::DrawableSides() const
     return m_DrawableSides;
 }
 
-const std::vector<glm::vec3>& Block::ExposedNormals() const
+const VecType<glm::vec3>& Block::ExposedNormals() const
 {
     return m_ExposedNormals;
 }

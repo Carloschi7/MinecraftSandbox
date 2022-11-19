@@ -50,7 +50,7 @@ private:
 	//Father World
 	World* m_RelativeWorld;
 
-	std::vector<Block> m_LocalBlocks;
+	VecType<Block> m_LocalBlocks;
 	GlCore::ChunkStructure m_ChunkStructure;
 	//front-bottom-left block position
 	glm::vec2 m_ChunkOrigin;
