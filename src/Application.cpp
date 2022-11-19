@@ -1,38 +1,76 @@
 #include "../application/Application.h"
+#include "Entrypoint.h"
 #include "World.h"
+#include "Renderer.h"
 
-std::unique_ptr<Window> WindowMaker::MakeWindow()
+//We create the window alongside with the whole OpenGL context
+Application::Application() :
+    m_Window(InitContext(1920, 1080, "MinecraftClone", true))
 {
-    return std::make_unique<Window>(1920, 1080, "Application", true);
-}
-
-Application::Application(Window& window)
-    :m_Window(window)
-{
+    m_Window.AttachWndToCurrentContext();
 }
 
 Application::~Application()
 {
+    for (auto& thread : m_AppThreads)
+        if(thread.joinable())
+            thread.join();
+
+    TerminateContext(m_Window);
 }
 
 void Application::OnUserCreate()
 {
-    m_Window.SetVsync(true);
-    m_Window.SetWndInCurrentContext();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //Setting the window in the environment vars
+    GlCore::Root::SetGameWindow(&m_Window);
+    GlCore::Root::SetGameCamera(&m_Camera);
+    GlCore::Renderer::Init();
 }
 
 void Application::OnUserRun()
 {
-    World WorldGameInstance(m_Window);
+    //TODO find a way to initialize this in the thread with the opnegl context
+    World WorldGameInstance;
 
-    m_Window.SetVsync(true);
+    //Logic thread function
+    auto logic_thread_impl = [&]()
+    {
+        while (GlCore::g_LogicThreadShouldRun)
+        {
+            WorldGameInstance.UpdateScene();
+        }
+    };
+
+    if constexpr (GlCore::g_MultithreadedRendering)
+        m_AppThreads.emplace_back(logic_thread_impl);
+
+    //For 3D rendering
     glEnable(GL_DEPTH_TEST);
     while (!m_Window.ShouldClose())
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        WorldGameInstance.UpdateScene();
-        WorldGameInstance.DrawRenderable();
+    {   
+        m_Window.ClearScreen();
+        if constexpr (GlCore::g_MultithreadedRendering)
+        {
+            //No need to render every frame, while the logic thread computes,
+            //sleeping every few milliseconds can save lots of performances without
+            //resulting too slow
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(5ms);
+            WorldGameInstance.DrawRenderable();
+        }
+        else
+        {
+            WorldGameInstance.UpdateScene();
+            WorldGameInstance.DrawRenderable();
+        }
+
         m_Window.Update();
+    }
+
+    if constexpr (GlCore::g_MultithreadedRendering)
+    {
+        //Join the logic thread
+        GlCore::g_LogicThreadShouldRun = false;
+        m_AppThreads[0].join();
     }
 }

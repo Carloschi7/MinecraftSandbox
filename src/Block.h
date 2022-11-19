@@ -1,20 +1,24 @@
 #pragma once
 #include <iostream>
+#include <mutex>
 #include "GlStructure.h"
+#include "Renderer.h"
 
 class Block
 {
 public:
     Block(const glm::vec3& position, const GameDefs::BlockType& bt);
+
     void Draw(bool bIsBlockSelected = false) const;
     void UpdateRenderableSides(const glm::vec3& camera_pos);
 
     const glm::vec3& GetPosition() const;
-    std::vector<glm::vec3>& ExposedNormals();
+
     const GlCore::DrawableData& DrawableSides() const;
+    std::vector<glm::vec3>& ExposedNormals();
     const std::vector<glm::vec3>& ExposedNormals() const;
     bool HasNormals() const;
-    inline bool IsDrawable() const { return m_DrawableSides.second; }
+    bool IsDrawable() const;
 private:
     glm::vec3 m_Position;
     //Used to determine which sides are exposed, thus
@@ -22,6 +26,7 @@ private:
     std::vector<glm::vec3> m_ExposedNormals;
     //Drawable sides of a cube(max 3 in 3d space obv)
     GlCore::BlockStructure m_BlockStructure;
+    //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
     GameDefs::BlockType m_BlockType;
 };

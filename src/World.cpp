@@ -1,8 +1,10 @@
 #include "World.h"
+#include "Renderer.h"
+#include <atomic>
 
 //Initializing a single block for now
-World::World(const Window& game_window)
-	:m_WorldStructure(game_window), m_LastPos(0.0f)
+World::World()
+	: m_LastPos(0.0f)
 {
 	using namespace GameDefs;
 
@@ -34,18 +36,27 @@ World::World(const Window& game_window)
 	}
 }
 
+World::~World()
+{
+	//GlCore::Renderer::Destroy();
+}
+
 void World::DrawRenderable() const
 {
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
 
-	GameDefs::RenderData draw_data = m_WorldStructure.GetRenderFrameInfo();
-	GameDefs::ChunkLogicData logic_data = m_WorldStructure.GetChunkLogicData();
-	//Initialising block shader uniform
-	m_WorldStructure.UniformRenderInit(draw_data, GlCore::BlockStructure::GetShader());
-	for (const auto& chunk : m_Chunks)
-		if(chunk.IsChunkRenderable(logic_data) && chunk.IsChunkVisible(logic_data))
+	GameDefs::RenderData draw_data = GlCore::WorldStructure::GetRenderFrameInfo();
+	GameDefs::ChunkLogicData logic_data = GlCore::WorldStructure::GetChunkLogicData();
+	
+	m_WorldStructure.UniformRenderInit(draw_data);
+	
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+	{
+		const auto& chunk = m_Chunks[i];
+		if (chunk.IsChunkRenderable(logic_data) && chunk.IsChunkVisible(logic_data))
 			chunk.Draw(draw_data);
+	}
 
 	//Resetting selection
 	for (const auto& chunk : m_Chunks)
@@ -57,7 +68,7 @@ void World::DrawRenderable() const
 
 void World::UpdateScene()
 {
-	GameDefs::ChunkLogicData chunk_logic_data = m_WorldStructure.GetChunkLogicData();
+	GameDefs::ChunkLogicData chunk_logic_data = GlCore::WorldStructure::GetChunkLogicData();
 
 	//Chunk dynamic spawning
 	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
@@ -140,6 +151,7 @@ void World::UpdateScene()
 		}
 	}
 
+	//Setting from which chunk the selectedd block comes from
 	if(involved_chunk != static_cast<uint32_t>(-1))
 		m_Chunks[involved_chunk].SetBlockSelected(true);
 

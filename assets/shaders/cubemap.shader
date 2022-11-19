@@ -3,7 +3,7 @@
 
 layout(location = 0) in vec3 pos;
 
-uniform mat4 view;
+uniform mat4 model;
 uniform mat4 proj;
 
 out vec3 TexCoord;
@@ -11,7 +11,7 @@ out vec3 TexCoord;
 void main()
 {
 	TexCoord = normalize(-pos);
-	gl_Position = proj * view * vec4(pos, 1.0f);
+	gl_Position = proj * model * vec4(pos, 1.0f);
 }
 
 #shader fragment

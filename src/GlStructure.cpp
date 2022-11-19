@@ -16,19 +16,18 @@ std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 namespace GlCore
 {
     //World definitions
-    WorldStructure::WorldStructure(const Window& window)
-        :m_GameWindow(window)
+    WorldStructure::WorldStructure()
     {
-        static constexpr float fRenderDistance = 1000.0f;
-        m_GameCamera.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+        Camera& cam = Root::GameCamera();
+        cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
-        m_GameCamera.SetPerspectiveValues(glm::radians(45.0f),
-            float(m_GameWindow.Width()) / float(m_GameWindow.Height()),
+        cam.SetPerspectiveValues(glm::radians(45.0f),
+            float(Root::GameWindow().Width()) / float(Root::GameWindow().Height()),
             0.1f,
-            fRenderDistance);
+            GameDefs::g_RenderDistance);
 
-        m_GameCamera.SetKeyboardFunction(GameDefs::KeyboardFunction);
-        m_GameCamera.SetMouseFunction(GameDefs::MouseFunction);
+        cam.SetKeyboardFunction(GameDefs::KeyboardFunction);
+        cam.SetMouseFunction(GameDefs::MouseFunction);
 
         
         //Loading static members
@@ -44,10 +43,10 @@ namespace GlCore
                 "assets/textures/ShadedBackground.png",
                 "assets/textures/ShadedBackground.png",
             };
-            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, fRenderDistance / 2.0f);
+            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, GameDefs::g_RenderDistance / 2.0f);
 
             m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
-            m_CubemapShaderPtr->UniformMat4f(m_GameCamera.GetProjMatrix(), g_ProjUniformName);
+            m_CubemapShaderPtr->UniformMat4f(cam.GetProjMatrix(), g_ProjUniformName);
 
             //Loading crossaim data
             m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
@@ -61,55 +60,58 @@ namespace GlCore
         }
     }
 
-    GameDefs::RenderData WorldStructure::GetRenderFrameInfo() const
+    GameDefs::RenderData WorldStructure::GetRenderFrameInfo()
     {
         GameDefs::RenderData rd;
-        rd.camera_position = m_GameCamera.GetPosition();
-        rd.proj_matrix = m_GameCamera.GetProjMatrix();
-        rd.view_matrix = m_GameCamera.GetViewMatrix();
-        rd.p_key = m_GameWindow.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
+        Camera& cam = Root::GameCamera();
+
+        rd.camera_position = cam.GetPosition();
+        rd.proj_matrix = cam.GetProjMatrix();
+        rd.view_matrix = cam.GetViewMatrix();
+        rd.p_key = Root::GameWindow().IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
         return rd;
     }
 
-    GameDefs::ChunkLogicData WorldStructure::GetChunkLogicData() const
+    GameDefs::ChunkLogicData WorldStructure::GetChunkLogicData()
     {
         GameDefs::ChunkLogicData ld;
-        ld.mouse_input.left_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
-        ld.mouse_input.right_click = m_GameWindow.IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
-        ld.camera_position = m_GameCamera.GetPosition();
-        ld.camera_direction = m_GameCamera.GetFront();
+        ld.mouse_input.left_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+        ld.mouse_input.right_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
+        ld.camera_position = Root::GameCamera().GetPosition();
+        ld.camera_direction = Root::GameCamera().GetFront();
         return ld;
-    }
-
-    const Camera& WorldStructure::GetGameCamera() const
-    {
-        return m_GameCamera;
     }
 
     void WorldStructure::UpdateCamera()
     {
-        m_GameCamera.ProcessInput(m_GameWindow, 1.0f);
+        Root::GameCamera().ProcessInput(Root::GameWindow(), 1.0f);
     }
 
     void WorldStructure::RenderSkybox() const
     {
-        m_CubemapPtr->BindTexture();
-        m_CubemapShaderPtr->Uniform1i(0, g_SkyboxUniformName);
-
         //SetViewMatrix with no translation
-        glm::mat4 view = glm::mat4(glm::mat3(m_GameCamera.GetViewMatrix()));
-        m_CubemapShaderPtr->UniformMat4f(view, g_ViewUniformName);
+        glm::mat4 view = glm::mat4(glm::mat3(Root::GameCamera().GetViewMatrix()));
+        RendererPayload pl{ view,
+            &m_CubemapPtr->GetVertexManager(),
+            m_CubemapShaderPtr.get(),
+            nullptr,
+            m_CubemapPtr.get(),
+            nullptr,
+            false,
+            false};
 
-        Renderer::Render({}, m_CubemapPtr->GetVertexManager(), *m_CubemapShaderPtr);
+        Renderer::Render(pl);
     }
 
     void WorldStructure::RenderCrossaim() const
     {
-        Renderer::Render({}, *m_CrossaimVmPtr, *m_CrossaimShaderPtr);
+        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false, true };
+        Renderer::Render(pl);
     }
 
-    void WorldStructure::UniformRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const
+    void WorldStructure::UniformRenderInit(const GameDefs::RenderData& rd) const
     {
+        auto block_shader = Root::BlockShader();
         block_shader->UniformMat4f(rd.proj_matrix, g_ProjUniformName);
         block_shader->UniformMat4f(rd.view_matrix, g_ViewUniformName);
     }
@@ -134,6 +136,9 @@ namespace GlCore
 
             m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+
+            //Root management
+            Root::SetBlockShader(m_ShaderPtr);
         } 
 
         switch (bt)
@@ -156,22 +161,17 @@ namespace GlCore
         return m_Textures;
     }
 
-    std::shared_ptr<Shader> BlockStructure::GetShader()
-    {
-        return m_ShaderPtr;
-    }
-
     void BlockStructure::Draw(const DrawableData& exp_norms, bool is_block_selected) const
     {
-        if (is_block_selected)
-            m_ShaderPtr->Uniform1i(true, g_EntitySelectedUniformName);
+        RendererPayload pl{ glm::translate(g_IdentityMatrix, m_ModelPos),
+                            m_CurrentVertexManager,
+                            m_ShaderPtr.get(),
+                            m_CurrentTexture,
+                            nullptr,
+                            &exp_norms,
+                            is_block_selected,
+                            false};
 
-        m_CurrentTexture->Bind(0);
-        m_ShaderPtr->Uniform1i(0, g_DiffuseTextureUniformName);
-
-        Renderer::RenderVisible(glm::translate(g_IdentityMatrix, m_ModelPos), *m_CurrentVertexManager, *m_ShaderPtr, exp_norms);
-
-        if (is_block_selected)
-            m_ShaderPtr->Uniform1i(false, g_EntitySelectedUniformName);
+        Renderer::Render(pl);
     }
 }

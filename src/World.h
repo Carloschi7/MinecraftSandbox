@@ -1,11 +1,13 @@
 #pragma once
 #include <iostream>
 #include <optional>
+#include <thread>
 #include "Chunk.h"
 
 class World {
 public:
-    World(const Window& game_window);
+    World();
+    ~World();
     //Draws the number of chunks visible to the player
     void DrawRenderable() const;
     void UpdateScene();

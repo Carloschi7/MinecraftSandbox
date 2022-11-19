@@ -17,21 +17,15 @@ namespace GlCore
     class WorldStructure
     {
     public:
-        WorldStructure(const Window& window);
+        WorldStructure();
         void UpdateCamera();
         void RenderSkybox() const;
         void RenderCrossaim() const;
-        void UniformRenderInit(const GameDefs::RenderData& rd, std::shared_ptr<Shader> block_shader) const;
+        void UniformRenderInit(const GameDefs::RenderData& rd) const;
         
-        GameDefs::RenderData GetRenderFrameInfo() const;
-        GameDefs::ChunkLogicData GetChunkLogicData() const;
-
-        const Camera& GetGameCamera() const;
+        static GameDefs::RenderData GetRenderFrameInfo();
+        static GameDefs::ChunkLogicData GetChunkLogicData();
     private:
-        //General definitions
-        const Window& m_GameWindow;
-        Camera m_GameCamera;
-
         //Cubemap Stuff
         static std::shared_ptr<CubeMap> m_CubemapPtr;
         static std::shared_ptr<Shader> m_CubemapShaderPtr;
@@ -54,7 +48,6 @@ namespace GlCore
         void Draw(const DrawableData& exp_norms, bool is_block_selected) const;
         
         const std::vector<Texture>& GetBlockTextures() const;
-        static std::shared_ptr<Shader> GetShader();
 
     private:
         //Handles the position of the block in the world;

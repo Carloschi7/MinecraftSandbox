@@ -33,13 +33,15 @@ else() #default linux ubuntu for now (STILL WORK IN PROGRESS)
 endif()
 
 project(${APP_NAME})
-add_executable(${PROJECT_NAME} src/Application.cpp
+add_executable(${PROJECT_NAME} src/Main.cpp
+		src/Application.cpp
 		src/World.cpp src/World.h
 		src/Chunk.cpp src/Chunk.h
 		src/Block.cpp src/Block.h
 		src/GlStructure.cpp src/GlStructure.h
 		src/Renderer.h src/Renderer.cpp
 		src/Vertices.h
+		src/Ts_containers.h
 		src/GameDefinitions.h src/GameDefinitions.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${C7ENGINE_OPENGL_LIB} ${C7ENGINE_DEPENDENCIES} ${C7ENGINE_LIB_PATH})

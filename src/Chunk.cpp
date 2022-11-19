@@ -40,7 +40,6 @@ void Chunk::InitBlockNormals()
 	m_MinusX = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::MINUS_X);
 	m_PlusZ = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::PLUS_Z);
 	m_MinusZ = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::MINUS_Z);
-	int32_t i, j, k;
 
 	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld->GetChunk(m_PlusX.value()) : nullptr;
 	Chunk* chunk_minus_x = m_MinusX.has_value() ? &m_RelativeWorld->GetChunk(m_MinusX.value()) : nullptr;
@@ -48,34 +47,13 @@ void Chunk::InitBlockNormals()
 	Chunk* chunk_minus_z = m_MinusZ.has_value() ? &m_RelativeWorld->GetChunk(m_MinusZ.value()) : nullptr;
 
 	//Checking also for adjacent chunks
-	/*for (auto& block : m_LocalBlocks)
-	{
-		i = block.GetPosition().x;
-		j = block.GetPosition().y;
-		k = block.GetPosition().z;
-
-		auto& norm_vec = block.ExposedNormals();
-
-		if (!m_MinusX.has_value() && i == m_ChunkOrigin.x)
-			norm_vec.emplace_back(-1.0f, 0.0f, 0.0f);
-		if (!m_PlusX.has_value() && i == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
-			norm_vec.emplace_back(1.0f, 0.0f, 0.0f);
-		if (j == 0.0f)
-			norm_vec.emplace_back(0.0f, -1.0f, 0.0f);
-		if (j == s_ChunkDepth - 1)
-			norm_vec.emplace_back(0.0f, 1.0f, 0.0f);
-		if (!m_MinusZ.has_value() && k == m_ChunkOrigin.y)
-			norm_vec.emplace_back(0.0f, 0.0f, -1.0f);
-		if (!m_PlusZ.has_value() && k == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
-			norm_vec.emplace_back(0.0f, 0.0f, 1.0f);
-	}*/
 
 	glm::vec3 pos_x(1.0f, 0.0f, 0.0f);
 	glm::vec3 neg_x(-1.0f, 0.0f, 0.0f);
 	glm::vec3 pos_z(0.0f, 0.0f, 1.0f);
 	glm::vec3 neg_z(0.0f, 0.0f, -1.0f);
 
-	//The following algorithm determines with minimal accuracy and pretty fast speed which faces of each
+	//The following algorithm determines with precise accuracy and pretty fast speed which faces of each
 	//block of the this chunk can be seen
 	//The algorithm analyses each column of blocks in the 16x16 which can be found in the chunk and
 	//from the top block of that column an index descends assigning to each side a normal
@@ -201,6 +179,7 @@ float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
 		}
 	}
 
+	//Logic which removes a block
 	if (m_SelectedBlock != static_cast<uint32_t>(-1) && ld.mouse_input.left_click)
 	{
 		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].GetPosition());
@@ -310,9 +289,8 @@ void Chunk::SetLoadedChunk(const GameDefs::ChunkLocation& cl, uint32_t value)
 void Chunk::Draw(const GameDefs::RenderData& rd) const
 {
 	auto tp1 = std::chrono::steady_clock::now();
-	std::size_t vec_size = m_LocalBlocks.size();
 
-	for (std::size_t i = 0; i < vec_size; ++i)
+	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{
 		auto& block = m_LocalBlocks[i];
 		//Discard automatically blocks which cant be drawn
