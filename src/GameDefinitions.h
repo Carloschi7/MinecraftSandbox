@@ -13,7 +13,7 @@ namespace GameDefs
 	extern const int32_t g_SpawnerEnd;
 	extern const int32_t g_SpawnerIncrement;
 
-    enum class BlockType
+    enum class BlockType : uint8_t
     {
         DIRT = 0, GRASS
     };

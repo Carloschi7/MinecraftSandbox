@@ -58,57 +58,57 @@ void Chunk::InitBlockNormals()
 	//The algorithm analyses each column of blocks in the 16x16 which can be found in the chunk and
 	//from the top block of that column an index descends assigning to each side a normal
 	//until a side block is found
-	float local_z = m_LocalBlocks[0].GetPosition().z;
+	float local_z = m_LocalBlocks[0].Position().z;
 	int32_t starting_index = 0;
 	//+1 because we need to parse the last column
 	for (int32_t i = 0; i < m_LocalBlocks.size() + 1; i++)
 	{
-		if (i != m_LocalBlocks.size() && m_LocalBlocks[i].GetPosition().z == local_z)
+		if (i != m_LocalBlocks.size() && m_LocalBlocks[i].Position().z == local_z)
 			continue;
 
 		if (i != m_LocalBlocks.size())
-			local_z = m_LocalBlocks[i].GetPosition().z;
+			local_z = m_LocalBlocks[i].Position().z;
 
 		uint32_t top_column_index = i - 1;
-		const glm::vec3& block_pos = m_LocalBlocks[top_column_index].GetPosition();
+		const glm::vec3& block_pos = m_LocalBlocks[top_column_index].Position();
 		bool confines_with_other_chunk = block_pos.x == m_ChunkOrigin.x || block_pos.x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1 ||
 			block_pos.z == m_ChunkOrigin.y || block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
 
-		m_LocalBlocks[top_column_index].ExposedNormals().emplace_back(0.0f, 1.0f, 0.0f);
+		m_LocalBlocks[top_column_index].AddNormal(0.0f, 1.0f, 0.0f);
 
 		if (confines_with_other_chunk)
 		{
 			int32_t p = top_column_index;
 			//Checking also for neighbor chunks
 			//Right
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_x, starting_index, true) &&
-				(!chunk_plus_x || !chunk_plus_x->IsBlock(m_LocalBlocks[p].GetPosition() + pos_x)))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true) &&
+				(!chunk_plus_x || !chunk_plus_x->IsBlock(m_LocalBlocks[p].Position() + pos_x)))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(pos_x);
+				m_LocalBlocks[p].AddNormal(pos_x);
 				p--;
 			}
 			p = top_column_index;
 			//Left
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_x, starting_index, false) &&
-				(!chunk_minus_x || !chunk_minus_x->IsBlock(m_LocalBlocks[p].GetPosition() + neg_x)))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_x, starting_index, false) &&
+				(!chunk_minus_x || !chunk_minus_x->IsBlock(m_LocalBlocks[p].Position() + neg_x)))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(neg_x);
+				m_LocalBlocks[p].AddNormal(neg_x);
 				p--;
 			}
 			p = top_column_index;
 			//Back
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_z, starting_index, true) &&
-				(!chunk_plus_z || !chunk_plus_z->IsBlock(m_LocalBlocks[p].GetPosition() + pos_z)))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_z, starting_index, true) &&
+				(!chunk_plus_z || !chunk_plus_z->IsBlock(m_LocalBlocks[p].Position() + pos_z)))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(pos_z);
+				m_LocalBlocks[p].AddNormal(pos_z);
 				p--;
 			}
 			p = top_column_index;
 			//Front
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_z, starting_index, false) &&
-				(!chunk_minus_z || !chunk_minus_z->IsBlock(m_LocalBlocks[p].GetPosition() + neg_z)))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_z, starting_index, false) &&
+				(!chunk_minus_z || !chunk_minus_z->IsBlock(m_LocalBlocks[p].Position() + neg_z)))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(neg_z);
+				m_LocalBlocks[p].AddNormal(neg_z);
 				p--;
 			}
 		}
@@ -117,30 +117,30 @@ void Chunk::InitBlockNormals()
 			//A more slim implementation for the majority of the iterations
 			uint32_t p = top_column_index;
 			//Right
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_x, starting_index, true))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(pos_x);
+				m_LocalBlocks[p].AddNormal(pos_x);
 				p--;
 			}
 			p = top_column_index;
 			//Left
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_x, starting_index, false))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_x, starting_index, false))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(neg_x);
+				m_LocalBlocks[p].AddNormal(neg_x);
 				p--;
 			}
 			p = top_column_index;
 			//Back
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + pos_z, starting_index, true))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_z, starting_index, true))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(pos_z);
+				m_LocalBlocks[p].AddNormal(pos_z);
 				p--;
 			}
 			p = top_column_index;
 			//Front
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].GetPosition() + neg_z, starting_index, false))
+			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_z, starting_index, false))
 			{
-				m_LocalBlocks[p].ExposedNormals().push_back(neg_z);
+				m_LocalBlocks[p].AddNormal(neg_z);
 				p--;
 			}
 		}
@@ -170,7 +170,7 @@ float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
 			continue;
 
 		float dist = 0.0f;
-		bool bSelected = GameDefs::ViewBlockCollision(ld.camera_position, ld.camera_direction, block.GetPosition(), dist);
+		bool bSelected = GameDefs::ViewBlockCollision(ld.camera_position, ld.camera_direction, block.Position(), dist);
 		
 		if (bSelected && dist < closest_selected_block_dist)
 		{
@@ -182,7 +182,7 @@ float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
 	//Logic which removes a block
 	if (m_SelectedBlock != static_cast<uint32_t>(-1) && ld.mouse_input.left_click)
 	{
-		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].GetPosition());
+		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
 		m_SelectedBlock = static_cast<uint32_t>(-1);
 	}
@@ -223,36 +223,36 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const GameDefs::ChunkLocation& loc)
 	{
 		uint32_t index = GetLoadedChunk(loc).value_or(0);
-		glm::vec3 block_pos = block.GetPosition() + vec;
+		glm::vec3 block_pos = block.Position() + vec;
 		bool is_block = m_RelativeWorld->GetChunk(index).IsBlock(block_pos);
 
 		if (is_block)
-			block.ExposedNormals().erase(NormalAt(block, norm));
+			block.RemoveNormal(norm);
 	};
 
 	//I remind you that the y component in the chunk origin is actually the world z component
 	if (norm == glm::vec3(1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
-			if (block.GetPosition().x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
+			if (block.Position().x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
 				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_X);
 	}
 	else if (norm == glm::vec3(-1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
-			if (block.GetPosition().x == m_ChunkOrigin.x)
+			if (block.Position().x == m_ChunkOrigin.x)
 				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_X);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, 1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
-			if (block.GetPosition().z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
+			if (block.Position().z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
 				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_Z);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
-			if (block.GetPosition().z == m_ChunkOrigin.y)
+			if (block.Position().z == m_ChunkOrigin.y)
 				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_Z);
 	}
 
@@ -326,7 +326,7 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 	{
 		glm::vec3 neighbor_pos = pos + norm;
 		auto local_iter = std::find_if(m_LocalBlocks.begin(), m_LocalBlocks.end(),
-			[neighbor_pos](const Block& b) {return b.GetPosition() == neighbor_pos; });
+			[neighbor_pos](const Block& b) {return b.Position() == neighbor_pos; });
 
 		//Behaviour between chunks
 		if (local_iter == m_LocalBlocks.end())
@@ -345,7 +345,7 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 		}
 		else
 		{
-			local_iter->ExposedNormals().push_back(-norm);
+			local_iter->AddNormal(-norm);
 		}
 	};
 
@@ -362,12 +362,6 @@ glm::vec3 Chunk::GetHalfWayVector()
 	return glm::vec3(s_ChunkWidthAndHeight / 2.0f, s_ChunkDepth / 2.0f, s_ChunkWidthAndHeight / 2.0f);
 }
 
-std::vector<glm::vec3>::const_iterator Chunk::NormalAt(const Block& b, const glm::vec3& norm)
-{
-	return std::find_if(b.ExposedNormals().begin(), b.ExposedNormals().end(),
-		[&](const glm::vec3& v) {return v == norm; });
-}
-
 bool Chunk::IsBlock(const glm::vec3& pos, int32_t starting_index, bool search_towards_end) const
 {
 	if (starting_index < 0 || starting_index >= m_LocalBlocks.size())
@@ -378,7 +372,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, int32_t starting_index, bool search_to
 		//Searching before in the defined batch
 		for (int32_t i = starting_index; i < m_LocalBlocks.size(); i++)
 		{
-			if (m_LocalBlocks[i].GetPosition() == pos)
+			if (m_LocalBlocks[i].Position() == pos)
 			{
 				return true;
 			}
@@ -389,7 +383,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, int32_t starting_index, bool search_to
 	{
 		for (int32_t i = starting_index; i >= 0; i--)
 		{
-			if (m_LocalBlocks[i].GetPosition() == pos)
+			if (m_LocalBlocks[i].Position() == pos)
 			{
 				return true;
 			}

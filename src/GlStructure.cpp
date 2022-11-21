@@ -1,7 +1,6 @@
 #include "GlStructure.h"
 #include "Vertices.h"
 #include "Block.h"
-#include "Renderer.h"
 
 std::shared_ptr<CubeMap> GlCore::WorldStructure::m_CubemapPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CubemapShaderPtr = nullptr;
@@ -64,7 +63,7 @@ namespace GlCore
         GameDefs::RenderData rd;
         Camera& cam = Root::GameCamera();
 
-        rd.camera_position = cam.GetPosition();
+        rd.camera_position = cam.Position();
         rd.proj_matrix = cam.GetProjMatrix();
         rd.view_matrix = cam.GetViewMatrix();
         rd.p_key = Root::GameWindow().IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
@@ -76,7 +75,7 @@ namespace GlCore
         GameDefs::ChunkLogicData ld;
         ld.mouse_input.left_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
         ld.mouse_input.right_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
-        ld.camera_position = Root::GameCamera().GetPosition();
+        ld.camera_position = Root::GameCamera().Position();
         ld.camera_direction = Root::GameCamera().GetFront();
         return ld;
     }
@@ -121,7 +120,6 @@ namespace GlCore
 
 
     BlockStructure::BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt)
-        :m_CurrentTexture(nullptr), m_CurrentVertexManager(nullptr), m_ModelPos(pos)
     {
         //Load static data
         if (m_VertexManagerSinglePtr.get() == nullptr)
@@ -140,19 +138,7 @@ namespace GlCore
             Root::SetBlockShader(m_ShaderPtr);
         } 
 
-        switch (bt)
-        {
-        case GameDefs::BlockType::DIRT:
-            m_CurrentTexture = &m_Textures[0];
-            m_CurrentVertexManager = m_VertexManagerSinglePtr.get();
-            break;
-        case GameDefs::BlockType::GRASS:
-            m_CurrentTexture = &m_Textures[1];
-            m_CurrentVertexManager = m_VertexManagerSidedPtr.get();
-            break;
-        default:
-            throw std::runtime_error("Texture preset for this block not found!");
-        }
+        
     }
 
     const std::vector<Texture>& BlockStructure::GetBlockTextures() const
@@ -160,12 +146,29 @@ namespace GlCore
         return m_Textures;
     }
 
-    void BlockStructure::Draw(const DrawableData& exp_norms, bool is_block_selected) const
+    void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt,
+        const DrawableData& exp_norms, bool is_block_selected) const
     {
-        RendererPayload pl{ glm::translate(g_IdentityMatrix, m_ModelPos),
-                            m_CurrentVertexManager,
+        Texture* current_texture = nullptr;
+        VertexManager* current_vertex_manager = nullptr;
+        switch (bt)
+        {
+        case GameDefs::BlockType::DIRT:
+            current_texture = &m_Textures[0];
+            current_vertex_manager = m_VertexManagerSinglePtr.get();
+            break;
+        case GameDefs::BlockType::GRASS:
+            current_texture = &m_Textures[1];
+            current_vertex_manager = m_VertexManagerSidedPtr.get();
+            break;
+        default:
+            throw std::runtime_error("Texture preset for this block not found!");
+        }
+
+        RendererPayload pl{ glm::translate(g_IdentityMatrix, pos),
+                            current_vertex_manager,
                             m_ShaderPtr.get(),
-                            m_CurrentTexture,
+                            current_texture,
                             nullptr,
                             &exp_norms,
                             is_block_selected,

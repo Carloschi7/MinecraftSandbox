@@ -4,6 +4,7 @@
 #include <memory>
 #include "GameDefinitions.h"
 #include "Vertices.h"
+#include "Renderer.h"
 
 class Block;
 class World;
@@ -45,17 +46,12 @@ namespace GlCore
     {
     public:
         BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt);
-        void Draw(const DrawableData& exp_norms, bool is_block_selected) const;
+        void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, 
+            const DrawableData& exp_norms, bool is_block_selected) const;
         
         const std::vector<Texture>& GetBlockTextures() const;
 
     private:
-        //Handles the position of the block in the world;
-        glm::vec3 m_ModelPos;
-        //Texture of the current block
-        Texture* m_CurrentTexture;
-        VertexManager* m_CurrentVertexManager;
-
         //Cube geometry
         //The core OpenGL structures which is designed to do actual drawing/rendering
         static std::shared_ptr<VertexManager> m_VertexManagerSinglePtr;

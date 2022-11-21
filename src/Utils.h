@@ -3,14 +3,45 @@
 #include <list>
 #include <mutex>
 
-//Implementing only the used methods
-//the methods here will have the same format as the ones in the standard lib 
-//for example "push_back", because the container we choose depends on the
-//app being multithreaded or not
+//Assert if the environment is x32 or x64(always 64 on linux)
+#if defined _WIN64 || defined _WIN32
+#	ifdef _WIN64
+#		define ENV64
+#	else
+#		define ENV32
+#	endif
+#elif defined __GNUC__
+#	ifdef __x86_64__ || __ppc64__
+#		define ENV64
+#	else
+#		define ENV32
+#	endif
+#endif
+
+#ifdef __linux__
+#	define ENV64
+#endif
+
+#ifndef ENV64
+#	define ENV32
+#endif
+
+#ifdef ENV64
+#	define POINTER_BYTES 8
+#else
+#	define POINTER_BYTES 4
+#endif
+
+//Utilities
 
 namespace Utils
 {
 	//Thread safe vector
+
+	//Implementing only the used methods
+	//the methods here will have the same format as the ones in the standard lib 
+	//for example "push_back", because the container we choose depends on the
+	//app being multithreaded or not. The same goes for TSList
 	template<class T>
 	class TSVector
 	{
@@ -173,4 +204,54 @@ namespace Utils
 	using ConditionalVector = typename std::conditional<_Cond, std::vector<T>, std::vector<T>>::type;
 	template<class T, bool _Cond>
 	using ConditionalList = typename std::conditional<_Cond, Utils::TSList<T>, std::list<T>>::type;
+
+	static constexpr uint32_t g_PointerBytes = POINTER_BYTES;
+
+	//Byte aligned pointer, allows class to adapt to the 8bit alignment
+	//DOES NOT HANDLE NULL EXCEPTIONS
+	template<class T>
+	class AlignedPtr
+	{
+	public:
+		AlignedPtr() { std::memset(m_Data, 0, g_PointerBytes); }
+		AlignedPtr(const AlignedPtr&) = default;
+		AlignedPtr(T* ptr) { operator=(ptr); }
+		operator T* () { return Get(); }
+		T* operator->() { return Get(); }
+		const T* operator->() const { return Get(); }
+
+		T* Get() 
+		{
+#ifdef ENV64
+			uint64_t res;
+#else
+			uint32_t res;
+#endif
+			std::memcpy(&res, m_Data, g_PointerBytes);
+			return reinterpret_cast<T*>(res);
+		}
+		const T* Get() const 
+		{
+#ifdef ENV64
+			uint64_t res;
+#else
+			uint32_t res;
+#endif
+			std::memcpy(&res, m_Data, g_PointerBytes);
+			return reinterpret_cast<T*>(res);
+		}
+		AlignedPtr& operator=(const AlignedPtr& rhs) { std::memcpy(m_Data, rhs.m_Data, g_PointerBytes); return *this; }
+		AlignedPtr& operator=(T* ptr) 
+		{
+#ifdef ENV64
+			uint64_t pointer_val = reinterpret_cast<uint64_t>(ptr);
+#else
+			uint32_t pointer_val = reinterpret_cast<uint32_t>(ptr);
+#endif
+			std::memcpy(m_Data, &pointer_val, g_PointerBytes); 
+			return *this;
+		}
+	private:
+		uint8_t m_Data[g_PointerBytes];
+	};
 }

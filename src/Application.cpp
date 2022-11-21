@@ -50,22 +50,22 @@ void Application::OnUserRun()
     while (!m_Window.ShouldClose())
     {   
         m_Window.ClearScreen();
+        auto tp2 = std::chrono::steady_clock::now();
         if constexpr (GlCore::g_MultithreadedRendering)
         {
             //No need to render every frame, while the logic thread computes,
             //sleeping every few milliseconds can save lots of performances without
             //resulting too slow
-            auto tp2 = std::chrono::steady_clock::now();
             WorldGameInstance.DrawRenderable();
-            dur = std::chrono::steady_clock::now() - tp2;
         }
         else
         {
             WorldGameInstance.UpdateScene();
             WorldGameInstance.DrawRenderable();
         }
+        dur = std::chrono::steady_clock::now() - tp2;
 
-        m_Camera.ProcessInput(m_Window, dur.count() * 60.0);
+        m_Camera.ProcessInput(m_Window, dur.count() * 60.0, 0.8);
         m_Window.Update();
     }
 

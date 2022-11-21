@@ -6,7 +6,7 @@
 #include "MainIncl.h"
 #include "GameDefinitions.h"
 #include "Vertices.h"
-#include "Ts_containers.h"
+#include "Utils.h"
 
 //Preferred singleton implementation
 namespace GlCore
@@ -31,6 +31,8 @@ namespace GlCore
 		static void SetGameWindow(Window* game_window_);
 		static void SetGameCamera(Camera* game_camera_);
 		static void SetBlockShader(std::shared_ptr<Shader> block_shader_);
+		static void AddChunkPosition(const glm::vec2& pos);
+		static glm::vec2 GetChunkPosition(uint32_t index);
 		static Window& GameWindow();
 		static Camera& GameCamera();
 		static std::shared_ptr<Shader> BlockShader();
@@ -42,6 +44,8 @@ namespace GlCore
 			Window* game_window;
 			Camera* camera;
 			std::shared_ptr<Shader> block_shader;
+			//Useful so blocks can reach the chunk's world position
+			std::vector<glm::vec2> m_ChunkPositions;
 		};
 		static RootImpl m_InternalPayload;
 	};
@@ -51,7 +55,7 @@ namespace GlCore
 		glm::mat4 model;
 		const VertexManager* vm;
 		Shader* shd;
-		Texture* texture;
+		const Texture* texture;
 		CubeMap* cubemap;
 		const GlCore::DrawableData* dd;
 		const bool block_selected;
