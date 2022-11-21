@@ -2,7 +2,8 @@
 #include "Vertices.h"
 
 Block::Block(const glm::vec3& position, const GameDefs::BlockType& bt)
-    :m_Position(position), m_BlockType(bt), m_BlockStructure(position, bt)
+    :m_Position(position), m_BlockType(bt), m_BlockStructure(position, bt),
+    m_ExposedNormals{}
 {
     for (auto& val : m_ExposedNormals)
         val = 0;
