@@ -45,8 +45,8 @@ private:
 	//The last two attributes can be used to make the searching faster
 	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true) const;
 private:
-	//Father World
-	World* m_RelativeWorld;
+	//Father world
+	Utils::AlignedPtr<World> m_RelativeWorld;
 
 	VecType<Block> m_LocalBlocks;
 	GlCore::ChunkStructure m_ChunkStructure;
@@ -59,6 +59,7 @@ private:
 	std::optional<uint32_t> m_PlusX, m_MinusX, m_PlusZ, m_MinusZ;
 	//Determines whether the block selection belongs to this chunk
 	mutable bool m_IsSelectionHere;
+
 	static float s_DiagonalLenght;
 	static constexpr uint32_t s_ChunkWidthAndHeight = 16;
 	static constexpr uint32_t s_ChunkDepth = 50;

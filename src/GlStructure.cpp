@@ -63,7 +63,7 @@ namespace GlCore
         GameDefs::RenderData rd;
         Camera& cam = Root::GameCamera();
 
-        rd.camera_position = cam.Position();
+        rd.camera_position = cam.GetPosition();
         rd.proj_matrix = cam.GetProjMatrix();
         rd.view_matrix = cam.GetViewMatrix();
         rd.p_key = Root::GameWindow().IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
@@ -75,7 +75,7 @@ namespace GlCore
         GameDefs::ChunkLogicData ld;
         ld.mouse_input.left_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
         ld.mouse_input.right_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
-        ld.camera_position = Root::GameCamera().Position();
+        ld.camera_position = Root::GameCamera().GetPosition();
         ld.camera_direction = Root::GameCamera().GetFront();
         return ld;
     }
@@ -95,7 +95,6 @@ namespace GlCore
             nullptr,
             m_CubemapPtr.get(),
             nullptr,
-            false,
             false};
 
         Renderer::Render(pl);
@@ -103,7 +102,7 @@ namespace GlCore
 
     void WorldStructure::RenderCrossaim() const
     {
-        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false, true };
+        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false };
         Renderer::Render(pl);
     }
 
@@ -171,8 +170,7 @@ namespace GlCore
                             current_texture,
                             nullptr,
                             &exp_norms,
-                            is_block_selected,
-                            false};
+                            is_block_selected};
 
         Renderer::Render(pl);
     }

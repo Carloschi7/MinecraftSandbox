@@ -216,7 +216,10 @@ namespace Utils
 		AlignedPtr() { std::memset(m_Data, 0, g_PointerBytes); }
 		AlignedPtr(const AlignedPtr&) = default;
 		AlignedPtr(T* ptr) { operator=(ptr); }
-		operator T* () { return Get(); }
+		
+		operator T*() { return Get(); }
+		operator bool() { return Get() != nullptr; }
+
 		T* operator->() { return Get(); }
 		const T* operator->() const { return Get(); }
 

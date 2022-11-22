@@ -39,5 +39,3 @@ private:
     GlCore::DrawableData m_DrawableSides;
     GameDefs::BlockType m_BlockType;
 };
-
-constexpr int i = sizeof(Block);

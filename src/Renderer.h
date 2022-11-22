@@ -59,7 +59,6 @@ namespace GlCore
 		CubeMap* cubemap;
 		const GlCore::DrawableData* dd;
 		const bool block_selected;
-		const bool last_drawcall;
 	};
 
 	class Renderer
