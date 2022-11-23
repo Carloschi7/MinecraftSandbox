@@ -24,9 +24,18 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	//normal insertion algorithm later
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
-			for (int32_t j = 0; j < s_ChunkDepth; j++)
-				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == s_ChunkDepth -1) ?
-					GameDefs::BlockType::GRASS : GameDefs::BlockType::DIRT);
+		{
+			float perl_x = static_cast<float>(i)/16.0f;
+			float perl_y = static_cast<float>(k)/16.0f;
+			float perlin_height = Gd::PerlNoise::Generate(perl_x, perl_y);
+			float perlin_height_final = perlin_height * 8.0f;
+
+			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_height_final);
+
+			for (int32_t j = 0; j < final_height; j++)
+				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == final_height - 1) ?
+					Gd::BlockType::GRASS : Gd::BlockType::DIRT);
+		}
 }
 
 Chunk::~Chunk()
@@ -36,10 +45,10 @@ Chunk::~Chunk()
 void Chunk::InitBlockNormals()
 {
 	//Determining if side chunk exist
-	m_PlusX = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::PLUS_X);
-	m_MinusX = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::MINUS_X);
-	m_PlusZ = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::PLUS_Z);
-	m_MinusZ = m_RelativeWorld->IsChunk(*this, GameDefs::ChunkLocation::MINUS_Z);
+	m_PlusX = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::PLUS_X);
+	m_MinusX = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::MINUS_X);
+	m_PlusZ = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::PLUS_Z);
+	m_MinusZ = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::MINUS_Z);
 
 	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld->GetChunk(m_PlusX.value()) : nullptr;
 	Chunk* chunk_minus_x = m_MinusX.has_value() ? &m_RelativeWorld->GetChunk(m_MinusX.value()) : nullptr;
@@ -154,7 +163,7 @@ void Chunk::SetBlockSelected(bool selected) const
 	m_IsSelectionHere = selected;
 }
 
-float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
+float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
@@ -170,7 +179,7 @@ float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
 			continue;
 
 		float dist = 0.0f;
-		bool bSelected = GameDefs::ViewBlockCollision(ld.camera_position, ld.camera_direction, block.Position(), dist);
+		bool bSelected = Gd::ViewBlockCollision(ld.camera_position, ld.camera_direction, block.Position(), dist);
 		
 		if (bSelected && dist < closest_selected_block_dist)
 		{
@@ -190,26 +199,26 @@ float Chunk::BlockCollisionLogic(const GameDefs::ChunkLogicData& ld)
 	return closest_selected_block_dist;
 }
 
-void Chunk::UpdateBlocks(const GameDefs::ChunkLogicData& ld)
+void Chunk::UpdateBlocks(const Gd::ChunkLogicData& ld)
 {
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
 		block.UpdateRenderableSides(ld.camera_position);
 }
 
-bool Chunk::IsChunkRenderable(const GameDefs::ChunkLogicData& rd) const
+bool Chunk::IsChunkRenderable(const Gd::ChunkLogicData& rd) const
 {
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(rd.camera_position.x, rd.camera_position.z);
 	glm::vec2 chunk_center_pos(m_ChunkCenter.x, m_ChunkCenter.z);
-	return (glm::length(cam_pos - chunk_center_pos) < GameDefs::g_ChunkRenderingDistance);
+	return (glm::length(cam_pos - chunk_center_pos) < Gd::g_ChunkRenderingDistance);
 }
 
-bool Chunk::IsChunkVisible(const GameDefs::ChunkLogicData& rd) const
+bool Chunk::IsChunkVisible(const Gd::ChunkLogicData& rd) const
 {
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - rd.camera_position);
 	return (glm::dot(camera_to_midway, rd.camera_direction) > 0.0f ||
-		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + GameDefs::g_CameraCompensation);
+		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
 
 	//The 5.0f is just an arbitrary value to fix drawing issues that would be
 	//to unnecessarily complex to fix precisely
@@ -220,7 +229,7 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	//Function that determines if a block normal towards the chunk can be removed,
 	//depending on if there is a block next to him in the desired direction.
 	//If there is no block, the normal isn't going to be removed
-	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const GameDefs::ChunkLocation& loc)
+	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const Gd::ChunkLocation& loc)
 	{
 		uint32_t index = GetLoadedChunk(loc).value_or(0);
 		glm::vec3 block_pos = block.Position() + vec;
@@ -235,25 +244,25 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
-				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_X);
+				erase_flanked_normal(block, norm, Gd::ChunkLocation::PLUS_X);
 	}
 	else if (norm == glm::vec3(-1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().x == m_ChunkOrigin.x)
-				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_X);
+				erase_flanked_normal(block, norm, Gd::ChunkLocation::MINUS_X);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, 1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
-				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::PLUS_Z);
+				erase_flanked_normal(block, norm, Gd::ChunkLocation::PLUS_Z);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().z == m_ChunkOrigin.y)
-				erase_flanked_normal(block, norm, GameDefs::ChunkLocation::MINUS_Z);
+				erase_flanked_normal(block, norm, Gd::ChunkLocation::MINUS_Z);
 	}
 
 }
@@ -263,43 +272,43 @@ const glm::vec2& Chunk::GetChunkOrigin() const
 	return m_ChunkOrigin;
 }
 
-const std::optional<uint32_t>& Chunk::GetLoadedChunk(const GameDefs::ChunkLocation& cl) const
+const std::optional<uint32_t>& Chunk::GetLoadedChunk(const Gd::ChunkLocation& cl) const
 {
 	switch (cl)
 	{
-	case GameDefs::ChunkLocation::PLUS_X:
+	case Gd::ChunkLocation::PLUS_X:
 		return m_PlusX;
-	case GameDefs::ChunkLocation::MINUS_X:
+	case Gd::ChunkLocation::MINUS_X:
 		return m_MinusX;
-	case GameDefs::ChunkLocation::PLUS_Z:
+	case Gd::ChunkLocation::PLUS_Z:
 		return m_PlusZ;
-	case GameDefs::ChunkLocation::MINUS_Z:
+	case Gd::ChunkLocation::MINUS_Z:
 		return m_MinusZ;
 	}
 
 	return std::nullopt;
 }
 
-void Chunk::SetLoadedChunk(const GameDefs::ChunkLocation& cl, uint32_t value)
+void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 {
 	switch (cl)
 	{
-	case GameDefs::ChunkLocation::PLUS_X:
+	case Gd::ChunkLocation::PLUS_X:
 		m_PlusX = value;
 		break;
-	case GameDefs::ChunkLocation::MINUS_X:
+	case Gd::ChunkLocation::MINUS_X:
 		m_MinusX = value;
 		break;
-	case GameDefs::ChunkLocation::PLUS_Z:
+	case Gd::ChunkLocation::PLUS_Z:
 		m_PlusZ = value;
 		break;
-	case GameDefs::ChunkLocation::MINUS_Z:
+	case Gd::ChunkLocation::MINUS_Z:
 		m_MinusZ = value;
 		break;
 	}
 }
 
-void Chunk::Draw(const GameDefs::RenderData& rd) const
+void Chunk::Draw(const Gd::RenderData& rd) const
 {
 	auto tp1 = std::chrono::steady_clock::now();
 

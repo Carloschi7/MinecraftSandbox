@@ -9,7 +9,7 @@ class Chunk;
 class Block
 {
 public:
-    Block(const glm::vec3& position, const GameDefs::BlockType& bt);
+    Block(const glm::vec3& position, const Gd::BlockType& bt);
 
     void Draw(bool bIsBlockSelected = false) const;
     void UpdateRenderableSides(const glm::vec3& camera_pos);
@@ -37,5 +37,5 @@ private:
     GlCore::BlockStructure m_BlockStructure;
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
-    GameDefs::BlockType m_BlockType;
+    Gd::BlockType m_BlockType;
 };

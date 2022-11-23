@@ -22,20 +22,20 @@ public:
 	//All the chunks need to be loaded in order to use this function
 	void InitBlockNormals();
 	void SetBlockSelected(bool selected) const;
-	[[nodiscard]] float BlockCollisionLogic(const GameDefs::ChunkLogicData& ld);
-	void UpdateBlocks(const GameDefs::ChunkLogicData& ld);
+	[[nodiscard]] float BlockCollisionLogic(const Gd::ChunkLogicData& ld);
+	void UpdateBlocks(const Gd::ChunkLogicData& ld);
 	//Checks if this chunk is near enough to the player to be rendered
-	bool IsChunkRenderable(const GameDefs::ChunkLogicData& rd) const;
+	bool IsChunkRenderable(const Gd::ChunkLogicData& rd) const;
 	//Checks if this chunk (within the renderable space) is visible by the player
-	bool IsChunkVisible(const GameDefs::ChunkLogicData& rd) const;
+	bool IsChunkVisible(const Gd::ChunkLogicData& rd) const;
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
 
 	const glm::vec2& GetChunkOrigin() const;
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
-	const std::optional<uint32_t>& GetLoadedChunk(const GameDefs::ChunkLocation& cl) const;
-	void SetLoadedChunk(const GameDefs::ChunkLocation& cl, uint32_t value);
-	void Draw(const GameDefs::RenderData& rd) const;
+	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
+	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
+	void Draw(const Gd::RenderData& rd) const;
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 
 	//Sum this with the chunk origin to get chunk's center

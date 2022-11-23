@@ -23,10 +23,10 @@ namespace GlCore
         cam.SetPerspectiveValues(glm::radians(45.0f),
             float(Root::GameWindow().Width()) / float(Root::GameWindow().Height()),
             0.1f,
-            GameDefs::g_RenderDistance);
+            Gd::g_RenderDistance);
 
-        cam.SetKeyboardFunction(GameDefs::KeyboardFunction);
-        cam.SetMouseFunction(GameDefs::MouseFunction);
+        cam.SetKeyboardFunction(Gd::KeyboardFunction);
+        cam.SetMouseFunction(Gd::MouseFunction);
         
         //Loading static members
         if (m_CrossaimShaderPtr.get() == nullptr)
@@ -41,7 +41,7 @@ namespace GlCore
                 "assets/textures/ShadedBackground.png",
                 "assets/textures/ShadedBackground.png",
             };
-            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, GameDefs::g_RenderDistance / 2.0f);
+            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, Gd::g_RenderDistance / 2.0f);
 
             m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
             m_CubemapShaderPtr->UniformMat4f(cam.GetProjMatrix(), g_ProjUniformName);
@@ -58,9 +58,9 @@ namespace GlCore
         }
     }
 
-    GameDefs::RenderData WorldStructure::GetRenderFrameInfo()
+    Gd::RenderData WorldStructure::GetRenderFrameInfo()
     {
-        GameDefs::RenderData rd;
+        Gd::RenderData rd;
         Camera& cam = Root::GameCamera();
 
         rd.camera_position = cam.GetPosition();
@@ -70,9 +70,9 @@ namespace GlCore
         return rd;
     }
 
-    GameDefs::ChunkLogicData WorldStructure::GetChunkLogicData()
+    Gd::ChunkLogicData WorldStructure::GetChunkLogicData()
     {
-        GameDefs::ChunkLogicData ld;
+        Gd::ChunkLogicData ld;
         ld.mouse_input.left_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
         ld.mouse_input.right_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
         ld.camera_position = Root::GameCamera().GetPosition();
@@ -106,7 +106,7 @@ namespace GlCore
         Renderer::Render(pl);
     }
 
-    void WorldStructure::UniformRenderInit(const GameDefs::RenderData& rd) const
+    void WorldStructure::UniformRenderInit(const Gd::RenderData& rd) const
     {
         auto block_shader = Root::BlockShader();
         block_shader->UniformMat4f(rd.proj_matrix, g_ProjUniformName);
@@ -118,7 +118,7 @@ namespace GlCore
     }
 
 
-    BlockStructure::BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt)
+    BlockStructure::BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt)
     {
         //Load static data
         if (m_VertexManagerSinglePtr.get() == nullptr)
@@ -145,18 +145,18 @@ namespace GlCore
         return m_Textures;
     }
 
-    void BlockStructure::Draw(const glm::vec3& pos, const GameDefs::BlockType& bt,
+    void BlockStructure::Draw(const glm::vec3& pos, const Gd::BlockType& bt,
         const DrawableData& exp_norms, bool is_block_selected) const
     {
         Texture* current_texture = nullptr;
         VertexManager* current_vertex_manager = nullptr;
         switch (bt)
         {
-        case GameDefs::BlockType::DIRT:
+        case Gd::BlockType::DIRT:
             current_texture = &m_Textures[0];
             current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
-        case GameDefs::BlockType::GRASS:
+        case Gd::BlockType::GRASS:
             current_texture = &m_Textures[1];
             current_vertex_manager = m_VertexManagerSidedPtr.get();
             break;

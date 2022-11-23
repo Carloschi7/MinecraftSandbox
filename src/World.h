@@ -13,12 +13,12 @@ public:
     void UpdateScene();
 
     //Returns the corresponding chunk index if exists
-    std::optional<uint32_t> IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl);
+    std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);
     Chunk& GetChunk(uint32_t index);
 
 private:
     //Function which handles spawnable chunk pushing conditions
-    bool IsPushable(const Chunk& chunk, const GameDefs::ChunkLocation& cl, const glm::vec3& vec);
+    bool IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec);
 private:
     VecType<Chunk> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the

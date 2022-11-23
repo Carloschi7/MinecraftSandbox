@@ -1,8 +1,10 @@
 #pragma once
 #include "MainIncl.h"
 #include <array>
+#include <glm/glm.hpp>
 
-namespace GameDefs
+//Game defintions
+namespace Gd
 {
 	//Game global variables
 	extern const float g_ChunkSpawningDistance;
@@ -108,5 +110,60 @@ namespace GameDefs
 			return false;
 
 		return true;
+	}
+
+	//Perlin noise related funcions namespace
+	namespace PerlNoise
+	{
+		inline float Interpolate(float a0, float a1, float w)
+		{
+			return (a1 - a0) * w + a0;
+		}
+
+		inline glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2)
+		{
+			// Snippet of code i took from the internet. scrambles 
+			//some values and spits out a reasonable random value
+			const uint32_t w = 8 * sizeof(uint32_t);
+			const uint32_t s = w / 2; // rotation width
+			uint32_t a = n1, b = n2;
+			a *= 3284157443; b ^= a << s | a >> w - s;
+			b *= 1911520717; a ^= b << s | b >> w - s;
+			a *= 2048419325;
+			float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
+			return { glm::cos(random), glm::sin(random) };
+		}
+
+		inline float PerformDot(int32_t a, int32_t b, float x, float y)
+		{
+			glm::vec2 rand_vec = GenRandomVecFrom(a, b);
+			//Offset vector
+			glm::vec2 offset{x - static_cast<float>(a), y - static_cast<float>(b)};
+			return glm::dot(offset, rand_vec);
+		}
+
+		//Trying to use as little of an overhead as possible
+		inline float Generate(float x, float y)
+		{
+			int32_t x0, x1, y0, y1;
+			float sx, sy;
+			x0 = std::floor(x);
+			x1 = x0 + 1;
+			y0 = std::floor(y);
+			y1 = y0 + 1;
+
+			sx = x - static_cast<float>(x0);
+			sy = y - static_cast<float>(y0);
+
+			float f1, f2, f3, f4, fr1, fr2;
+			f1 = PerformDot(x0, y0, x, y);
+			f2 = PerformDot(x1, y0, x, y);
+			f3 = PerformDot(x0, y1, x, y);
+			f4 = PerformDot(x1, y1, x, y);
+
+			fr1 = Interpolate(f1, f2, sx);
+			fr2 = Interpolate(f3, f4, sx);
+			return Interpolate(fr1, fr2, sy);
+		}
 	}
 }

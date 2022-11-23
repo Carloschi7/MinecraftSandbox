@@ -22,10 +22,10 @@ namespace GlCore
         void UpdateCamera();
         void RenderSkybox() const;
         void RenderCrossaim() const;
-        void UniformRenderInit(const GameDefs::RenderData& rd) const;
+        void UniformRenderInit(const Gd::RenderData& rd) const;
         
-        static GameDefs::RenderData GetRenderFrameInfo();
-        static GameDefs::ChunkLogicData GetChunkLogicData();
+        static Gd::RenderData GetRenderFrameInfo();
+        static Gd::ChunkLogicData GetChunkLogicData();
     private:
         //Cubemap Stuff
         static std::shared_ptr<CubeMap> m_CubemapPtr;
@@ -45,8 +45,8 @@ namespace GlCore
     class BlockStructure 
     {
     public:
-        BlockStructure(const glm::vec3& pos, const GameDefs::BlockType& bt);
-        void Draw(const glm::vec3& pos, const GameDefs::BlockType& bt, 
+        BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt);
+        void Draw(const glm::vec3& pos, const Gd::BlockType& bt, 
             const DrawableData& exp_norms, bool is_block_selected) const;
         
         const std::vector<Texture>& GetBlockTextures() const;

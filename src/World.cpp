@@ -6,7 +6,7 @@
 World::World()
 	: m_LastPos(0.0f)
 {
-	using namespace GameDefs;
+	using namespace Gd;
 
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
@@ -46,8 +46,8 @@ void World::DrawRenderable() const
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
 
-	GameDefs::RenderData draw_data = GlCore::WorldStructure::GetRenderFrameInfo();
-	GameDefs::ChunkLogicData logic_data = GlCore::WorldStructure::GetChunkLogicData();
+	Gd::RenderData draw_data = GlCore::WorldStructure::GetRenderFrameInfo();
+	Gd::ChunkLogicData logic_data = GlCore::WorldStructure::GetChunkLogicData();
 	
 	m_WorldStructure.UniformRenderInit(draw_data);
 	
@@ -68,7 +68,7 @@ void World::DrawRenderable() const
 
 void World::UpdateScene()
 {
-	GameDefs::ChunkLogicData chunk_logic_data = GlCore::WorldStructure::GetChunkLogicData();
+	Gd::ChunkLogicData chunk_logic_data = GlCore::WorldStructure::GetChunkLogicData();
 
 	//Chunk dynamic spawning
 	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
@@ -76,7 +76,7 @@ void World::UpdateScene()
 		const glm::vec3& vec = m_SpawnableChunks[i];
 		glm::vec2 vec_2d(vec.x, vec.z);
 		glm::vec2 camera_2d(chunk_logic_data.camera_position.x, chunk_logic_data.camera_position.z);
-		if (glm::length(vec_2d - camera_2d) < GameDefs::g_ChunkSpawningDistance)
+		if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
 		{
 			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
 			glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
@@ -86,39 +86,39 @@ void World::UpdateScene()
 			
 			//Removing previously visible normals from old chunks && update local chunks
 			//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
-			if (auto opt = this_chunk.GetLoadedChunk(GameDefs::ChunkLocation::PLUS_X); opt.has_value())
+			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_X); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(GameDefs::ChunkLocation::MINUS_X, m_Chunks.size() - 1);
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, m_Chunks.size() - 1);
 				neighbor_chunk.RemoveBorderNorm(glm::vec3(-1.0f, 0.0f, 0.0f));
 			}
-			if (auto opt = this_chunk.GetLoadedChunk(GameDefs::ChunkLocation::MINUS_X); opt.has_value())
+			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(GameDefs::ChunkLocation::PLUS_X, m_Chunks.size() - 1);
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, m_Chunks.size() - 1);
 				neighbor_chunk.RemoveBorderNorm(glm::vec3(1.0f, 0.0f, 0.0f));
 			}
-			if (auto opt = this_chunk.GetLoadedChunk(GameDefs::ChunkLocation::PLUS_Z); opt.has_value())
+			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(GameDefs::ChunkLocation::MINUS_Z, m_Chunks.size() - 1);
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, m_Chunks.size() - 1);
 				neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, -1.0f));
 			}
-			if (auto opt = this_chunk.GetLoadedChunk(GameDefs::ChunkLocation::MINUS_Z); opt.has_value())
+			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(GameDefs::ChunkLocation::PLUS_Z, m_Chunks.size() - 1);
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, m_Chunks.size() - 1);
 				neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 
 			//Pushing new spawnable vectors
-			if (IsPushable(this_chunk, GameDefs::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
+			if (IsPushable(this_chunk, Gd::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
-			if (IsPushable(this_chunk, GameDefs::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
+			if (IsPushable(this_chunk, Gd::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
-			if (IsPushable(this_chunk, GameDefs::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
+			if (IsPushable(this_chunk, Gd::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
-			if (IsPushable(this_chunk, GameDefs::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
+			if (IsPushable(this_chunk, Gd::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
 				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
 
 			//Remove the just spawned chunk from the spawnable list
@@ -159,7 +159,7 @@ void World::UpdateScene()
 	//m_WorldStructure.UpdateCamera();
 }
 
-std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const GameDefs::ChunkLocation& cl)
+std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)
 {
 	const glm::vec2& origin = chunk.GetChunkOrigin();
 	auto find_alg = [&](const glm::vec2& pos) ->std::optional<uint32_t>
@@ -175,13 +175,13 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const GameDefs::Chunk
 
 	switch (cl)
 	{
-	case GameDefs::ChunkLocation::PLUS_X:
+	case Gd::ChunkLocation::PLUS_X:
 		return find_alg(origin + glm::vec2(16.0f, 0.0f));
-	case GameDefs::ChunkLocation::MINUS_X:
+	case Gd::ChunkLocation::MINUS_X:
 		return find_alg(origin - glm::vec2(16.0f, 0.0f));
-	case GameDefs::ChunkLocation::PLUS_Z:
+	case Gd::ChunkLocation::PLUS_Z:
 		return find_alg(origin + glm::vec2(0.0f, 16.0f));
-	case GameDefs::ChunkLocation::MINUS_Z:
+	case Gd::ChunkLocation::MINUS_Z:
 		return find_alg(origin - glm::vec2(0.0f, 16.0f));
 	}
 
@@ -196,7 +196,7 @@ Chunk& World::GetChunk(uint32_t index)
 	return m_Chunks[index];
 }
 
-bool World::IsPushable(const Chunk& chunk, const GameDefs::ChunkLocation& cl, const glm::vec3& vec)
+bool World::IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec)
 {
 	auto internal_pred = [&](const glm::vec3& internal_vec) {return internal_vec == vec; };
 
