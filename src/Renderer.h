@@ -31,8 +31,6 @@ namespace GlCore
 		static void SetGameWindow(Window* game_window_);
 		static void SetGameCamera(Camera* game_camera_);
 		static void SetBlockShader(std::shared_ptr<Shader> block_shader_);
-		static void AddChunkPosition(const glm::vec2& pos);
-		static glm::vec2 GetChunkPosition(uint32_t index);
 		static Window& GameWindow();
 		static Camera& GameCamera();
 		static std::shared_ptr<Shader> BlockShader();
