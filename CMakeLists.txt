@@ -41,7 +41,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/GlStructure.cpp src/GlStructure.h
 		src/Renderer.h src/Renderer.cpp
 		src/Vertices.h
-		src/Ts_containers.h
+		src/Utils.h
 		src/GameDefinitions.h src/GameDefinitions.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${C7ENGINE_OPENGL_LIB} ${C7ENGINE_DEPENDENCIES} ${C7ENGINE_LIB_PATH})

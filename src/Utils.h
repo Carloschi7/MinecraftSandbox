@@ -11,7 +11,7 @@
 #		define ENV32
 #	endif
 #elif defined __GNUC__
-#	ifdef __x86_64__ || __ppc64__
+#	if defined __x86_64__ || defined __ppc64__
 #		define ENV64
 #	else
 #		define ENV32
