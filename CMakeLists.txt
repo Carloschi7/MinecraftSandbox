@@ -10,6 +10,8 @@ if("${ENGINE_PATH}" STREQUAL "" OR "${ENGINE_BUILD_PATH}" STREQUAL "")
 	message(FATAL_ERROR "You need to define the vars ENGINE_PATH and ENGINE_BUILD_PATH, Check out the Github page to see what they should be bound to")
 endif()
 
+project(${APP_NAME})
+
 #Visual studio is only availabe on Windows, so no need to check for anything else
 #On 
 if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
@@ -25,14 +27,14 @@ if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
 	set(C7ENGINE_LIB_PATH ${ENGINE_BUILD_PATH}/$(Configuration)/C7Engine.lib)
 
 else() #default linux ubuntu for now (STILL WORK IN PROGRESS)
-
+	find_package(Threads REQUIRED)
 	set(UBUNTU_LIB_PATH /usr/lib/x86_64-linux-gnu)
 	set(C7ENGINE_OPENGL_LIB ${UBUNTU_LIB_PATH}/libGL.so)
 	set(C7ENGINE_DEPENDENCIES glfw GLEW ${UBUNTU_LIB_PATH}/libassimp.so)
-	set(C7ENGINE_LIB_PATH  ${ENGINE_BUILD_PATH}/libC7Engine.so)
+	set(C7ENGINE_LIB_PATH  ${ENGINE_BUILD_PATH}/libC7Engine.so Threads::Threads)
 endif()
 
-project(${APP_NAME})
+
 add_executable(${PROJECT_NAME} src/Main.cpp
 		src/Application.cpp
 		src/World.cpp src/World.h
