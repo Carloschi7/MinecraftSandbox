@@ -18,7 +18,8 @@
 #	endif
 #endif
 
-#ifdef __linux__
+//Generic linux platforms
+#if defined __linux__ && !defined ENV64
 #	define ENV64
 #endif
 
