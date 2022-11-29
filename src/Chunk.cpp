@@ -25,8 +25,8 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
-			float perl_x = static_cast<float>(i)/16.0f;
-			float perl_y = static_cast<float>(k)/16.0f;
+			float perl_x = static_cast<float>(i)/12.0f;
+			float perl_y = static_cast<float>(k)/12.0f;
 			float perlin_height = Gd::PerlNoise::Generate(perl_x, perl_y);
 			float perlin_height_final = perlin_height * 8.0f;
 
