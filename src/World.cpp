@@ -102,25 +102,25 @@ void World::UpdateScene()
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
 				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, m_Chunks.size() - 1);
-				neighbor_chunk.RemoveBorderNorm(glm::vec3(-1.0f, 0.0f, 0.0f));
+				//neighbor_chunk.RemoveBorderNorm(glm::vec3(-1.0f, 0.0f, 0.0f));
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
 				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, m_Chunks.size() - 1);
-				neighbor_chunk.RemoveBorderNorm(glm::vec3(1.0f, 0.0f, 0.0f));
+				//neighbor_chunk.RemoveBorderNorm(glm::vec3(1.0f, 0.0f, 0.0f));
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
 				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, m_Chunks.size() - 1);
-				neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, -1.0f));
+				//neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, -1.0f));
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
 			{
 				auto& neighbor_chunk = m_Chunks[opt.value()];
 				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, m_Chunks.size() - 1);
-				neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, 1.0f));
+				//neighbor_chunk.RemoveBorderNorm(glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 
 			//Pushing new spawnable vectors

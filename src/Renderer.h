@@ -22,6 +22,13 @@ namespace GlCore
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = true;
 	extern std::atomic_bool g_LogicThreadShouldRun;
+	//Basic normals
+	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
+	static constexpr glm::vec3 g_NegX{ -1.0f,	0.0f,	0.0f };
+	static constexpr glm::vec3 g_PosY{	0.0f,	1.0f,	0.0f };
+	static constexpr glm::vec3 g_NegY{	0.0f,  -1.0f,	0.0f };
+	static constexpr glm::vec3 g_PosZ{	0.0f,	0.0f,	1.0f };
+	static constexpr glm::vec3 g_NegZ{	0.0f,	0.0f,  -1.0f };
 
 	//Static handler of the most used game system entities,
 	//Gets initialised by the user with the Init static function

@@ -43,7 +43,9 @@ public:
 private:
 	//Returns if there is a block at the location pos
 	//The last two attributes can be used to make the searching faster
-	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true) const;
+	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true, uint32_t* block_index = nullptr) const;
+	Block& GetBlock(uint32_t index);
+	const Block& GetBlock(uint32_t index) const;
 private:
 	//Father world
 	Utils::AlignedPtr<World> m_RelativeWorld;
