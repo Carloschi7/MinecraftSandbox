@@ -59,8 +59,8 @@ void World::DrawRenderable() const
 	}
 
 	//Resetting selection
-	for (const auto& chunk : m_Chunks)
-		chunk.SetBlockSelected(false);
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+		m_Chunks[i].SetBlockSelected(false);
 	
 	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
@@ -80,7 +80,19 @@ void World::UpdateScene()
 		{
 			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
 			glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
+
+#ifdef STRONG_THREAD_SAFETY
+			bool needs_lock = m_Chunks.size() == m_Chunks.capacity();
+			if (needs_lock)
+				if constexpr (GlCore::g_MultithreadedRendering)
+					m_Chunks.lock();
+#endif
 			m_Chunks.emplace_back(this, chunk_pos);
+#ifdef STRONG_THREAD_SAFETY
+			if (needs_lock)
+				if constexpr (GlCore::g_MultithreadedRendering)
+					m_Chunks.unlock();
+#endif
 			auto& this_chunk = m_Chunks.back();
 			this_chunk.InitBlockNormals();
 			

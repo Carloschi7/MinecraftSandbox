@@ -2,39 +2,10 @@
 #include <vector>
 #include <list>
 #include <mutex>
+#include "Macros.h"
 
-//Assert if the environment is x32 or x64(always 64 on linux)
-#if defined _WIN64 || defined _WIN32
-#	ifdef _WIN64
-#		define ENV64
-#	else
-#		define ENV32
-#	endif
-#elif defined __GNUC__
-#	if defined __x86_64__ || defined __ppc64__
-#		define ENV64
-#	else
-#		define ENV32
-#	endif
-#endif
-
-//Generic linux platforms
-#if defined __linux__ && !defined ENV64
-#	define ENV64
-#endif
-
-#ifndef ENV64
-#	define ENV32
-#endif
-
-#ifdef ENV64
-#	define POINTER_BYTES 8
-#else
-#	define POINTER_BYTES 4
-#endif
 
 //Utilities
-
 namespace Utils
 {
 	//Thread safe vector
@@ -63,66 +34,104 @@ namespace Utils
 			return *this;
 		}
 
+		//Specific features
+		void lock()
+		{
+			m_Locked = true;
+			m_OwningThreadID = std::this_thread::get_id();
+		}
+		void unlock()
+		{
+			m_Locked = false;
+			m_OwningThreadID = std::thread::id{};
+		}
+	private:
+		void _CheckUnlocked() const
+		{
+			//Return if the calling thread is the same
+#ifdef STRONG_THREAD_SAFETY
+			if (m_OwningThreadID == std::this_thread::get_id())
+				return;
+
+			while (m_Locked) {}
+#endif
+		}
+	public:
+
 		void push_back(const T& ref)
 		{
+			_CheckUnlocked();
 			m_Container.push_back(ref);
 		}
 		template<class... Args>
 		decltype(auto) emplace_back(Args&&... args)
 		{
+			_CheckUnlocked();
 			return m_Container.emplace_back(std::forward<Args>(args)...);
 		}
 		T& operator[](std::size_t index)
 		{
-			std::scoped_lock lk(m_Mutex);
+			_CheckUnlocked();
 			return m_Container[index];
 		}
 		const T& operator[](std::size_t index) const
 		{
-			std::scoped_lock lk(m_Mutex);
+			_CheckUnlocked();
 			return m_Container[index];
 		}
 		void erase(const_iterator iter)
 		{
-			std::scoped_lock lk(m_Mutex);
+			_CheckUnlocked();
 			m_Container.erase(iter);
 		}
 
 		iterator begin()
 		{
+			_CheckUnlocked();
 			return m_Container.begin();
 		}
 		iterator end()
 		{
+			_CheckUnlocked();
 			return m_Container.end();
 		}
 		const_iterator begin() const
 		{
+			_CheckUnlocked();
 			return m_Container.begin();
 		}
 		const_iterator end() const
 		{
+			_CheckUnlocked();
 			return m_Container.end();
 		}
-		const_iterator cbegin() const { return begin(); }
-		const_iterator cend() const { return end(); }
+		const_iterator cbegin() const { _CheckUnlocked(); return begin(); }
+		const_iterator cend() const { _CheckUnlocked(); return end(); }
 
-		T& front() {  return m_Container[0]; }
-		T& back() {  return m_Container[m_Container.size() - 1]; }
-		const T& front() const {  return m_Container[0]; }
-		const T& back() const {  return m_Container[m_Container.size() - 1]; }
+		T& front() { _CheckUnlocked(); return m_Container[0]; }
+		T& back() { _CheckUnlocked(); return m_Container[m_Container.size() - 1]; }
+		const T& front() const { _CheckUnlocked(); return m_Container[0]; }
+		const T& back() const { _CheckUnlocked(); return m_Container[m_Container.size() - 1]; }
 
 		std::size_t size() const
 		{
+			_CheckUnlocked();
 			return m_Container.size();
+		}
+		std::size_t capacity() const
+		{
+			_CheckUnlocked();
+			return m_Container.capacity();
 		}
 		bool empty() const
 		{
+			_CheckUnlocked();
 			return m_Container.empty();
 		}
 	private:
 		std::vector<T> m_Container;
-		mutable std::mutex m_Mutex;
+		mutable std::atomic_bool m_Locked;
+		std::thread::id m_OwningThreadID;
 	};
 
 	//Thread safe list
@@ -184,14 +193,12 @@ namespace Utils
 			std::scoped_lock lk(m_Lock);
 			m_Container.clear();
 		}
-		std::size_t size()
+		std::size_t size() const
 		{
-			std::scoped_lock lk(m_Lock);
 			return m_Container.size();
 		}
 		bool empty() const
 		{
-			std::scoped_lock lk(m_Lock);
 			return m_Container.empty();
 		}
 
@@ -202,7 +209,7 @@ namespace Utils
 
 	//For now TSVector is disabled, mutexes soak up a lot of performance
 	template<class T, bool _Cond>
-	using ConditionalVector = typename std::conditional<_Cond, std::vector<T>, std::vector<T>>::type;
+	using ConditionalVector = typename std::conditional<_Cond, Utils::TSVector<T>, std::vector<T>>::type;
 	template<class T, bool _Cond>
 	using ConditionalList = typename std::conditional<_Cond, Utils::TSList<T>, std::list<T>>::type;
 
