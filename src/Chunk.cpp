@@ -88,7 +88,8 @@ void Chunk::InitBlockNormals()
 		conf_rlfb[2] = block_pos.z == m_ChunkOrigin.y;
 		conf_rlfb[3] = block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
 
-		m_LocalBlocks[top_column_index].AddNormal(0.0f, 1.0f, 0.0f);
+		//Upper block of a column is always visible from the top
+		m_LocalBlocks[top_column_index].AddNormal(GlCore::g_PosY);
 
 		if (conf_rlfb[0] || conf_rlfb[1] || conf_rlfb[2] || conf_rlfb[3])
 		{
@@ -178,22 +179,23 @@ void Chunk::InitBlockNormals()
 		if (conf_rlfb[0] && chunk_plus_x)
 		{
 			uint32_t block_index;
-			glm::vec3 local_pos{ 0.0f, 1.0f, 0.0f };
-			while (chunk_plus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + pos_x + local_pos, 0, true, &block_index))
+			//Emplacing back normals from the first block higher than the current one 
+			glm::vec3 begin_check = GlCore::g_PosY;
+			while (chunk_plus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + pos_x + begin_check, 0, true, &block_index))
 			{
 				chunk_plus_x->GetBlock(block_index).AddNormal(-1.0f, 0.0f, 0.0f);
-				local_pos.y += 1.0f;
+				begin_check.y += 1.0f;
 			}
 		}
 
 		if (conf_rlfb[1] && chunk_minus_x)
 		{
 			uint32_t block_index;
-			glm::vec3 local_pos{ 0.0f, 1.0f, 0.0f };
-			while (chunk_minus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + neg_x + local_pos, 0, true, &block_index))
+			glm::vec3 begin_check = GlCore::g_PosY;
+			while (chunk_minus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + neg_x + begin_check, 0, true, &block_index))
 			{
 				chunk_minus_x->GetBlock(block_index).AddNormal(1.0f, 0.0f, 0.0f);
-				local_pos.y += 1.0f;
+				begin_check.y += 1.0f;
 			}
 		}
 
@@ -375,8 +377,6 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 
 void Chunk::Draw(const Gd::RenderData& rd) const
 {
-	auto tp1 = std::chrono::steady_clock::now();
-
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{
 		auto& block = m_LocalBlocks[i];
@@ -385,12 +385,6 @@ void Chunk::Draw(const Gd::RenderData& rd) const
 			continue;
 
 		block.Draw(m_IsSelectionHere && i == m_SelectedBlock);
-	}
-
-	if (rd.p_key)
-	{
-		auto tp2 = std::chrono::steady_clock::now();
-		std::cout << "FPS:" << 1.0f / std::chrono::duration<float>(tp2 - tp1).count() << std::endl;
 	}
 }
 

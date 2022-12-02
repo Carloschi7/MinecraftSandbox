@@ -35,9 +35,12 @@ void Application::OnUserRun()
     //Logic thread function
     auto logic_thread_impl = [&]()
     {
+        Utils::Timer timer;
         while (GlCore::g_LogicThreadShouldRun)
         {
+            timer.StartTimer();
             WorldGameInstance.UpdateScene();
+            LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
     };
 
@@ -46,11 +49,11 @@ void Application::OnUserRun()
 
     //For 3D rendering
     glEnable(GL_DEPTH_TEST);
-    std::chrono::duration<double> dur;
+    Utils::Timer timer;
     while (!m_Window.ShouldClose())
     {   
         m_Window.ClearScreen();
-        auto tp2 = std::chrono::steady_clock::now();
+        timer.StartTimer();
         if constexpr (GlCore::g_MultithreadedRendering)
         {
             //No need to render every frame, while the logic thread computes,
@@ -63,9 +66,9 @@ void Application::OnUserRun()
             WorldGameInstance.UpdateScene();
             WorldGameInstance.DrawRenderable();
         }
-        dur = std::chrono::steady_clock::now() - tp2;
+        LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
 
-        m_Camera.ProcessInput(m_Window, dur.count() * 60.0, 0.8);
+        m_Camera.ProcessInput(m_Window, timer.GetElapsedSeconds() * Gd::g_FramedPlayerSpeed, 0.8);
         m_Window.Update();
     }
 

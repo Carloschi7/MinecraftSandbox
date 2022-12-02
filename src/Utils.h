@@ -2,6 +2,7 @@
 #include <vector>
 #include <list>
 #include <mutex>
+#include <chrono>
 #include "Macros.h"
 
 
@@ -264,5 +265,23 @@ namespace Utils
 		}
 	private:
 		uint8_t m_Data[g_PointerBytes];
+	};
+
+	class Timer
+	{
+	public:
+		Timer() = default;
+		void StartTimer() { m_TimePoint = std::chrono::steady_clock::now(); }
+		float GetElapsedMilliseconds() const
+		{
+			return GetElapsedSeconds() * 1000.0f;
+		}
+		float GetElapsedSeconds() const
+		{
+			auto now = std::chrono::steady_clock::now();
+			return std::chrono::duration<float>(now - m_TimePoint).count();
+		}
+	private:
+		std::chrono::steady_clock::time_point m_TimePoint;
 	};
 }

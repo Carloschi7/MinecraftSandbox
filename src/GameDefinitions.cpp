@@ -6,6 +6,7 @@ namespace Gd
 	const float g_ChunkRenderingDistance = 150.0f;
 	const float g_CameraCompensation = 5.0f;
 	const float g_RenderDistance = 1500.0f;
+    const float g_FramedPlayerSpeed = 60.0f;
 	const int32_t g_SpawnerBegin = -64;
 	const int32_t g_SpawnerEnd = 64;
 	const int32_t g_SpawnerIncrement = 16;

@@ -37,3 +37,9 @@
 #if defined _DEBUG || defined __linux__
 #	define STRONG_THREAD_SAFETY
 #endif
+
+#ifdef _DEBUG
+#	define LOG_DEBUG(fmt, ...) std::printf(fmt, __VA_ARGS__);
+#else
+#	define LOG_DEBUG(fmt, ...)
+#endif

@@ -11,6 +11,7 @@ namespace Gd
 	extern const float g_ChunkRenderingDistance;
 	extern const float g_CameraCompensation;
 	extern const float g_RenderDistance;
+	extern const float g_FramedPlayerSpeed;
 	extern const int32_t g_SpawnerBegin;
 	extern const int32_t g_SpawnerEnd;
 	extern const int32_t g_SpawnerIncrement;
