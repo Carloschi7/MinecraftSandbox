@@ -16,6 +16,9 @@ public:
     std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);
     Chunk& GetChunk(uint32_t index);
 
+    Gd::WorldSeed& Seed();
+    const Gd::WorldSeed& Seed() const;
+
 private:
     //Function which handles spawnable chunk pushing conditions
     bool IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec);
@@ -28,5 +31,7 @@ private:
     glm::vec3 m_LastPos;
     //Responsible for camera, skybox & other stuff
     GlCore::WorldStructure m_WorldStructure;
+    //For terrain generation
+    Gd::WorldSeed m_WorldSeed;
 };
 

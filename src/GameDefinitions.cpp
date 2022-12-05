@@ -2,8 +2,8 @@
 
 namespace Gd
 {
-	const float g_ChunkSpawningDistance = 200.0f;
-	const float g_ChunkRenderingDistance = 150.0f;
+	const float g_ChunkSpawningDistance = 250.0f;
+	const float g_ChunkRenderingDistance = 200.0f;
 	const float g_CameraCompensation = 5.0f;
 	const float g_RenderDistance = 1500.0f;
     const float g_FramedPlayerSpeed = 60.0f;
@@ -81,30 +81,42 @@ namespace Gd
 
     namespace PerlNoise
     {
+        //Init the seed with premultiplied constants,
+        //So multiplying the seed to a random value to emulate
+        //randomness is done only once
+        void InitSeedMap(WorldSeed& seed)
+        {
+            if (seed.secundary_seeds.empty())
+            {
+                seed.secundary_seeds.resize(2);
+                seed.secundary_seeds[0] = 28584983 * seed.seed_value;
+                seed.secundary_seeds[1] = 3142523 * seed.seed_value;
+            }
+        }
         float Interpolate(float a0, float a1, float w)
         {
             return (a1 - a0) * w + a0;
         }
-        glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2)
+        glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2, const uint64_t& seed)
         {
             // Snippet of code i took from the internet. scrambles
             //some values and spits out a reasonable random value
             const uint32_t w = 8 * sizeof(uint32_t);
             const uint32_t s = w / 2; // rotation width
             uint32_t a = n1, b = n2;
-            a *= 3284157443; b ^= a << s | a >> w - s;
+            a *= 3284157443 * seed; b ^= a << s | a >> w - s;
             b *= 1911520717; a ^= b << s | b >> w - s;
             a *= 2048419325;
             float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
             return { glm::cos(random), glm::sin(random) };
         }
-        float PerformDot(int32_t a, int32_t b, float x, float y) {
-            glm::vec2 rand_vec = GenRandomVecFrom(a, b);
+        float PerformDot(int32_t a, int32_t b, float x, float y, const uint64_t& seed) {
+            glm::vec2 rand_vec = GenRandomVecFrom(a, b, seed);
             //Offset vector
             glm::vec2 offset{x - static_cast<float>(a), y - static_cast<float>(b)};
             return glm::dot(offset, rand_vec);
         }
-        float Generate(float x, float y) {
+        float GenerateSingleNoise(float x, float y, const uint64_t& seed) {
             int32_t x0, x1, y0, y1;
             float sx, sy;
             x0 = std::floor(x);
@@ -116,14 +128,24 @@ namespace Gd
             sy = y - static_cast<float>(y0);
 
             float f1, f2, f3, f4, fr1, fr2;
-            f1 = PerformDot(x0, y0, x, y);
-            f2 = PerformDot(x1, y0, x, y);
-            f3 = PerformDot(x0, y1, x, y);
-            f4 = PerformDot(x1, y1, x, y);
+            f1 = PerformDot(x0, y0, x, y, seed);
+            f2 = PerformDot(x1, y0, x, y, seed);
+            f3 = PerformDot(x0, y1, x, y, seed);
+            f4 = PerformDot(x1, y1, x, y, seed);
 
             fr1 = Interpolate(f1, f2, sx);
             fr2 = Interpolate(f3, f4, sx);
             return Interpolate(fr1, fr2, sy);
+        }
+        float GetBlockAltitude(float x, float y, const WorldSeed& seed)
+        {
+            //Biome distribution TODO
+
+            //Terrain generation
+            float fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
+            float fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
+            float fz = GenerateSingleNoise(x / 60.0f, y / 60.0f, seed.secundary_seeds[1]) * 2.5f;
+            return fx + fy + fz;
         }
     }
 }

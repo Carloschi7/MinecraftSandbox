@@ -25,12 +25,8 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
-			float perl_x = static_cast<float>(i)/12.0f;
-			float perl_y = static_cast<float>(k)/12.0f;
-			float perlin_height = Gd::PerlNoise::Generate(perl_x, perl_y);
-			float perlin_height_final = perlin_height * 8.0f;
-
-			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_height_final);
+			float perlin_height = Gd::PerlNoise::GetBlockAltitude(static_cast<float>(i), static_cast<float>(k), m_RelativeWorld->Seed());
+			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_height * 8.0f);
 
 			for (int32_t j = 0; j < final_height; j++)
 				m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == final_height - 1) ?

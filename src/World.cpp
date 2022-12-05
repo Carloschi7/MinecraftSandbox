@@ -8,6 +8,10 @@ World::World()
 {
 	using namespace Gd;
 
+	//Init world seed
+	m_WorldSeed.seed_value = 1;
+	PerlNoise::InitSeedMap(m_WorldSeed);
+
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
 			m_Chunks.emplace_back(this, glm::vec2(float(i), float(j)));
@@ -201,6 +205,16 @@ Chunk& World::GetChunk(uint32_t index)
 		throw std::runtime_error("Vector index out of bounds");
 
 	return m_Chunks[index];
+}
+
+Gd::WorldSeed& World::Seed()
+{
+	return m_WorldSeed;
+}
+
+const Gd::WorldSeed& World::Seed() const
+{
+	return m_WorldSeed;
 }
 
 bool World::IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec)

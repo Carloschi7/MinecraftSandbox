@@ -2,6 +2,7 @@
 #include "MainIncl.h"
 #include <array>
 #include <glm/glm.hpp>
+#include <vector>
 
 //Game defintions
 namespace Gd
@@ -42,6 +43,15 @@ namespace Gd
 		glm::vec3 camera_position;
 		glm::vec3 camera_direction;
 	};
+	struct WorldSeed
+	{
+		//Chosed world seed
+		uint64_t seed_value;
+		//Related seeds computed from the main one, used to generate
+		//overlapping perlin noise to give a much direct sense of realism
+		//in the scene
+		std::vector<uint64_t> secundary_seeds;
+	};
 
 	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};
 
@@ -52,9 +62,11 @@ namespace Gd
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise
 	{
+		void InitSeedMap(WorldSeed& seed);
 		float Interpolate(float a0, float a1, float w);
-		glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2);
-		float PerformDot(int32_t a, int32_t b, float x, float y);
-		float Generate(float x, float y);
+		glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2, const uint64_t& seed);
+		float PerformDot(int32_t a, int32_t b, float x, float y, const uint64_t& seed);
+		float GenerateSingleNoise(float x, float y, const uint64_t& seed);
+		float GetBlockAltitude(float x, float y, const WorldSeed& seed);
 	}
 }
