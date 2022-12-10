@@ -10,6 +10,7 @@ namespace Gd
 	const int32_t g_SpawnerBegin = -64;
 	const int32_t g_SpawnerEnd = 64;
 	const int32_t g_SpawnerIncrement = 16;
+    const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
 
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
@@ -137,15 +138,23 @@ namespace Gd
             fr2 = Interpolate(f3, f4, sx);
             return Interpolate(fr1, fr2, sy);
         }
-        float GetBlockAltitude(float x, float y, const WorldSeed& seed)
+        Generation GetBlockAltitude(float x, float y, const WorldSeed& seed)
         {
-            //Biome distribution TODO
+            //Biome distribution
+            float biome_map = GenerateSingleNoise(x / 1000.0f, y / 1000.0f, seed.seed_value);
+            Biome local_biome = biome_map < -0.2f ? Biome::DESERT : Biome::PLAINS;
 
             //Terrain generation
             float fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
             float fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
             float fz = GenerateSingleNoise(x / 60.0f, y / 60.0f, seed.secundary_seeds[1]) * 2.5f;
-            return fx + fy + fz;
+
+            float terrain_output = fx + fy + fz;
+            //Smoothing the landscape's slopes as we approach the desert
+            if (biome_map < 0.0f)
+                terrain_output *= glm::max(glm::exp(biome_map * 6.0f), 0.1f);
+
+            return { terrain_output, local_biome };
         }
     }
 }

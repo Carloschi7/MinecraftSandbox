@@ -129,9 +129,12 @@ namespace GlCore
             m_VertexManagerSidedPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
 
             m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
+            //Uniforming light direction(static for now)
+            m_ShaderPtr->UniformVec3f(Gd::g_LightDirection, "light_direction");
 
             m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+            m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
 
             //Root management
             Root::SetBlockShader(m_ShaderPtr);
@@ -159,6 +162,10 @@ namespace GlCore
         case Gd::BlockType::GRASS:
             current_texture = &m_Textures[1];
             current_vertex_manager = m_VertexManagerSidedPtr.get();
+            break;
+        case Gd::BlockType::SAND:
+            current_texture = &m_Textures[2];
+            current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
         default:
             throw std::runtime_error("Texture preset for this block not found!");
