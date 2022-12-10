@@ -129,6 +129,18 @@ namespace Utils
 			_CheckUnlocked();
 			return m_Container.empty();
 		}
+
+		void resize(std::size_t size)
+		{
+			_CheckUnlocked();
+			m_Container.resize(size);
+		}
+		void reserve(std::size_t size)
+		{
+			_CheckUnlocked();
+			m_Container.reserve(size);
+		}
+
 	private:
 		std::vector<T> m_Container;
 		mutable std::atomic_bool m_Locked;
