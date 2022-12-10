@@ -38,6 +38,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 					break;
 				case Gd::Biome::DESERT:
 					m_LocalBlocks.emplace_back(glm::vec3(i, j, k), Gd::BlockType::SAND);
+					break;
 				}
 			}
 		}
@@ -289,7 +290,7 @@ bool Chunk::IsChunkRenderable(const Gd::ChunkLogicData& rd) const
 bool Chunk::IsChunkVisible(const Gd::ChunkLogicData& rd) const
 {
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - rd.camera_position);
-	return (glm::dot(camera_to_midway, rd.camera_direction) > 0.0f ||
+	return (glm::dot(camera_to_midway, rd.camera_direction) > 0.35f ||
 		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
 
 	//The 5.0f is just an arbitrary value to fix drawing issues that would be
