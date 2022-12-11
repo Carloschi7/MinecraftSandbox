@@ -171,6 +171,7 @@ namespace GlCore
             throw std::runtime_error("Texture preset for this block not found!");
         }
 
+
         RendererPayload pl{ glm::translate(g_IdentityMatrix, pos),
                             current_vertex_manager,
                             m_ShaderPtr.get(),
@@ -178,6 +179,7 @@ namespace GlCore
                             nullptr,
                             &exp_norms,
                             is_block_selected};
+
 
         Renderer::Render(pl);
     }

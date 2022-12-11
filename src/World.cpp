@@ -45,7 +45,7 @@ World::~World()
 	//GlCore::Renderer::Destroy();
 }
 
-void World::DrawRenderable() const
+void World::DrawRenderable()
 {
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
@@ -54,7 +54,7 @@ void World::DrawRenderable() const
 	Gd::ChunkLogicData logic_data = GlCore::WorldStructure::GetChunkLogicData();
 	
 	m_WorldStructure.UniformRenderInit(draw_data);
-	
+
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		const auto& chunk = m_Chunks[i];
@@ -141,21 +141,26 @@ void World::UpdateScene()
 	}
 
 	//Block Selection & normal updating
+	HandleSelection(chunk_logic_data);
+	m_LastPos = chunk_logic_data.camera_position;
+}
 
+void World::HandleSelection(const Gd::ChunkLogicData& ld)
+{
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		auto& chunk = m_Chunks[i];
-		if (!chunk.IsChunkRenderable(chunk_logic_data) || !chunk.IsChunkVisible(chunk_logic_data))
+		if (!chunk.IsChunkRenderable(ld) || !chunk.IsChunkVisible(ld))
 			continue;
 
-		float current_selection = chunk.BlockCollisionLogic(chunk_logic_data);
-		
+		float current_selection = chunk.BlockCollisionLogic(ld);
+
 		//We update blocks drawing conditions only if we move or if we break blocks
-		if (chunk_logic_data.camera_position != m_LastPos || chunk_logic_data.mouse_input.left_click)
-			chunk.UpdateBlocks(chunk_logic_data);
-		
+		if (ld.camera_position != m_LastPos || ld.mouse_input.left_click)
+			chunk.UpdateBlocks(ld);
+
 		if (current_selection < nearest_selection)
 		{
 			nearest_selection = current_selection;
@@ -164,10 +169,8 @@ void World::UpdateScene()
 	}
 
 	//Setting from which chunk the selectedd block comes from
-	if(involved_chunk != static_cast<uint32_t>(-1))
+	if (involved_chunk != static_cast<uint32_t>(-1))
 		m_Chunks[involved_chunk].SetBlockSelected(true);
-
-	m_LastPos = chunk_logic_data.camera_position;
 }
 
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)

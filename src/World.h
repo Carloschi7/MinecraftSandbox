@@ -9,8 +9,9 @@ public:
     World();
     ~World();
     //Draws the number of chunks visible to the player
-    void DrawRenderable() const;
+    void DrawRenderable();
     void UpdateScene();
+    void HandleSelection(const Gd::ChunkLogicData& ld);
 
     //Returns the corresponding chunk index if exists
     std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);

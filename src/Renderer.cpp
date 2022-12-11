@@ -74,9 +74,6 @@ namespace GlCore
 
 	void Renderer::IRender(const RendererPayload& pl)
 	{
-		if (pl.block_selected)
-			pl.shd->Uniform1i(true, g_EntitySelectedUniformName);
-
 		pl.shd->Use();
 		pl.vm->BindVertexArray();
 
@@ -111,6 +108,19 @@ namespace GlCore
 		}
 
 		if (pl.block_selected)
-			pl.shd->Uniform1i(false, g_EntitySelectedUniformName);
+		{
+			//Giving to the selection that minecraft edgy feel
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			//Deselect the bound texture so it appears black
+			glBindTexture(GL_TEXTURE_2D, 0);
+			pl.shd->Uniform1i(0, g_DiffuseTextureUniformName);
+			//Make the lines stand out
+			glLineWidth(4.0f);
+			pl.shd->UniformMat4f(glm::scale(pl.model, glm::vec3(1.02f)), g_ModelUniformName);
+			glDrawArrays(GL_TRIANGLES, 0, pl.vm->GetIndicesCount());
+			//Reverting crucial changes
+			glLineWidth(1.0f);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		}
 	}
 }
