@@ -11,6 +11,8 @@ namespace Gd
 	const int32_t g_SpawnerEnd = 64;
 	const int32_t g_SpawnerIncrement = 16;
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
+    std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
+    std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
 
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {

@@ -6,9 +6,10 @@
 
 //Half a chunk's diagonal
 float Chunk::s_DiagonalLenght = 0.0f;
+uint32_t Chunk::s_InternalSelectedBlock = static_cast<uint32_t>(-1);
 
 Chunk::Chunk(World* father, glm::vec2 origin)
-	:m_RelativeWorld(father), m_ChunkOrigin(origin), m_IsSelectionHere(false), 
+	:m_RelativeWorld(father), m_ChunkOrigin(origin),
 	m_SelectedBlock(static_cast<uint32_t>(-1)), m_ChunkCenter(0.0f)
 {
 	glm::vec3 chunk_origin_3d(m_ChunkOrigin.x, 0.0f, m_ChunkOrigin.y);
@@ -208,7 +209,7 @@ void Chunk::InitBlockNormals()
 		if (conf_rlfb[2] && chunk_minus_z)
 		{
 			uint32_t block_index;
-			glm::vec3 local_pos{ 0.0f, 1.0f, 0.0f };
+			glm::vec3 local_pos = GlCore::g_PosY;
 			while (chunk_minus_z->IsBlock(m_LocalBlocks[top_column_index].Position() + neg_z + local_pos, 0, true, &block_index))
 			{
 				chunk_minus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, 1.0f);
@@ -219,7 +220,7 @@ void Chunk::InitBlockNormals()
 		if (conf_rlfb[3] && chunk_plus_z)
 		{
 			uint32_t block_index;
-			glm::vec3 local_pos{ 0.0f, 1.0f, 0.0f };
+			glm::vec3 local_pos = GlCore::g_PosY;
 			while (chunk_plus_z->IsBlock(m_LocalBlocks[top_column_index].Position() + pos_z + local_pos, 0, true, &block_index))
 			{
 				chunk_plus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, -1.0f);
@@ -229,11 +230,6 @@ void Chunk::InitBlockNormals()
 
 		starting_index = i;
 	}
-}
-
-void Chunk::SetBlockSelected(bool selected) const
-{
-	m_IsSelectionHere = selected;
 }
 
 float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
@@ -381,7 +377,7 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 	}
 }
 
-void Chunk::Draw(const Gd::RenderData& rd) const
+void Chunk::Draw(const Gd::RenderData& rd, bool selected) const
 {
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{
@@ -390,7 +386,7 @@ void Chunk::Draw(const Gd::RenderData& rd) const
 		if (!block.IsDrawable())
 			continue;
 
-		block.Draw(m_IsSelectionHere && i == m_SelectedBlock);
+		block.Draw(selected && i == s_InternalSelectedBlock);
 	}
 }
 
@@ -407,13 +403,13 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 		{
 			if (!side_chunk_check)
 			{
-				if (m_PlusX.has_value() && norm == glm::vec3(1.0f, 0.0f, 0.0f))
+				if (m_PlusX.has_value() && norm == GlCore::g_PosX)
 					m_RelativeWorld->GetChunk(m_PlusX.value()).AddNewExposedNormals(pos, true);
-				if (m_MinusX.has_value() && norm == glm::vec3(-1.0f, 0.0f, 0.0f))
+				if (m_MinusX.has_value() && norm == GlCore::g_NegX)
 					m_RelativeWorld->GetChunk(m_MinusX.value()).AddNewExposedNormals(pos, true);
-				if (m_PlusZ.has_value() && norm == glm::vec3(0.0f, 0.0f, 1.0f))
+				if (m_PlusZ.has_value() && norm == GlCore::g_PosZ)
 					m_RelativeWorld->GetChunk(m_PlusZ.value()).AddNewExposedNormals(pos, true);
-				if (m_MinusZ.has_value() && norm == glm::vec3(0.0f, 0.0f, -1.0f))
+				if (m_MinusZ.has_value() && norm == GlCore::g_NegZ)
 					m_RelativeWorld->GetChunk(m_MinusZ.value()).AddNewExposedNormals(pos, true);
 			}
 		}
@@ -423,12 +419,17 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 		}
 	};
 
-	compute_new_normals(block_pos, glm::vec3(1.0f, 0.0f, 0.0f));
-	compute_new_normals(block_pos, glm::vec3(-1.0f, 0.0f, 0.0f));
-	compute_new_normals(block_pos, glm::vec3(0.0f, 1.0f, 0.0f));
-	compute_new_normals(block_pos, glm::vec3(0.0f, -1.0f, 0.0f));
-	compute_new_normals(block_pos, glm::vec3(0.0f, 0.0f, 1.0f));
-	compute_new_normals(block_pos, glm::vec3(0.0f, 0.0f, -1.0f));
+	compute_new_normals(block_pos, GlCore::g_PosX);
+	compute_new_normals(block_pos, GlCore::g_NegX);
+	compute_new_normals(block_pos, GlCore::g_PosY);
+	compute_new_normals(block_pos, GlCore::g_NegY);
+	compute_new_normals(block_pos, GlCore::g_PosZ);
+	compute_new_normals(block_pos, GlCore::g_NegZ);
+}
+
+uint32_t Chunk::LastSelectedBlock() const
+{
+	return m_SelectedBlock;
 }
 
 glm::vec3 Chunk::GetHalfWayVector()

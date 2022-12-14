@@ -55,16 +55,15 @@ void World::DrawRenderable()
 	
 	m_WorldStructure.UniformRenderInit(draw_data);
 
+	uint32_t ch = Gd::g_SelectedChunk.load();
+	//Setting selected block index, which will be used only by the owning chunk
+	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		const auto& chunk = m_Chunks[i];
 		if (chunk.IsChunkRenderable(logic_data) && chunk.IsChunkVisible(logic_data))
-			chunk.Draw(draw_data);
+			chunk.Draw(draw_data, ch == i);
 	}
-
-	//Resetting selection
-	for (uint32_t i = 0; i < m_Chunks.size(); i++)
-		m_Chunks[i].SetBlockSelected(false);
 	
 	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
@@ -169,8 +168,11 @@ void World::HandleSelection(const Gd::ChunkLogicData& ld)
 	}
 
 	//Setting from which chunk the selectedd block comes from
+	Gd::g_SelectedChunk = involved_chunk;
 	if (involved_chunk != static_cast<uint32_t>(-1))
-		m_Chunks[involved_chunk].SetBlockSelected(true);
+	{
+		Gd::g_SelectedBlock = m_Chunks[involved_chunk].LastSelectedBlock();
+	}
 }
 
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)

@@ -17,6 +17,9 @@ namespace Gd
 	extern const int32_t g_SpawnerEnd;
 	extern const int32_t g_SpawnerIncrement;
 	extern const glm::vec3 g_LightDirection;
+	//Variables for block selection
+	extern std::atomic_uint32_t g_SelectedBlock;
+	extern std::atomic_uint32_t g_SelectedChunk;
 
     enum class BlockType : uint8_t
     {
