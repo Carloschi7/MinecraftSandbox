@@ -135,6 +135,8 @@ namespace GlCore
             m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
+            m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
+            m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
 
             //Root management
             Root::SetBlockShader(m_ShaderPtr);
@@ -165,6 +167,14 @@ namespace GlCore
             break;
         case Gd::BlockType::SAND:
             current_texture = &m_Textures[2];
+            current_vertex_manager = m_VertexManagerSinglePtr.get();
+            break;
+        case Gd::BlockType::WOOD:
+            current_texture = &m_Textures[3];
+            current_vertex_manager = m_VertexManagerSidedPtr.get();
+            break;
+        case Gd::BlockType::LEAVES:
+            current_texture = &m_Textures[4];
             current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
         default:

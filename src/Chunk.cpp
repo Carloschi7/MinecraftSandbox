@@ -24,6 +24,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
+	{
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
 			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(static_cast<float>(i), static_cast<float>(k), m_RelativeWorld->Seed());
@@ -42,7 +43,23 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 					break;
 				}
 			}
+
+			//Spawn a tree in the center
+			if (perlin_data.biome == Gd::Biome::PLAINS &&
+				i == origin.x + s_ChunkWidthAndHeight / 2 &&
+				k == origin.y + s_ChunkWidthAndHeight / 2)
+			{
+				for(uint32_t p = 0; p < 4; p++)
+					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Gd::BlockType::WOOD);
+
+				//With its leaves
+				for (int32_t x = -1; x <= 1; x++)
+					for (int32_t z = -1; z <= 1; z++)
+						for (int32_t y = 1; y <= 3; y++)
+							m_LocalBlocks.emplace_back(glm::vec3(i + x, final_height + 3 + y, k + z), Gd::BlockType::LEAVES);
+			}
 		}
+	}
 }
 
 Chunk::~Chunk()
@@ -74,19 +91,30 @@ void Chunk::InitBlockNormals()
 	//The algorithm analyses each column of blocks in the 16x16 which can be found in the chunk and
 	//from the top block of that column an index descends assigning to each side a normal
 	//until a side block is found
-	float local_z = m_LocalBlocks[0].Position().z;
+	float local_x =  m_LocalBlocks[0].Position().x, local_z = m_LocalBlocks[0].Position().z;
 	int32_t starting_index = 0;
 	//+1 because we need to parse the last column
 	for (int32_t i = 0; i < m_LocalBlocks.size() + 1; i++)
 	{
-		if (i != m_LocalBlocks.size() && m_LocalBlocks[i].Position().z == local_z)
+		if (i != m_LocalBlocks.size() &&
+			m_LocalBlocks[i].Position().x == local_x &&
+			m_LocalBlocks[i].Position().z == local_z)
+		{
 			continue;
+		}
 
 		if (i != m_LocalBlocks.size())
+		{
+			local_x = m_LocalBlocks[i].Position().x;
 			local_z = m_LocalBlocks[i].Position().z;
+		}
 
 		uint32_t top_column_index = i - 1;
-		const glm::vec3& block_pos = m_LocalBlocks[top_column_index].Position();
+		//The block at the top of the pile and the one at the bottom
+		auto& top_block = m_LocalBlocks[top_column_index];
+		auto& bot_block = m_LocalBlocks[starting_index];
+
+		const glm::vec3& block_pos = top_block.Position();
 
 		//if the blocks confines with another chunk right left front or back
 		bool conf_rlfb[4];
@@ -96,11 +124,11 @@ void Chunk::InitBlockNormals()
 		conf_rlfb[3] = block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
 
 		//Upper block of a column is always visible from the top
-		m_LocalBlocks[top_column_index].AddNormal(GlCore::g_PosY);
+		top_block.AddNormal(GlCore::g_PosY);
 
+		int32_t p = top_column_index;
 		if (conf_rlfb[0] || conf_rlfb[1] || conf_rlfb[2] || conf_rlfb[3])
 		{
-			int32_t p = top_column_index;
 			//Checking also for neighbor chunks
 			//Right
 			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true) &&
@@ -151,7 +179,6 @@ void Chunk::InitBlockNormals()
 		else
 		{
 			//A more slim implementation for the majority of the iterations
-			uint32_t p = top_column_index;
 			//Right
 			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true))
 			{
@@ -180,6 +207,10 @@ void Chunk::InitBlockNormals()
 				p--;
 			}
 		}
+		//Push a normal at the bottom
+		if(bot_block.Position().y != 0.0f)
+			bot_block.AddNormal(GlCore::g_NegY);
+
 
 		//Adding additional normals to side chunks, which were not considered because there hasn't
 		//been a spawned chunk yet
@@ -188,7 +219,7 @@ void Chunk::InitBlockNormals()
 			uint32_t block_index;
 			//Emplacing back normals from the first block higher than the current one 
 			glm::vec3 begin_check = GlCore::g_PosY;
-			while (chunk_plus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + pos_x + begin_check, 0, true, &block_index))
+			while (chunk_plus_x->IsBlock(top_block.Position() + pos_x + begin_check, 0, true, &block_index))
 			{
 				chunk_plus_x->GetBlock(block_index).AddNormal(-1.0f, 0.0f, 0.0f);
 				begin_check.y += 1.0f;
@@ -199,7 +230,7 @@ void Chunk::InitBlockNormals()
 		{
 			uint32_t block_index;
 			glm::vec3 begin_check = GlCore::g_PosY;
-			while (chunk_minus_x->IsBlock(m_LocalBlocks[top_column_index].Position() + neg_x + begin_check, 0, true, &block_index))
+			while (chunk_minus_x->IsBlock(top_block.Position() + neg_x + begin_check, 0, true, &block_index))
 			{
 				chunk_minus_x->GetBlock(block_index).AddNormal(1.0f, 0.0f, 0.0f);
 				begin_check.y += 1.0f;
@@ -210,7 +241,7 @@ void Chunk::InitBlockNormals()
 		{
 			uint32_t block_index;
 			glm::vec3 local_pos = GlCore::g_PosY;
-			while (chunk_minus_z->IsBlock(m_LocalBlocks[top_column_index].Position() + neg_z + local_pos, 0, true, &block_index))
+			while (chunk_minus_z->IsBlock(top_block.Position() + neg_z + local_pos, 0, true, &block_index))
 			{
 				chunk_minus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, 1.0f);
 				local_pos.y += 1.0f;
@@ -221,7 +252,7 @@ void Chunk::InitBlockNormals()
 		{
 			uint32_t block_index;
 			glm::vec3 local_pos = GlCore::g_PosY;
-			while (chunk_plus_z->IsBlock(m_LocalBlocks[top_column_index].Position() + pos_z + local_pos, 0, true, &block_index))
+			while (chunk_plus_z->IsBlock(top_block.Position() + pos_z + local_pos, 0, true, &block_index))
 			{
 				chunk_plus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, -1.0f);
 				local_pos.y += 1.0f;

@@ -23,7 +23,7 @@ namespace Gd
 
     enum class BlockType : uint8_t
     {
-        DIRT = 0, GRASS, SAND
+        DIRT = 0, GRASS, SAND, WOOD, LEAVES
     };
 
 	struct MouseInput
