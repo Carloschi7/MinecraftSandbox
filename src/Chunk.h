@@ -15,6 +15,8 @@ public:
 	//the y axis is not considered, so the y component of the origin vector
 	//will be used as an alias of z
 	Chunk(World* father, glm::vec2 origin);
+	//Construct by deserialization
+	Chunk(const Utils::Serializer& sz);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&&) = default;
 	~Chunk();
@@ -37,9 +39,14 @@ public:
 	void Draw(const Gd::RenderData& rd, bool selected = false) const;
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 	uint32_t LastSelectedBlock() const;
+	uint32_t SectorIndex() const;
 
 	//Sum this with the chunk origin to get chunk's center
 	static glm::vec3 GetHalfWayVector();
+
+	//Serializing & and deserializing % function
+	const Utils::Serializer& operator&(const Utils::Serializer& sz);
+	const Utils::Serializer& operator%(const Utils::Serializer& sz);
 public:
 	//Variable used to determine which chunk holds the selected block
 	//used instead of Gd::g_SelectedChunk in multiple iterations so we
@@ -56,7 +63,6 @@ private:
 	Utils::AlignedPtr<World> m_RelativeWorld;
 
 	VecType<Block> m_LocalBlocks;
-	GlCore::ChunkStructure m_ChunkStructure;
 	//front-bottom-left block position
 	glm::vec2 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;
@@ -64,6 +70,8 @@ private:
 	uint32_t m_SelectedBlock;
 	//determining if side chunk exists
 	std::optional<uint32_t> m_PlusX, m_MinusX, m_PlusZ, m_MinusZ;
+	//Sector index
+	uint32_t m_SectorIndex;
 
 
 	static float s_DiagonalLenght;

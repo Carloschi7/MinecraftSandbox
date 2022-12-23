@@ -113,10 +113,6 @@ namespace GlCore
         block_shader->UniformMat4f(rd.view_matrix, g_ViewUniformName);
     }
 
-    ChunkStructure::ChunkStructure()
-    {
-    }
-
 
     BlockStructure::BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt)
     {

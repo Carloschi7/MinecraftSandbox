@@ -63,6 +63,12 @@ namespace Gd
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
     void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);
 	bool ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, float& dist);
+	//Chunks will also be assigned a value in order to be grouped
+	//with other chunks. This is done in order to save RAM, so not
+	//every chunk of the world is loaded at once.
+	//If the player is far enough from a chunk sector, the chunks
+	//will be serialized on the disk
+	uint32_t ChunkSectorIndex(const glm::vec2& pos);
 
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise

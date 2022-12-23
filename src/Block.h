@@ -23,9 +23,12 @@ public:
     void RemoveNormal(float x, float y, float z);
     bool HasNormals() const;
     bool IsDrawable() const;
-private:
-    uint32_t _IndexForNormal(const glm::vec3& vec);
-    glm::vec3 _NormalForIndex(uint32_t index);
+
+    //Serialization
+    void Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos);
+public:
+    static uint32_t IndexForNormal(const glm::vec3& vec);
+    static glm::vec3 NormalForIndex(uint32_t index);
 private:
     glm::vec3 m_Position;
     //Used to determine which sides are exposed, thus

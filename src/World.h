@@ -20,9 +20,12 @@ public:
     Gd::WorldSeed& Seed();
     const Gd::WorldSeed& Seed() const;
 
+    void SerializeSector(uint32_t index);
+
 private:
     //Function which handles spawnable chunk pushing conditions
     bool IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec);
+    
 private:
     VecType<Chunk> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
@@ -34,5 +37,7 @@ private:
     GlCore::WorldStructure m_WorldStructure;
     //For terrain generation
     Gd::WorldSeed m_WorldSeed;
+    //For serialization purposes
+    Utils::Serializer m_Serializer;
 };
 

@@ -36,12 +36,6 @@ namespace GlCore
         friend class World;
     };
 
-    class ChunkStructure
-    {
-    public:
-        ChunkStructure();
-    };
-
     class BlockStructure 
     {
     public:

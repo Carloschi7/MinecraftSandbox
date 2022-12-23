@@ -10,7 +10,8 @@ uint32_t Chunk::s_InternalSelectedBlock = static_cast<uint32_t>(-1);
 
 Chunk::Chunk(World* father, glm::vec2 origin)
 	:m_RelativeWorld(father), m_ChunkOrigin(origin),
-	m_SelectedBlock(static_cast<uint32_t>(-1)), m_ChunkCenter(0.0f)
+	m_SelectedBlock(static_cast<uint32_t>(-1)), m_ChunkCenter(0.0f),
+	m_SectorIndex(0)
 {
 	glm::vec3 chunk_origin_3d(m_ChunkOrigin.x, 0.0f, m_ChunkOrigin.y);
 	m_ChunkCenter = chunk_origin_3d + GetHalfWayVector();
@@ -60,6 +61,15 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 			}
 		}
 	}
+
+	//Set chunk sector
+	m_SectorIndex = Gd::ChunkSectorIndex(m_ChunkOrigin);
+}
+
+Chunk::Chunk(const Utils::Serializer& sz)
+{
+	//Simply forward everithing to the deserializing operator
+	*this % sz;
 }
 
 Chunk::~Chunk()
@@ -463,9 +473,88 @@ uint32_t Chunk::LastSelectedBlock() const
 	return m_SelectedBlock;
 }
 
+uint32_t Chunk::SectorIndex() const
+{
+	return m_SectorIndex;
+}
+
 glm::vec3 Chunk::GetHalfWayVector()
 {
 	return glm::vec3(s_ChunkWidthAndHeight / 2.0f, s_ChunkDepth / 2.0f, s_ChunkWidthAndHeight / 2.0f);
+}
+
+const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
+{
+	//Serializing components
+	//At first we tell how many blocks the chunk has
+	sz& m_LocalBlocks.size();
+	//World address does not need to be serialized
+
+	if (!m_LocalBlocks.empty())
+	{
+		auto& base_vec = m_LocalBlocks[0].Position();
+		//We serialize only a single 12bytes position vector,
+		//so the other can be stored as 3bytes vector offsets
+		sz& base_vec.x& base_vec.y& base_vec.z;
+
+		for (auto& block : m_LocalBlocks)
+			block.Serialize(sz, base_vec);
+	}
+
+	sz& m_ChunkOrigin.x & m_ChunkOrigin.y;
+	//m_ChunkCenter can be calculated from m_ChunkOrigin
+	//m_SelectedBlock does not need to be serialized
+
+	sz& m_PlusX.value_or(-1)
+		& m_MinusX.value_or(-1)
+		& m_PlusZ.value_or(-1)
+		& m_MinusZ.value_or(-1);
+
+	return sz;
+}
+
+const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
+{
+	std::size_t blk_vec_size;
+	glm::vec3 base_vec;
+	uint32_t adj_chunks[4];
+
+	sz% blk_vec_size;
+
+	if (blk_vec_size != 0)
+	{
+		m_LocalBlocks.clear();
+
+		sz% base_vec.x% base_vec.y% base_vec.z;
+
+		glm::u8vec3 v;
+		uint8_t norm_payload, block_type;
+
+		for (uint32_t i = 0; i < blk_vec_size; i++)
+		{
+			sz% v.x% v.y% v.z;
+			sz% norm_payload;
+			sz% block_type;
+
+			glm::vec3 original_vec = base_vec + static_cast<glm::vec3>(v);
+			m_LocalBlocks.emplace_back(original_vec, static_cast<Gd::BlockType>(block_type));
+			auto& bb = m_LocalBlocks.back();
+			
+			Utils::Bitfield<6> bf( {norm_payload} );
+			for (uint32_t i = 0; i < bf.Size(); i++)
+				if (bf[i])
+					bb.AddNormal(Block::NormalForIndex(i));
+		}
+	}
+
+	sz% m_ChunkOrigin.x% m_ChunkOrigin.y;
+	sz% adj_chunks[0] % adj_chunks[1] % adj_chunks[2] % adj_chunks[3];
+	m_PlusX = adj_chunks[0];
+	m_MinusX = adj_chunks[1];
+	m_PlusZ = adj_chunks[2];
+	m_MinusZ = adj_chunks[3];
+
+	return sz;
 }
 
 bool Chunk::IsBlock(const glm::vec3& pos, int32_t starting_index, bool search_towards_end, uint32_t* block_index) const

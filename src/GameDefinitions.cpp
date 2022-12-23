@@ -82,6 +82,17 @@ namespace Gd
         return true;
     }
 
+    uint32_t ChunkSectorIndex(const glm::vec2& pos)
+    {
+        //Determine the chunk's level of distance
+        int16_t dist_x = 0, dist_y = 0;
+        dist_x = static_cast<int16_t>(glm::floor(pos.x / 128.0f));
+        dist_y = static_cast<int16_t>(glm::floor(pos.y / 128.0f));
+
+        uint32_t ret = static_cast<uint32_t>(dist_x) << 8 | static_cast<uint16_t>(dist_y);
+        return ret;
+    }
+
     namespace PerlNoise
     {
         //Init the seed with premultiplied constants,

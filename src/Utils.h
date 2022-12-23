@@ -3,8 +3,12 @@
 #include <list>
 #include <mutex>
 #include <chrono>
+#include <fstream>
 #include "Macros.h"
 
+#ifndef BYTE_INDEX_FOR_BITS
+	#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
+#endif
 
 //Utilities
 namespace Utils
@@ -84,6 +88,11 @@ namespace Utils
 		{
 			_CheckUnlocked();
 			m_Container.erase(iter);
+		}
+		void clear()
+		{
+			_CheckUnlocked();
+			m_Container.clear();
 		}
 
 		iterator begin()
@@ -295,5 +304,145 @@ namespace Utils
 		}
 	private:
 		std::chrono::steady_clock::time_point m_TimePoint;
+	};
+
+	//Serializes object on the disk
+	//As a convention, the & operator means serialization
+	//and the % operator means deserialization
+	class Serializer
+	{
+	public:
+		Serializer(const std::string& filename)
+		{
+			m_File = std::fopen(filename.c_str(), "w+b");
+		}
+		~Serializer()
+		{
+			std::fclose(m_File);
+		}
+
+		//T object needs to be serializable
+		template<typename T, 
+			std::enable_if_t<std::is_integral_v<T> | std::is_floating_point_v<T>,
+			int> = 0>
+		void Serialize(const T& obj) const
+		{
+			std::fwrite(&obj, sizeof(T), 1, m_File);
+		}
+
+		template<typename T,
+			std::enable_if_t<std::is_integral_v<T> | std::is_floating_point_v<T>,
+			int> = 0>
+		T Deserialize() const
+		{
+			T obj;
+			std::fread(&obj, sizeof(T), 1, m_File);
+			return obj;
+		}
+
+		void Seek(std::size_t pos) const
+		{
+			std::fseek(m_File, pos, SEEK_SET);
+		}
+		std::size_t Tell() const
+		{
+			return std::ftell(m_File);
+		}
+		void Rewind()
+		{
+			Seek(0);
+		}
+
+		template<typename T>
+		const Serializer& operator&(const T& obj) const
+		{
+			Serialize<T>(obj);
+			return *this;
+		}
+		template<typename T>
+		const Serializer& operator%(T& obj) const
+		{
+			obj = Deserialize<T>();
+			return *this;
+		}
+		
+	private:
+		FILE* m_File;
+	};
+
+	//Avoid using std::bitset because it occupies 4 bytes even for a few bits
+	//
+	//	00100010 01001000 ... 
+	//  |				|
+	//  |				|
+	//  |				|
+	//	bit 0			bit 15
+	//
+	//	Implicit big endian conversion performed to preserv continuity
+	
+	//Calculates a u8 array dimension for the given number of bits
+	//In this project, helps with block normal serialization
+	template<uint32_t Bits>
+	class Bitfield
+	{
+		static_assert(Bits != 0);
+	public:
+		Bitfield() = default;
+		Bitfield(const Bitfield&) = default;
+		Bitfield(const std::array<uint8_t, BYTE_INDEX_FOR_BITS(Bits)>& arr)
+			:m_Data(arr)
+		{
+		}
+
+		void Set(uint32_t pos, bool state)
+		{
+			if (pos >= Bits)
+			{
+				LOG_DEBUG("Invalid pos, nothing will change");
+				return;
+			}
+
+			uint8_t& cur_byte = m_Data[pos / 8];
+			uint32_t wrapped_pos = 7 - (pos % 8);
+
+			cur_byte = (cur_byte & ~(1 << wrapped_pos)) | (state << wrapped_pos);
+		}
+		bool Get(uint32_t pos) const
+		{
+			//If index over bounds, just return false
+			if (pos >= Bits)
+			{
+				LOG_DEBUG("Invalid pos, false will be returned");
+				return false;
+			}
+
+			const uint8_t& cur_byte = m_Data[pos / 8];
+			uint32_t wrapped_pos = 7 - (pos % 8);
+
+			auto val = static_cast<uint8_t>((cur_byte & (1 << wrapped_pos)) >> wrapped_pos);
+			return val != 0;
+		}
+		uint32_t Size() const { return Bits; }
+		bool operator[](uint32_t bit) const { return Get(bit); }
+
+		uint8_t Getu8Payload(uint32_t index)
+		{
+			if (index >= m_Data.size())
+				return 0;
+
+			return m_Data[index];
+		}
+
+		bool AllOf(bool state) const
+		{
+			for (const uint8_t& byte : m_Data)
+				if (byte != static_cast<uint8_t>(-state))
+					return false;
+
+			return true;
+		}
+
+	private:
+		std::array<uint8_t, BYTE_INDEX_FOR_BITS(Bits)> m_Data{};
 	};
 }

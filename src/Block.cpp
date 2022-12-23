@@ -24,7 +24,7 @@ void Block::UpdateRenderableSides(const glm::vec3& camera_pos)
         const bool& is_norm = m_ExposedNormals[i];
         if (is_norm)
         {
-            glm::vec3 norm = _NormalForIndex(i);
+            glm::vec3 norm = NormalForIndex(i);
             if (counter < 3 && glm::dot(norm, -dir) > 0.0f)
                 m_DrawableSides.first[counter++] = GlCore::GetNormVertexBegin(norm);
         }
@@ -43,7 +43,7 @@ const GlCore::DrawableData& Block::DrawableSides() const
 
 void Block::AddNormal(const glm::vec3& norm)
 {
-    m_ExposedNormals[_IndexForNormal(norm)] = true;
+    m_ExposedNormals[IndexForNormal(norm)] = true;
 }
 
 void Block::AddNormal(float x, float y, float z)
@@ -53,7 +53,7 @@ void Block::AddNormal(float x, float y, float z)
 
 void Block::RemoveNormal(const glm::vec3& norm)
 {
-    m_ExposedNormals[_IndexForNormal(norm)] = false;
+    m_ExposedNormals[IndexForNormal(norm)] = false;
 }
 
 void Block::RemoveNormal(float x, float y, float z)
@@ -71,7 +71,22 @@ bool Block::IsDrawable() const
     return m_DrawableSides.second;
 }
 
-uint32_t Block::_IndexForNormal(const glm::vec3& vec)
+void Block::Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos)
+{
+    auto offset_vec = static_cast<glm::u8vec3>(m_Position - base_pos);
+    sz& offset_vec.x& offset_vec.y& offset_vec.z;
+
+    Utils::Bitfield<6> bitfield;
+    for (uint32_t i = 0; i < m_ExposedNormals.size(); i++)
+        bitfield.Set(i, m_ExposedNormals[i]);
+
+    sz& bitfield.Getu8Payload(0);
+    //m_BlockStructure and m_DrawableData do not need to be serialized
+
+    sz& static_cast<uint8_t>(m_BlockType);
+}
+
+uint32_t Block::IndexForNormal(const glm::vec3& vec)
 {
     if (vec == glm::vec3(1.0f, 0.0f, 0.0f))
         return 0;
@@ -89,7 +104,7 @@ uint32_t Block::_IndexForNormal(const glm::vec3& vec)
     return static_cast<uint32_t>(-1);
 }
 
-glm::vec3 Block::_NormalForIndex(uint32_t index)
+glm::vec3 Block::NormalForIndex(uint32_t index)
 {
     switch (index)
     {

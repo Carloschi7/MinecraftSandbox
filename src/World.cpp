@@ -4,7 +4,7 @@
 
 //Initializing a single block for now
 World::World()
-	: m_LastPos(0.0f)
+	: m_Serializer("output.txt"), m_LastPos(0.0f)
 {
 	using namespace Gd;
 
@@ -42,7 +42,6 @@ World::World()
 
 World::~World()
 {
-	//GlCore::Renderer::Destroy();
 }
 
 void World::DrawRenderable()
@@ -220,6 +219,15 @@ Gd::WorldSeed& World::Seed()
 const Gd::WorldSeed& World::Seed() const
 {
 	return m_WorldSeed;
+}
+
+void World::SerializeSector(uint32_t index)
+{
+	for (auto& chunk : m_Chunks)
+	{
+		if (chunk.SectorIndex() == index)
+			chunk & m_Serializer;
+	}
 }
 
 bool World::IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec)
