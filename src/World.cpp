@@ -4,7 +4,7 @@
 
 //Initializing a single block for now
 World::World()
-	: m_Serializer("output.txt"), m_LastPos(0.0f)
+	: m_LastPos(0.0f)
 {
 	using namespace Gd;
 
@@ -15,6 +15,8 @@ World::World()
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
 			m_Chunks.emplace_back(this, glm::vec2(float(i), float(j)));
+
+	HandleSectionData();
 
 	auto add_spawnable_chunk = [&](const glm::vec3& pos)
 	{
@@ -90,6 +92,7 @@ void World::UpdateScene()
 					m_Chunks.lock();
 #endif
 			m_Chunks.emplace_back(this, chunk_pos);
+			HandleSectionData();
 #ifdef STRONG_THREAD_SAFETY
 			if (needs_lock)
 				if constexpr (GlCore::g_MultithreadedRendering)
@@ -141,6 +144,23 @@ void World::UpdateScene()
 	//Block Selection & normal updating
 	HandleSelection(chunk_logic_data);
 	m_LastPos = chunk_logic_data.camera_position;
+
+	//TODO Serialization (Test)
+	//glm::vec2 camera_2d{ chunk_logic_data.camera_position.x,chunk_logic_data.camera_position.z };
+	//for (Gd::SectionData& data : m_SectionsData)
+	//{
+	//	//Serialization zone
+	//	if (data.bLoaded && glm::length(camera_2d - data.central_position) > 250.0f)
+	//	{
+	//		//SerializeSector(data.index);
+	//	}
+
+	//	//Deserialization zone
+	//	if (!data.bLoaded && glm::length(camera_2d - data.central_position) < 150.0f)
+	//	{
+	//		//DeserializeSector(data.index);
+	//	}
+	//}
 }
 
 void World::HandleSelection(const Gd::ChunkLogicData& ld)
@@ -172,6 +192,23 @@ void World::HandleSelection(const Gd::ChunkLogicData& ld)
 	{
 		Gd::g_SelectedBlock = m_Chunks[involved_chunk].LastSelectedBlock();
 	}
+}
+
+void World::HandleSectionData()
+{
+	//Load pushed sections
+	for (auto& obj : Gd::g_PushedSections)
+	{
+		//Checking that it was now pushed yet
+		if (std::find_if(m_SectionsData.begin(), m_SectionsData.end(),
+			[&](const auto& elem) {return elem.index == obj; }) == m_SectionsData.end())
+		{
+			Gd::SectionData sd{ obj, SectionCentralPosFrom(obj), true };
+			m_SectionsData.push_back(sd);
+		}
+	}
+
+	Gd::g_PushedSections.clear();
 }
 
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)
@@ -223,10 +260,27 @@ const Gd::WorldSeed& World::Seed() const
 
 void World::SerializeSector(uint32_t index)
 {
-	for (auto& chunk : m_Chunks)
+	//Load sector's serializer
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat);
+
+	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end(); ++iter)
 	{
-		if (chunk.SectorIndex() == index)
-			chunk & m_Serializer;
+		if (iter->SectorIndex() == index)
+		{
+			*iter & sz;
+			m_Chunks.erase(iter);
+		}
+	}
+}
+
+void World::DeserializeSector(uint32_t index)
+{
+	//Load sector's serializer
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat);
+
+	while (!sz.Eof())
+	{
+		m_Chunks.emplace_back(sz);
 	}
 }
 
@@ -236,5 +290,18 @@ bool World::IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const gl
 
 	return !IsChunk(chunk, cl).has_value() && 
 		std::find_if(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), internal_pred) == m_SpawnableChunks.end();
+}
+
+glm::vec2 World::SectionCentralPosFrom(uint32_t index)
+{
+	//extract the 2 u16
+	int16_t coords[2];
+	std::memcpy(coords, &index, sizeof(uint32_t));
+
+	glm::vec2 pos = glm::vec2(coords[0], coords[1]) * Gd::g_SectionDimension;
+	pos.x += Gd::g_SectionDimension * 0.5f;
+	pos.y += Gd::g_SectionDimension * 0.5f;
+
+	return pos;
 }
 

@@ -7,12 +7,17 @@ namespace Gd
 	const float g_CameraCompensation = 5.0f;
 	const float g_RenderDistance = 1500.0f;
     const float g_FramedPlayerSpeed = 60.0f;
+    const float g_SectionDimension = 512.0f;
 	const int32_t g_SpawnerBegin = -64;
 	const int32_t g_SpawnerEnd = 64;
 	const int32_t g_SpawnerIncrement = 16;
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
+    //Shorthand for Sector SerialiZeD
+    std::string g_SerializedFileFormat = ".sszd";
+
+    std::unordered_set<uint32_t> g_PushedSections;
 
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
@@ -85,11 +90,12 @@ namespace Gd
     uint32_t ChunkSectorIndex(const glm::vec2& pos)
     {
         //Determine the chunk's level of distance
-        int16_t dist_x = 0, dist_y = 0;
-        dist_x = static_cast<int16_t>(glm::floor(pos.x / 128.0f));
-        dist_y = static_cast<int16_t>(glm::floor(pos.y / 128.0f));
+        int16_t dist[2];
+        dist[0] = static_cast<int16_t>(glm::floor(pos.x / g_SectionDimension));
+        dist[1] = static_cast<int16_t>(glm::floor(pos.y / g_SectionDimension));
 
-        uint32_t ret = static_cast<uint32_t>(dist_x) << 8 | static_cast<uint16_t>(dist_y);
+        uint32_t ret = 0;
+        std::memcpy(&ret, dist, sizeof(uint32_t));
         return ret;
     }
 

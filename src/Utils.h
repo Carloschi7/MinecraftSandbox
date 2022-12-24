@@ -309,6 +309,7 @@ namespace Utils
 	//Serializes object on the disk
 	//As a convention, the & operator means serialization
 	//and the % operator means deserialization
+	//NOT THREAD SAFE
 	class Serializer
 	{
 	public:
@@ -344,6 +345,16 @@ namespace Utils
 		{
 			std::fseek(m_File, pos, SEEK_SET);
 		}
+
+		bool Eof() const
+		{
+			uint32_t cur_pos = std::ftell(m_File);
+			std::fseek(m_File, 0, SEEK_END);
+			bool is_eof = cur_pos == std::ftell(m_File);
+			std::fseek(m_File, cur_pos, SEEK_SET);
+			return is_eof;
+		}
+
 		std::size_t Tell() const
 		{
 			return std::ftell(m_File);

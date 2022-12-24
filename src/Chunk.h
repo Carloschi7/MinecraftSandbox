@@ -18,8 +18,11 @@ public:
 	//Construct by deserialization
 	Chunk(const Utils::Serializer& sz);
 	Chunk(const Chunk&) = delete;
-	Chunk(Chunk&&) = default;
+	Chunk(Chunk&& rhs) noexcept;
 	~Chunk();
+
+	Chunk& operator=(const Chunk&) = delete;
+	Chunk& operator=(Chunk&& rhs) noexcept;
 
 	//All the chunks need to be loaded in order to use this function
 	void InitBlockNormals();

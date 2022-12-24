@@ -3,6 +3,7 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <vector>
+#include <unordered_set>
 
 //Game defintions
 namespace Gd
@@ -13,6 +14,7 @@ namespace Gd
 	extern const float g_CameraCompensation;
 	extern const float g_RenderDistance;
 	extern const float g_FramedPlayerSpeed;
+	extern const float g_SectionDimension;
 	extern const int32_t g_SpawnerBegin;
 	extern const int32_t g_SpawnerEnd;
 	extern const int32_t g_SpawnerIncrement;
@@ -20,6 +22,9 @@ namespace Gd
 	//Variables for block selection
 	extern std::atomic_uint32_t g_SelectedBlock;
 	extern std::atomic_uint32_t g_SelectedChunk;
+	//Used to track how many sections have been pushed
+	extern std::unordered_set<uint32_t> g_PushedSections;
+	extern std::string g_SerializedFileFormat;
 
     enum class BlockType : uint8_t
     {
@@ -55,6 +60,14 @@ namespace Gd
 		//overlapping perlin noise to give a much direct sense of realism
 		//in the scene
 		std::vector<uint64_t> secundary_seeds;
+	};
+
+	//Handles section data
+	struct SectionData
+	{
+		uint32_t index;
+		glm::vec2 central_position;
+		bool bLoaded = true;
 	};
 
 	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};

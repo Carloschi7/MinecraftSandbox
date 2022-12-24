@@ -12,6 +12,8 @@ public:
     void DrawRenderable();
     void UpdateScene();
     void HandleSelection(const Gd::ChunkLogicData& ld);
+    //Pushes setion data to eventually help with serialization
+    void HandleSectionData();
 
     //Returns the corresponding chunk index if exists
     std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);
@@ -20,11 +22,14 @@ public:
     Gd::WorldSeed& Seed();
     const Gd::WorldSeed& Seed() const;
 
+    //Serialization utilities
     void SerializeSector(uint32_t index);
+    void DeserializeSector(uint32_t index);
 
 private:
     //Function which handles spawnable chunk pushing conditions
     bool IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec);
+    glm::vec2 SectionCentralPosFrom(uint32_t index);
     
 private:
     VecType<Chunk> m_Chunks;
@@ -37,7 +42,7 @@ private:
     GlCore::WorldStructure m_WorldStructure;
     //For terrain generation
     Gd::WorldSeed m_WorldSeed;
-    //For serialization purposes
-    Utils::Serializer m_Serializer;
+    //Handles section data
+    std::vector<Gd::SectionData> m_SectionsData;
 };
 

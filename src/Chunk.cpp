@@ -64,6 +64,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 
 	//Set chunk sector
 	m_SectorIndex = Gd::ChunkSectorIndex(m_ChunkOrigin);
+	Gd::g_PushedSections.insert(m_SectorIndex);
 }
 
 Chunk::Chunk(const Utils::Serializer& sz)
@@ -72,8 +73,27 @@ Chunk::Chunk(const Utils::Serializer& sz)
 	*this % sz;
 }
 
+Chunk::Chunk(Chunk&& rhs) noexcept
+{
+	*this = std::move(rhs);
+}
+
 Chunk::~Chunk()
 {
+}
+
+Chunk& Chunk::operator=(Chunk&& rhs) noexcept
+{
+	m_RelativeWorld = rhs.m_RelativeWorld;
+	m_LocalBlocks = std::move(rhs.m_LocalBlocks);
+	m_ChunkOrigin = rhs.m_ChunkOrigin;
+	m_ChunkCenter = rhs.m_ChunkCenter;
+	m_SectorIndex = rhs.m_SectorIndex;
+
+	m_PlusX = rhs.m_PlusX;
+	m_MinusX = rhs.m_MinusX;
+	m_PlusZ = rhs.m_PlusZ;
+	m_MinusZ = rhs.m_MinusZ;
 }
 
 void Chunk::InitBlockNormals()
