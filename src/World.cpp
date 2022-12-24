@@ -265,9 +265,10 @@ void World::SerializeSector(uint32_t index)
 
 	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end(); ++iter)
 	{
-		if (iter->SectorIndex() == index)
+		Chunk& chunk = *iter;
+		if (chunk.SectorIndex() == index)
 		{
-			*iter & sz;
+			chunk & sz;
 			m_Chunks.erase(iter);
 		}
 	}

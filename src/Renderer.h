@@ -49,8 +49,6 @@ namespace GlCore
 			Window* game_window;
 			Camera* camera;
 			std::shared_ptr<Shader> block_shader;
-			//Useful so blocks can reach the chunk's world position
-			std::vector<glm::vec2> m_ChunkPositions;
 		};
 		static RootImpl m_InternalPayload;
 	};
