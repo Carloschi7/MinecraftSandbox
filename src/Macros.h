@@ -43,3 +43,7 @@
 #else
 #	define LOG_DEBUG(fmt, ...)
 #endif
+
+#ifdef _DEBUG
+#	define DEBUG_MODE
+#endif

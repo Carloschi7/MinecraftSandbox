@@ -13,6 +13,9 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	m_SelectedBlock(static_cast<uint32_t>(-1)), m_ChunkCenter(0.0f),
 	m_SectorIndex(0)
 {
+	//Assigning chunk index
+	m_ChunkIndex = Gd::g_ChunkProgIndex++;
+
 	glm::vec3 chunk_origin_3d(m_ChunkOrigin.x, 0.0f, m_ChunkOrigin.y);
 	m_ChunkCenter = chunk_origin_3d + GetHalfWayVector();
 
@@ -67,7 +70,8 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	Gd::g_PushedSections.insert(m_SectorIndex);
 }
 
-Chunk::Chunk(const Utils::Serializer& sz)
+Chunk::Chunk(World* father, const Utils::Serializer& sz, uint32_t index) :
+	m_RelativeWorld(father), m_SectorIndex(index)
 {
 	//Simply forward everithing to the deserializing operator
 	*this % sz;
@@ -85,6 +89,8 @@ Chunk::~Chunk()
 Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 {
 	m_RelativeWorld = rhs.m_RelativeWorld;
+	m_ChunkIndex = rhs.m_ChunkIndex;
+
 	m_LocalBlocks = std::move(rhs.m_LocalBlocks);
 	m_ChunkOrigin = rhs.m_ChunkOrigin;
 	m_ChunkCenter = rhs.m_ChunkCenter;
@@ -94,6 +100,7 @@ Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 	m_MinusX = rhs.m_MinusX;
 	m_PlusZ = rhs.m_PlusZ;
 	m_MinusZ = rhs.m_MinusZ;
+	return *this;
 }
 
 void Chunk::InitBlockNormals()
@@ -498,6 +505,11 @@ uint32_t Chunk::SectorIndex() const
 	return m_SectorIndex;
 }
 
+uint32_t Chunk::Index() const
+{
+	return m_ChunkIndex;
+}
+
 glm::vec3 Chunk::GetHalfWayVector()
 {
 	return glm::vec3(s_ChunkWidthAndHeight / 2.0f, s_ChunkDepth / 2.0f, s_ChunkWidthAndHeight / 2.0f);
@@ -508,6 +520,7 @@ const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
 	//Serializing components
 	//At first we tell how many blocks the chunk has
 	sz& m_LocalBlocks.size();
+	sz& m_ChunkIndex;
 	//World address does not need to be serialized
 
 	if (!m_LocalBlocks.empty())
@@ -540,6 +553,7 @@ const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
 	uint32_t adj_chunks[4];
 
 	sz% blk_vec_size;
+	sz% m_ChunkIndex;
 
 	if (blk_vec_size != 0)
 	{
@@ -568,6 +582,11 @@ const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
 	}
 
 	sz% m_ChunkOrigin.x% m_ChunkOrigin.y;
+
+	//Calculate chunk center
+	glm::vec3 chunk_origin_3d(m_ChunkOrigin.x, 0.0f, m_ChunkOrigin.y);
+	m_ChunkCenter = chunk_origin_3d + GetHalfWayVector();
+
 	sz% adj_chunks[0] % adj_chunks[1] % adj_chunks[2] % adj_chunks[3];
 	m_PlusX = adj_chunks[0];
 	m_MinusX = adj_chunks[1];

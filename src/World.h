@@ -44,5 +44,9 @@ private:
     Gd::WorldSeed m_WorldSeed;
     //Handles section data
     std::vector<Gd::SectionData> m_SectionsData;
+    //Determines whether m_Chunks is serializing/deserializing
+    std::atomic_bool m_ChunkMemoryOperations = false;
+    //Safe iteration size
+    std::atomic_uint32_t m_SafeChunkSize = 0;
 };
 

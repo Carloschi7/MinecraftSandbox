@@ -84,10 +84,10 @@ namespace Utils
 			_CheckUnlocked();
 			return m_Container[index];
 		}
-		void erase(const_iterator iter)
+		iterator erase(const_iterator iter)
 		{
 			_CheckUnlocked();
-			m_Container.erase(iter);
+			return m_Container.erase(iter);
 		}
 		void clear()
 		{
@@ -313,9 +313,9 @@ namespace Utils
 	class Serializer
 	{
 	public:
-		Serializer(const std::string& filename)
+		Serializer(const std::string& filename, const char* mode)
 		{
-			m_File = std::fopen(filename.c_str(), "w+b");
+			fopen_s(&m_File, filename.c_str(), mode);
 		}
 		~Serializer()
 		{
@@ -358,6 +358,14 @@ namespace Utils
 		std::size_t Tell() const
 		{
 			return std::ftell(m_File);
+		}
+		std::size_t FileSize() const
+		{
+			auto pos = Tell();
+			std::fseek(m_File, 0, SEEK_END);
+			auto ret_val = Tell();
+			Seek(pos);
+			return ret_val;
 		}
 		void Rewind()
 		{

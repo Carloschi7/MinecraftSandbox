@@ -16,7 +16,7 @@ public:
 	//will be used as an alias of z
 	Chunk(World* father, glm::vec2 origin);
 	//Construct by deserialization
-	Chunk(const Utils::Serializer& sz);
+	Chunk(World* father, const Utils::Serializer& sz, uint32_t index);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&& rhs) noexcept;
 	~Chunk();
@@ -42,7 +42,9 @@ public:
 	void Draw(const Gd::RenderData& rd, bool selected = false) const;
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 	uint32_t LastSelectedBlock() const;
+
 	uint32_t SectorIndex() const;
+	uint32_t Index() const;
 
 	//Sum this with the chunk origin to get chunk's center
 	static glm::vec3 GetHalfWayVector();
@@ -55,6 +57,7 @@ public:
 	//used instead of Gd::g_SelectedChunk in multiple iterations so we
 	//access the atomic variable only once
 	static uint32_t s_InternalSelectedBlock;
+
 private:
 	//Returns if there is a block at the location pos
 	//The last two attributes can be used to make the searching faster
@@ -64,6 +67,9 @@ private:
 private:
 	//Father world
 	Utils::AlignedPtr<World> m_RelativeWorld;
+
+	//Chunk progressive index
+	uint32_t m_ChunkIndex;
 
 	VecType<Block> m_LocalBlocks;
 	//front-bottom-left block position

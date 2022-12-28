@@ -15,6 +15,8 @@ namespace Gd
 	extern const float g_RenderDistance;
 	extern const float g_FramedPlayerSpeed;
 	extern const float g_SectionDimension;
+	//Personal index for each chunk
+	extern uint32_t g_ChunkProgIndex;
 	extern const int32_t g_SpawnerBegin;
 	extern const int32_t g_SpawnerEnd;
 	extern const int32_t g_SpawnerIncrement;
@@ -67,7 +69,8 @@ namespace Gd
 	{
 		uint32_t index;
 		glm::vec2 central_position;
-		bool bLoaded = true;
+		//Determines whether or not the data is loaded in memory
+		bool loaded = true;
 	};
 
 	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};

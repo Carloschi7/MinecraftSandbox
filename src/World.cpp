@@ -17,6 +17,8 @@ World::World()
 			m_Chunks.emplace_back(this, glm::vec2(float(i), float(j)));
 
 	HandleSectionData();
+	//Set safe iterable size for the rendering thread(set in all cases by default)
+	m_SafeChunkSize = m_Chunks.size();
 
 	auto add_spawnable_chunk = [&](const glm::vec3& pos)
 	{
@@ -59,13 +61,20 @@ void World::DrawRenderable()
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();
-	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+	
+	//Asserting chunks are not getting serialized if
+	//we are in multithreading mode (temporary solution)
+	if constexpr (GlCore::g_MultithreadedRendering)
+		while (m_ChunkMemoryOperations) {}
+
+	std::size_t size = GlCore::g_MultithreadedRendering ? m_SafeChunkSize.load() : m_Chunks.size();
+	for (uint32_t i = 0; i < size; i++)
 	{
 		const auto& chunk = m_Chunks[i];
 		if (chunk.IsChunkRenderable(logic_data) && chunk.IsChunkVisible(logic_data))
 			chunk.Draw(draw_data, ch == i);
 	}
-	
+
 	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
 }
@@ -75,11 +84,11 @@ void World::UpdateScene()
 	Gd::ChunkLogicData chunk_logic_data = GlCore::WorldStructure::GetChunkLogicData();
 
 	//Chunk dynamic spawning
+	glm::vec2 camera_2d(chunk_logic_data.camera_position.x, chunk_logic_data.camera_position.z);
 	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
 	{
 		const glm::vec3& vec = m_SpawnableChunks[i];
 		glm::vec2 vec_2d(vec.x, vec.z);
-		glm::vec2 camera_2d(chunk_logic_data.camera_position.x, chunk_logic_data.camera_position.z);
 		if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
 		{
 			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
@@ -92,6 +101,7 @@ void World::UpdateScene()
 					m_Chunks.lock();
 #endif
 			m_Chunks.emplace_back(this, chunk_pos);
+			m_SafeChunkSize++;
 			HandleSectionData();
 #ifdef STRONG_THREAD_SAFETY
 			if (needs_lock)
@@ -105,23 +115,23 @@ void World::UpdateScene()
 			//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_X); opt.has_value())
 			{
-				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, m_Chunks.size() - 1);
+				auto& neighbor_chunk = GetChunk(opt.value());
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, this_chunk.Index());
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
 			{
-				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, m_Chunks.size() - 1);
+				auto& neighbor_chunk = GetChunk(opt.value());
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, this_chunk.Index());
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
 			{
-				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, m_Chunks.size() - 1);
+				auto& neighbor_chunk = GetChunk(opt.value());
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, this_chunk.Index());
 			}
 			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
 			{
-				auto& neighbor_chunk = m_Chunks[opt.value()];
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, m_Chunks.size() - 1);
+				auto& neighbor_chunk = GetChunk(opt.value());
+				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, this_chunk.Index());
 			}
 
 			//Pushing new spawnable vectors
@@ -146,21 +156,24 @@ void World::UpdateScene()
 	m_LastPos = chunk_logic_data.camera_position;
 
 	//TODO Serialization (Test)
-	//glm::vec2 camera_2d{ chunk_logic_data.camera_position.x,chunk_logic_data.camera_position.z };
-	//for (Gd::SectionData& data : m_SectionsData)
-	//{
-	//	//Serialization zone
-	//	if (data.bLoaded && glm::length(camera_2d - data.central_position) > 250.0f)
-	//	{
-	//		//SerializeSector(data.index);
-	//	}
+	for (Gd::SectionData& data : m_SectionsData)
+	{
+		//Serialization zone
+		if (data.loaded && glm::length(camera_2d - data.central_position) > 750.0f)
+		{
+			SerializeSector(data.index);
+			std::cout << "Serialize:" << m_Chunks.size() << std::endl;
+			data.loaded = false;
+		}
 
-	//	//Deserialization zone
-	//	if (!data.bLoaded && glm::length(camera_2d - data.central_position) < 150.0f)
-	//	{
-	//		//DeserializeSector(data.index);
-	//	}
-	//}
+		//Deserialization zone
+		if (!data.loaded && glm::length(camera_2d - data.central_position) < 650.0f)
+		{
+			DeserializeSector(data.index);
+			std::cout << "Deserialize:" << m_Chunks.size() << std::endl;
+			data.loaded = true;
+		}
+	}
 }
 
 void World::HandleSelection(const Gd::ChunkLogicData& ld)
@@ -219,7 +232,7 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 		for (uint32_t i = 0; i < m_Chunks.size(); i++)
 		{
 			if (m_Chunks[i].GetChunkOrigin() == pos)
-				return i;
+				return m_Chunks[i].Index();
 		}
 
 		return std::nullopt;
@@ -242,10 +255,13 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 
 Chunk& World::GetChunk(uint32_t index)
 {
-	if (index >= m_Chunks.size())
-		throw std::runtime_error("Vector index out of bounds");
+	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
+		[index](const Chunk& c) {return c.Index() == index; });
 
-	return m_Chunks[index];
+	if (iter == m_Chunks.end())
+		throw std::runtime_error("Chunk element with this index not found");
+
+	return *iter;
 }
 
 Gd::WorldSeed& World::Seed()
@@ -261,27 +277,71 @@ const Gd::WorldSeed& World::Seed() const
 void World::SerializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat);
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "wb");
+	uint32_t serialized_chunks = 0;
 
-	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end(); ++iter)
+	//(When multithreading) Advertise the render thread m_Chunks 
+	//is undergoing some heavy changes
+	if constexpr (GlCore::g_MultithreadedRendering)
+	{
+		m_ChunkMemoryOperations = true;
+
+		//Rearrange all the elements so that the ones that need to be serialized are at the end
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [&](const Chunk& ch) {return ch.SectorIndex() != index; });
+		//Determine safe iteration range for the renderer thread
+		m_SafeChunkSize = static_cast<uint32_t>(iter - m_Chunks.begin());
+
+		m_ChunkMemoryOperations = false;
+	}
+
+	//Number of chunks at the beginning (leave blank for now)
+	sz.Serialize<uint32_t>(0);
+	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end();)
 	{
 		Chunk& chunk = *iter;
 		if (chunk.SectorIndex() == index)
 		{
 			chunk & sz;
-			m_Chunks.erase(iter);
+			serialized_chunks++;
+			iter = m_Chunks.erase(iter);
+			continue;
 		}
+		++iter;
 	}
+	
+	//Write the amount of chunks serialized
+	sz.Seek(0);
+	sz& serialized_chunks;
+
+	m_SafeChunkSize = m_Chunks.size();
 }
 
 void World::DeserializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat);
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "rb");
+
+	if constexpr (GlCore::g_MultithreadedRendering)
+	{
+		m_ChunkMemoryOperations = true;
+
+		uint32_t deser_size = 0;
+		sz% deser_size;
+		m_Chunks.reserve(m_Chunks.size() + deser_size);
+
+		m_ChunkMemoryOperations = false;
+	}
+	else
+	{
+		//Not used
+		uint32_t deser_size = 0;
+		sz% deser_size;
+	}
 
 	while (!sz.Eof())
 	{
-		m_Chunks.emplace_back(sz);
+		m_Chunks.emplace_back(this, sz, index);
+		m_SafeChunkSize--;
 	}
 }
 

@@ -2,6 +2,7 @@
 #include "Entrypoint.h"
 #include "World.h"
 #include "Renderer.h"
+#include <filesystem>
 
 //We create the window alongside with the whole OpenGL context
 Application::Application() :
@@ -25,6 +26,13 @@ void Application::OnUserCreate()
     GlCore::Root::SetGameWindow(&m_Window);
     GlCore::Root::SetGameCamera(&m_Camera);
     GlCore::Renderer::Init();
+
+    //Create needed dirs
+    using namespace std::filesystem;
+
+    path p{ "runtime_files" };
+    if(!is_directory(p))
+        create_directory(p);
 }
 
 void Application::OnUserRun()
@@ -38,7 +46,9 @@ void Application::OnUserRun()
         Utils::Timer timer;
         while (GlCore::g_LogicThreadShouldRun)
         {
+#ifdef DEBUG_MODE
             timer.StartTimer();
+#endif
             WorldGameInstance.UpdateScene();
             LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
@@ -53,6 +63,7 @@ void Application::OnUserRun()
     while (!m_Window.ShouldClose())
     {   
         m_Window.ClearScreen();
+        
         timer.StartTimer();
         if constexpr (GlCore::g_MultithreadedRendering)
         {
@@ -78,4 +89,10 @@ void Application::OnUserRun()
         GlCore::g_LogicThreadShouldRun = false;
         m_AppThreads[0].join();
     }
+
+    //Remove serialization dir
+    using namespace std::filesystem;
+
+    path p{ "runtime_files" };
+    remove_all(p);
 }

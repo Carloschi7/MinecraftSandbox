@@ -8,6 +8,7 @@ namespace Gd
 	const float g_RenderDistance = 1500.0f;
     const float g_FramedPlayerSpeed = 60.0f;
     const float g_SectionDimension = 512.0f;
+    uint32_t g_ChunkProgIndex = 0;
 	const int32_t g_SpawnerBegin = -64;
 	const int32_t g_SpawnerEnd = 64;
 	const int32_t g_SpawnerIncrement = 16;
@@ -16,7 +17,6 @@ namespace Gd
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
-
     std::unordered_set<uint32_t> g_PushedSections;
 
     void KeyboardFunction(const Window& window, Camera* camera, double time)
