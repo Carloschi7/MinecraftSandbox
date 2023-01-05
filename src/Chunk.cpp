@@ -71,7 +71,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 }
 
 Chunk::Chunk(World* father, const Utils::Serializer& sz, uint32_t index) :
-	m_RelativeWorld(father), m_SectorIndex(index)
+	m_RelativeWorld(father), m_SectorIndex(index), m_SelectedBlock(static_cast<uint32_t>(-1))
 {
 	//Simply forward everithing to the deserializing operator
 	*this % sz;
@@ -588,10 +588,11 @@ const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
 	m_ChunkCenter = chunk_origin_3d + GetHalfWayVector();
 
 	sz% adj_chunks[0] % adj_chunks[1] % adj_chunks[2] % adj_chunks[3];
-	m_PlusX = adj_chunks[0];
-	m_MinusX = adj_chunks[1];
-	m_PlusZ = adj_chunks[2];
-	m_MinusZ = adj_chunks[3];
+
+	m_PlusX = adj_chunks[0] != -1 ? std::make_optional(adj_chunks[0]) : std::nullopt;
+	m_MinusX = adj_chunks[1] != -1 ? std::make_optional(adj_chunks[1]) : std::nullopt;
+	m_PlusZ = adj_chunks[2] != -1 ? std::make_optional(adj_chunks[2]) : std::nullopt;
+	m_MinusZ = adj_chunks[3] != -1 ? std::make_optional(adj_chunks[3]) : std::nullopt;
 
 	return sz;
 }

@@ -341,7 +341,7 @@ void World::DeserializeSector(uint32_t index)
 	while (!sz.Eof())
 	{
 		m_Chunks.emplace_back(this, sz, index);
-		m_SafeChunkSize--;
+		m_SafeChunkSize++;
 	}
 }
 

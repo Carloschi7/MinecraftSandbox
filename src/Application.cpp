@@ -50,7 +50,7 @@ void Application::OnUserRun()
             timer.StartTimer();
 #endif
             WorldGameInstance.UpdateScene();
-            LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
+            //LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
     };
 
@@ -77,7 +77,7 @@ void Application::OnUserRun()
             WorldGameInstance.UpdateScene();
             WorldGameInstance.DrawRenderable();
         }
-        LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
+        //LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
 
         m_Camera.ProcessInput(m_Window, timer.GetElapsedSeconds() * Gd::g_FramedPlayerSpeed, 0.8);
         m_Window.Update();
