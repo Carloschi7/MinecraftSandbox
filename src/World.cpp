@@ -54,7 +54,6 @@ void World::DrawRenderable()
 	m_WorldStructure.RenderSkybox();
 
 	Gd::RenderData draw_data = GlCore::WorldStructure::GetRenderFrameInfo();
-	Gd::ChunkLogicData logic_data = GlCore::WorldStructure::GetChunkLogicData();
 	
 	m_WorldStructure.UniformRenderInit(draw_data);
 
@@ -71,7 +70,7 @@ void World::DrawRenderable()
 	for (uint32_t i = 0; i < size; i++)
 	{
 		const auto& chunk = m_Chunks[i];
-		if (chunk.IsChunkRenderable(logic_data) && chunk.IsChunkVisible(logic_data))
+		if (chunk.IsChunkRenderable() && chunk.IsChunkVisible())
 			chunk.Draw(draw_data, ch == i);
 	}
 
@@ -81,10 +80,10 @@ void World::DrawRenderable()
 
 void World::UpdateScene()
 {
-	Gd::ChunkLogicData chunk_logic_data = GlCore::WorldStructure::GetChunkLogicData();
-
 	//Chunk dynamic spawning
-	glm::vec2 camera_2d(chunk_logic_data.camera_position.x, chunk_logic_data.camera_position.z);
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+
+	glm::vec2 camera_2d(camera_position.x, camera_position.z);
 	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
 	{
 		const glm::vec3& vec = m_SpawnableChunks[i];
@@ -152,8 +151,8 @@ void World::UpdateScene()
 	}
 
 	//Block Selection & normal updating
-	HandleSelection(chunk_logic_data);
-	m_LastPos = chunk_logic_data.camera_position;
+	HandleSelection();
+	m_LastPos = camera_position;
 
 	//TODO Serialization (Test)
 	for (Gd::SectionData& data : m_SectionsData)
@@ -176,21 +175,25 @@ void World::UpdateScene()
 	}
 }
 
-void World::HandleSelection(const Gd::ChunkLogicData& ld)
+void World::HandleSelection()
 {
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
+
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	bool left_click = GlCore::Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		auto& chunk = m_Chunks[i];
-		if (!chunk.IsChunkRenderable(ld) || !chunk.IsChunkVisible(ld))
+		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
 			continue;
 
-		float current_selection = chunk.BlockCollisionLogic(ld);
+		float current_selection = chunk.BlockCollisionLogic(left_click);
 
 		//We update blocks drawing conditions only if we move or if we break blocks
-		if (ld.camera_position != m_LastPos || ld.mouse_input.left_click)
-			chunk.UpdateBlocks(ld);
+		//if (camera_position != m_LastPos || left_click)
+			chunk.UpdateBlocks();
 
 		if (current_selection < nearest_selection)
 		{

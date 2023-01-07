@@ -26,12 +26,12 @@ public:
 
 	//All the chunks need to be loaded in order to use this function
 	void InitBlockNormals();
-	[[nodiscard]] float BlockCollisionLogic(const Gd::ChunkLogicData& ld);
-	void UpdateBlocks(const Gd::ChunkLogicData& ld);
+	[[nodiscard]] float BlockCollisionLogic(bool left_click);
+	void UpdateBlocks();
 	//Checks if this chunk is near enough to the player to be rendered
-	bool IsChunkRenderable(const Gd::ChunkLogicData& rd) const;
+	bool IsChunkRenderable() const;
 	//Checks if this chunk (within the renderable space) is visible by the player
-	bool IsChunkVisible(const Gd::ChunkLogicData& rd) const;
+	bool IsChunkVisible() const;
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
 
@@ -66,7 +66,7 @@ private:
 	const Block& GetBlock(uint32_t index) const;
 private:
 	//Father world
-	Utils::AlignedPtr<World> m_RelativeWorld;
+	World* m_RelativeWorld;
 
 	//Chunk progressive index
 	uint32_t m_ChunkIndex;

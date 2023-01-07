@@ -25,7 +25,6 @@ namespace GlCore
         void UniformRenderInit(const Gd::RenderData& rd) const;
         
         static Gd::RenderData GetRenderFrameInfo();
-        static Gd::ChunkLogicData GetChunkLogicData();
     private:
         //Cubemap Stuff
         static std::shared_ptr<CubeMap> m_CubemapPtr;

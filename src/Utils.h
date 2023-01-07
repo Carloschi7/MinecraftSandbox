@@ -10,6 +10,14 @@
 	#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
+#ifdef STRONG_THREAD_SAFETY
+#	define _CHECK_UNLOCKED()\
+		if (m_OwningThreadID != std::this_thread::get_id())\
+			while (m_Locked) {}
+#else
+#	define _CHECK_UNLOCKED()
+#endif
+
 //Utilities
 namespace Utils
 {
@@ -42,111 +50,101 @@ namespace Utils
 		//Specific features
 		void lock()
 		{
+			_CHECK_UNLOCKED();
 			m_Locked = true;
 			m_OwningThreadID = std::this_thread::get_id();
 		}
 		void unlock()
 		{
+			_CHECK_UNLOCKED();
 			m_Locked = false;
 			m_OwningThreadID = std::thread::id{};
 		}
-	private:
-		void _CheckUnlocked() const
-		{
-			//Return if the calling thread is the same
-#ifdef STRONG_THREAD_SAFETY
-			if (m_OwningThreadID == std::this_thread::get_id())
-				return;
-
-			while (m_Locked) {}
-#endif
-		}
-	public:
 
 		void push_back(const T& ref)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			m_Container.push_back(ref);
 		}
 		template<class... Args>
 		decltype(auto) emplace_back(Args&&... args)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.emplace_back(std::forward<Args>(args)...);
 		}
 		T& operator[](std::size_t index)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container[index];
 		}
 		const T& operator[](std::size_t index) const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container[index];
 		}
 		iterator erase(const_iterator iter)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.erase(iter);
 		}
 		void clear()
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			m_Container.clear();
 		}
 
 		iterator begin()
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.begin();
 		}
 		iterator end()
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.end();
 		}
 		const_iterator begin() const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.begin();
 		}
 		const_iterator end() const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.end();
 		}
-		const_iterator cbegin() const { _CheckUnlocked(); return begin(); }
-		const_iterator cend() const { _CheckUnlocked(); return end(); }
+		const_iterator cbegin() const { _CHECK_UNLOCKED(); return begin(); }
+		const_iterator cend() const { _CHECK_UNLOCKED(); return end(); }
 
-		T& front() { _CheckUnlocked(); return m_Container[0]; }
-		T& back() { _CheckUnlocked(); return m_Container[m_Container.size() - 1]; }
-		const T& front() const { _CheckUnlocked(); return m_Container[0]; }
-		const T& back() const { _CheckUnlocked(); return m_Container[m_Container.size() - 1]; }
+		T& front() { _CHECK_UNLOCKED(); return m_Container[0]; }
+		T& back() { _CHECK_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
+		const T& front() const { _CHECK_UNLOCKED(); return m_Container[0]; }
+		const T& back() const { _CHECK_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
 
 		std::size_t size() const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.size();
 		}
 		std::size_t capacity() const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.capacity();
 		}
 		bool empty() const
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			return m_Container.empty();
 		}
 
 		void resize(std::size_t size)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			m_Container.resize(size);
 		}
 		void reserve(std::size_t size)
 		{
-			_CheckUnlocked();
+			_CHECK_UNLOCKED();
 			m_Container.reserve(size);
 		}
 

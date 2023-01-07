@@ -70,16 +70,6 @@ namespace GlCore
         return rd;
     }
 
-    Gd::ChunkLogicData WorldStructure::GetChunkLogicData()
-    {
-        Gd::ChunkLogicData ld;
-        ld.mouse_input.left_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
-        ld.mouse_input.right_click = Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
-        ld.camera_position = Root::GameCamera().GetPosition();
-        ld.camera_direction = Root::GameCamera().GetFront();
-        return ld;
-    }
-
     void WorldStructure::UpdateCamera()
     {
         Root::GameCamera().ProcessInput(Root::GameWindow(), 1.0f);

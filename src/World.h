@@ -11,7 +11,7 @@ public:
     //Draws the number of chunks visible to the player
     void DrawRenderable();
     void UpdateScene();
-    void HandleSelection(const Gd::ChunkLogicData& ld);
+    void HandleSelection();
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
 

@@ -300,12 +300,15 @@ void Chunk::InitBlockNormals()
 	}
 }
 
-float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
+float Chunk::BlockCollisionLogic(bool left_click)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
 	std::size_t vec_size = m_LocalBlocks.size();
 	m_SelectedBlock = static_cast<uint32_t>(-1);
+
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	auto& camera_direction = GlCore::Root::GameCamera().GetFront();
 
 	//Checking selection
 	for (std::size_t i = 0; i < vec_size; ++i)
@@ -316,7 +319,7 @@ float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
 			continue;
 
 		float dist = 0.0f;
-		bool bSelected = Gd::ViewBlockCollision(ld.camera_position, ld.camera_direction, block.Position(), dist);
+		bool bSelected = Gd::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
 		
 		if (bSelected && dist < closest_selected_block_dist)
 		{
@@ -326,7 +329,7 @@ float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
 	}
 
 	//Logic which removes a block
-	if (m_SelectedBlock != static_cast<uint32_t>(-1) && ld.mouse_input.left_click)
+	if (m_SelectedBlock != static_cast<uint32_t>(-1) && left_click)
 	{
 		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
@@ -336,29 +339,33 @@ float Chunk::BlockCollisionLogic(const Gd::ChunkLogicData& ld)
 	return closest_selected_block_dist;
 }
 
-void Chunk::UpdateBlocks(const Gd::ChunkLogicData& ld)
+void Chunk::UpdateBlocks()
 {
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
-		block.UpdateRenderableSides(ld.camera_position);
+		block.UpdateRenderableSides(camera_position);
 }
 
-bool Chunk::IsChunkRenderable(const Gd::ChunkLogicData& rd) const
+bool Chunk::IsChunkRenderable() const
 {
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+
 	//This algorithm does not take account for the player altitude in space
-	glm::vec2 cam_pos(rd.camera_position.x, rd.camera_position.z);
+	glm::vec2 cam_pos(camera_position.x, camera_position.z);
 	glm::vec2 chunk_center_pos(m_ChunkCenter.x, m_ChunkCenter.z);
 	return (glm::length(cam_pos - chunk_center_pos) < Gd::g_ChunkRenderingDistance);
 }
 
-bool Chunk::IsChunkVisible(const Gd::ChunkLogicData& rd) const
+bool Chunk::IsChunkVisible() const
 {
-	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - rd.camera_position);
-	return (glm::dot(camera_to_midway, rd.camera_direction) > 0.35f ||
-		glm::length(rd.camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
+	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	auto& camera_direction = GlCore::Root::GameCamera().GetFront();
 
-	//The 5.0f is just an arbitrary value to fix drawing issues that would be
-	//to unnecessarily complex to fix precisely
+	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
+	return (glm::dot(camera_to_midway, camera_direction) > 0.4f ||
+		glm::length(camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
 }
 
 void Chunk::RemoveBorderNorm(const glm::vec3& norm)

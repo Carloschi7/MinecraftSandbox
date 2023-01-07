@@ -47,13 +47,6 @@ namespace Gd
 		//Debug purposes
 		bool p_key;
     };
-	//Logic for chunk updating
-	struct ChunkLogicData
-	{
-		MouseInput mouse_input;
-		glm::vec3 camera_position;
-		glm::vec3 camera_direction;
-	};
 	struct WorldSeed
 	{
 		//Chosed world seed
