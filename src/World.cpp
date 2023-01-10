@@ -88,6 +88,7 @@ void World::UpdateScene()
 	{
 		const glm::vec3& vec = m_SpawnableChunks[i];
 		glm::vec2 vec_2d(vec.x, vec.z);
+		//Check if a new chunk can be generated
 		if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
 		{
 			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
@@ -146,6 +147,17 @@ void World::UpdateScene()
 			//Remove the just spawned chunk from the spawnable list
 			m_SpawnableChunks.erase(m_SpawnableChunks.begin() + i);
 			
+			//Order chunk spawning order based on the distance with the player
+			static auto spawner_sorter = [&](const glm::vec3& v1, const glm::vec3& v2) {
+				return glm::length(camera_position - v1) < glm::length(camera_position - v2);
+			};
+
+			if (m_SortingTimer.GetElapsedSeconds() > 1.0f)
+			{
+				std::sort(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), spawner_sorter);
+				m_SortingTimer.StartTimer();
+			}
+
 			break;
 		}
 	}
@@ -230,7 +242,7 @@ void World::HandleSectionData()
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)
 {
 	const glm::vec2& origin = chunk.GetChunkOrigin();
-	auto find_alg = [&](const glm::vec2& pos) ->std::optional<uint32_t>
+	static auto find_alg = [&](const glm::vec2& pos) ->std::optional<uint32_t>
 	{
 		for (uint32_t i = 0; i < m_Chunks.size(); i++)
 		{

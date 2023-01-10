@@ -46,7 +46,10 @@ private:
     std::vector<Gd::SectionData> m_SectionsData;
     //Determines whether m_Chunks is serializing/deserializing
     std::atomic_bool m_ChunkMemoryOperations = false;
-    //Safe iteration size
+    //Safe iteration size(useful when the chunks at the end of the vector are being serialized)
     std::atomic_uint32_t m_SafeChunkSize = 0;
+    //Timer used to sort the spawnable chunks vector every now and then
+    //(sorting every frame would be pointless)
+    Utils::Timer m_SortingTimer;
 };
 
