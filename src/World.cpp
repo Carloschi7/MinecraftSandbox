@@ -42,6 +42,9 @@ World::World()
 
 		chunk.InitBlockNormals();
 	}
+
+	//Set proj matrix, won't vary for now in the app
+	m_WorldStructure.UniformProjMatrix();
 }
 
 World::~World()
@@ -52,10 +55,8 @@ void World::DrawRenderable()
 {
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
-
-	Gd::RenderData draw_data = GlCore::WorldStructure::GetRenderFrameInfo();
 	
-	m_WorldStructure.UniformRenderInit(draw_data);
+	m_WorldStructure.UniformViewMatrix();
 
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
@@ -71,7 +72,7 @@ void World::DrawRenderable()
 	{
 		const auto& chunk = m_Chunks[i];
 		if (chunk.IsChunkRenderable() && chunk.IsChunkVisible())
-			chunk.Draw(draw_data, ch == i);
+			chunk.Draw(ch == i);
 	}
 
 	//Drawing crossaim
@@ -166,7 +167,7 @@ void World::UpdateScene()
 	HandleSelection();
 	m_LastPos = camera_position;
 
-	//TODO Serialization (Test)
+	//Serialization (Working but still causing random crashes sometimes)
 	for (Gd::SectionData& data : m_SectionsData)
 	{
 		//Serialization zone

@@ -58,17 +58,6 @@ namespace GlCore
         }
     }
 
-    Gd::RenderData WorldStructure::GetRenderFrameInfo()
-    {
-        Gd::RenderData rd;
-        Camera& cam = Root::GameCamera();
-
-        rd.camera_position = cam.GetPosition();
-        rd.proj_matrix = cam.GetProjMatrix();
-        rd.view_matrix = cam.GetViewMatrix();
-        rd.p_key = Root::GameWindow().IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS });
-        return rd;
-    }
 
     void WorldStructure::UpdateCamera()
     {
@@ -96,11 +85,16 @@ namespace GlCore
         Renderer::Render(pl);
     }
 
-    void WorldStructure::UniformRenderInit(const Gd::RenderData& rd) const
+    void WorldStructure::UniformProjMatrix() const
     {
         auto block_shader = Root::BlockShader();
-        block_shader->UniformMat4f(rd.proj_matrix, g_ProjUniformName);
-        block_shader->UniformMat4f(rd.view_matrix, g_ViewUniformName);
+        block_shader->UniformMat4f(Root::GameCamera().GetProjMatrix(), g_ProjUniformName);
+    }
+
+    void WorldStructure::UniformViewMatrix() const
+    {
+        auto block_shader = Root::BlockShader();
+        block_shader->UniformMat4f(Root::GameCamera().GetViewMatrix(), g_ViewUniformName);
     }
 
 

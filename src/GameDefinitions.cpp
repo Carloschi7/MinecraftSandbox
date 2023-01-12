@@ -2,8 +2,8 @@
 
 namespace Gd
 {
-	const float g_ChunkSpawningDistance = 250.0f;
-	const float g_ChunkRenderingDistance = 200.0f;
+	const float g_ChunkSpawningDistance = 500.0f;
+	const float g_ChunkRenderingDistance = 300.0f;
 	const float g_CameraCompensation = 10.0f;
 	const float g_RenderDistance = 1500.0f;
     const float g_FramedPlayerSpeed = 60.0f;
@@ -166,7 +166,7 @@ namespace Gd
             //Terrain generation
             float fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
             float fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
-            float fz = GenerateSingleNoise(x / 60.0f, y / 60.0f, seed.secundary_seeds[1]) * 2.5f;
+            float fz = GenerateSingleNoise(x / 80.0f, y / 80.0f, seed.secundary_seeds[1]) * 3.0f;
 
             float terrain_output = fx + fy + fz;
             //Smoothing the landscape's slopes as we approach the desert

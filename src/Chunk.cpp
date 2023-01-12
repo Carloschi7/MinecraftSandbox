@@ -452,7 +452,7 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 	}
 }
 
-void Chunk::Draw(const Gd::RenderData& rd, bool selected) const
+void Chunk::Draw(bool selected) const
 {
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{

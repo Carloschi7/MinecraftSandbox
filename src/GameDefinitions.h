@@ -39,14 +39,6 @@ namespace Gd
 		bool left_click;
 	};
 
-    struct RenderData
-    {
-		glm::vec3 camera_position;
-        glm::mat4 proj_matrix;
-        glm::mat4 view_matrix;
-		//Debug purposes
-		bool p_key;
-    };
 	struct WorldSeed
 	{
 		//Chosed world seed

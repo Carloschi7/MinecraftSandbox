@@ -39,7 +39,7 @@ public:
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
 	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
 	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
-	void Draw(const Gd::RenderData& rd, bool selected = false) const;
+	void Draw(bool selected = false) const;
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 	uint32_t LastSelectedBlock() const;
 

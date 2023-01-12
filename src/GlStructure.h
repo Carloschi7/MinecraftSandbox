@@ -22,9 +22,9 @@ namespace GlCore
         void UpdateCamera();
         void RenderSkybox() const;
         void RenderCrossaim() const;
-        void UniformRenderInit(const Gd::RenderData& rd) const;
-        
-        static Gd::RenderData GetRenderFrameInfo();
+
+        void UniformProjMatrix() const;
+        void UniformViewMatrix() const;
     private:
         //Cubemap Stuff
         static std::shared_ptr<CubeMap> m_CubemapPtr;
