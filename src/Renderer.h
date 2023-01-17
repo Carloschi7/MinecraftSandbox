@@ -21,6 +21,7 @@ namespace GlCore
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = true;
+	static constexpr bool g_UpdateBlockModelWithUniformBuffer = true;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
@@ -62,6 +63,7 @@ namespace GlCore
 		CubeMap* cubemap;
 		const GlCore::DrawableData* dd;
 		const bool block_selected;
+		const bool model_on_uniform_buffer;
 	};
 
 	class Renderer

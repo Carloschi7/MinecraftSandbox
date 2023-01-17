@@ -74,14 +74,14 @@ namespace GlCore
             nullptr,
             m_CubemapPtr.get(),
             nullptr,
-            false};
+            false, false};
 
         Renderer::Render(pl);
     }
 
     void WorldStructure::RenderCrossaim() const
     {
-        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false };
+        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false, false };
         Renderer::Render(pl);
     }
 
@@ -117,6 +117,10 @@ namespace GlCore
             m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
             m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
+
+            m_ShaderPtr->Uniform1i(g_UpdateBlockModelWithUniformBuffer, "update_with_ub");
+            //Generate an utility uniform buffer(may be used to update the model matrix of the blocks)
+            m_ShaderPtr->GenUniformBuffer("OnFrequentUpdate", sizeof(glm::mat4), 0);
 
             //Root management
             Root::SetBlockShader(m_ShaderPtr);
@@ -168,7 +172,8 @@ namespace GlCore
                             current_texture,
                             nullptr,
                             &exp_norms,
-                            is_block_selected};
+                            is_block_selected, 
+                            g_UpdateBlockModelWithUniformBuffer };
 
 
         Renderer::Render(pl);
