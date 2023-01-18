@@ -17,52 +17,6 @@ namespace GlCore
 
     static constexpr float one_third = 1.0f / 3.0f;
 
-    static const std::vector<float> pos_and_tex_coord_single = {
-        //Back
-        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,      0.0f, 0.0f,
-        //Front
-        -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,       0.0f, 0.0f,
-        //Left
-        -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,      1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,      1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,      0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,      0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,      0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,      1.0f, 0.0f,
-        //Right
-         0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,       1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,    1.0f, 0.0f, 0.0f,       1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,       0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,       0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,    1.0f, 0.0f, 0.0f,       0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,       1.0f, 0.0f,
-         //Bottom
-        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,      0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,      1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,      1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,      1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,      0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,      0.0f, 1.0f,
-         //Top
-        -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,       0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,       1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,       1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,       1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,       0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,       0.0f, 1.0f
-
-    };
-
     static const std::vector<float> pos_and_tex_coord_sided
     {
         //Back
@@ -119,29 +73,13 @@ namespace GlCore
         -0.5f, -0.5f,
     };
 
-    enum class VertexProps{POS_AND_TEX_COORDS_SINGLE = 0, POS_AND_TEX_COORD_SIDED};
-
-    inline VertexData Cube(const VertexProps& ip)
+    inline VertexData Cube()
     {
         Layout lyt;
-
-        switch(ip)
-        {
-        case VertexProps::POS_AND_TEX_COORDS_SINGLE:
-            lyt.PushAttribute({3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0});
-            lyt.PushAttribute({3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float)});
-            lyt.PushAttribute({2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float)});
-            return { pos_and_tex_coord_single, lyt };
-
-        case VertexProps::POS_AND_TEX_COORD_SIDED:
-            lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
-            lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
-            lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
-            return { pos_and_tex_coord_sided, lyt };
-
-        default:
-            return {};
-        }
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
+        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
+        return { pos_and_tex_coord_sided, lyt };
     }
 
     inline VertexData CrossAim()

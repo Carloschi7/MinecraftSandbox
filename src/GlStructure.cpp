@@ -7,8 +7,7 @@ std::shared_ptr<Shader> GlCore::WorldStructure::m_CubemapShaderPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
 std::shared_ptr<VertexManager> GlCore::WorldStructure::m_CrossaimVmPtr = nullptr;
 
-std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerSinglePtr = nullptr;
-std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerSidedPtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
 std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 
@@ -74,14 +73,14 @@ namespace GlCore
             nullptr,
             m_CubemapPtr.get(),
             nullptr,
-            false, false};
+            false};
 
         Renderer::Render(pl);
     }
 
     void WorldStructure::RenderCrossaim() const
     {
-        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false, false };
+        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false };
         Renderer::Render(pl);
     }
 
@@ -101,32 +100,25 @@ namespace GlCore
     BlockStructure::BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt)
     {
         //Load static data
-        if (m_VertexManagerSinglePtr.get() == nullptr)
-        {
-            VertexData cd = Cube(VertexProps::POS_AND_TEX_COORDS_SINGLE);
-            m_VertexManagerSinglePtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-            cd = Cube(VertexProps::POS_AND_TEX_COORD_SIDED);
-            m_VertexManagerSidedPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-
-            m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
-            //Uniforming light direction(static for now)
-            m_ShaderPtr->UniformVec3f(Gd::g_LightDirection, "light_direction");
-
-            m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
-            m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
-            m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
-            m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
-            m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
-
-            m_ShaderPtr->Uniform1i(g_UpdateBlockModelWithUniformBuffer, "update_with_ub");
-            //Generate an utility uniform buffer(may be used to update the model matrix of the blocks)
-            m_ShaderPtr->GenUniformBuffer("OnFrequentUpdate", sizeof(glm::mat4), 0);
-
-            //Root management
-            Root::SetBlockShader(m_ShaderPtr);
-        } 
-
+        if (m_VertexManagerPtr.get() != nullptr)
+            return;
         
+        VertexData cd = Cube();
+        m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
+
+        m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
+        //Uniforming light direction(static for now)
+        m_ShaderPtr->UniformVec3f(Gd::g_LightDirection, "light_direction");
+
+        m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
+        m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+        m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
+        m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
+        m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
+
+        //Root management
+        Root::SetBlockShader(m_ShaderPtr);
+        Root::SetBlockVM(m_VertexManagerPtr);
     }
 
     const std::vector<Texture>& BlockStructure::GetBlockTextures() const
@@ -138,28 +130,22 @@ namespace GlCore
         const DrawableData& exp_norms, bool is_block_selected) const
     {
         Texture* current_texture = nullptr;
-        VertexManager* current_vertex_manager = nullptr;
         switch (bt)
         {
         case Gd::BlockType::DIRT:
             current_texture = &m_Textures[0];
-            current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
         case Gd::BlockType::GRASS:
             current_texture = &m_Textures[1];
-            current_vertex_manager = m_VertexManagerSidedPtr.get();
             break;
         case Gd::BlockType::SAND:
             current_texture = &m_Textures[2];
-            current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
         case Gd::BlockType::WOOD:
             current_texture = &m_Textures[3];
-            current_vertex_manager = m_VertexManagerSidedPtr.get();
             break;
         case Gd::BlockType::LEAVES:
             current_texture = &m_Textures[4];
-            current_vertex_manager = m_VertexManagerSinglePtr.get();
             break;
         default:
             throw std::runtime_error("Texture preset for this block not found!");
@@ -167,13 +153,12 @@ namespace GlCore
 
 
         RendererPayload pl{ glm::translate(g_IdentityMatrix, pos),
-                            current_vertex_manager,
+                            m_VertexManagerPtr.get(),
                             m_ShaderPtr.get(),
                             current_texture,
                             nullptr,
                             &exp_norms,
-                            is_block_selected, 
-                            g_UpdateBlockModelWithUniformBuffer };
+                            is_block_selected };
 
 
         Renderer::Render(pl);

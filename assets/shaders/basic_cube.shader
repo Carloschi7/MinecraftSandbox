@@ -5,14 +5,9 @@ layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 norm;
 layout(location = 2) in vec2 tex_coords;
 
-layout(std140) uniform OnFrequentUpdate{
-	mat4 model;
-} fu;
-
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
-uniform bool update_with_ub;
 
 out vec2 TexCoords;
 out vec3 Norm;
@@ -22,10 +17,7 @@ void main()
 	TexCoords = tex_coords;
 	Norm = normalize(norm);
 
-	if (!update_with_ub)
-		gl_Position = proj * view * model * vec4(pos, 1.0f);
-	else
-		gl_Position = proj * view * fu.model * vec4(pos, 1.0f);
+	gl_Position = proj * view * model * vec4(pos, 1.0f);
 }
 
 #shader fragment

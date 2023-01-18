@@ -47,8 +47,7 @@ namespace GlCore
     private:
         //Cube geometry
         //The core OpenGL structures which is designed to do actual drawing/rendering
-        static std::shared_ptr<VertexManager> m_VertexManagerSinglePtr;
-        static std::shared_ptr<VertexManager> m_VertexManagerSidedPtr;
+        static std::shared_ptr<VertexManager> m_VertexManagerPtr;
         //Instructions on how to draw the cube
         static std::shared_ptr<Shader> m_ShaderPtr;
         //Various cube textures

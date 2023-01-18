@@ -26,6 +26,10 @@ namespace GlCore
 	{
 		m_InternalPayload.block_shader = block_shader_;
 	}
+	void Root::SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		m_InternalPayload.block_vm = vertex_manager_;
+	}
 	Window& Root::GameWindow()
 	{
 		return *m_InternalPayload.game_window;
@@ -38,6 +42,11 @@ namespace GlCore
 	std::shared_ptr<Shader> Root::BlockShader()
 	{
 		return m_InternalPayload.block_shader;
+	}
+
+	std::shared_ptr<VertexManager> Root::BlockVM()
+	{
+		return m_InternalPayload.block_vm;
 	}
 	
 	Root::Root()
@@ -98,10 +107,7 @@ namespace GlCore
 		//If we uniform something the shader gets bound automatically
 		if (pl.model != g_NullMatrix)
 		{
-			if(!pl.model_on_uniform_buffer)
-				pl.shd->UniformMat4f(pl.model, g_ModelUniformName);
-			else
-				pl.shd->SendDataToUniformBuffer(0, sizeof(glm::mat4), 0, glm::value_ptr(pl.model));
+			pl.shd->UniformMat4f(pl.model, g_ModelUniformName);
 		}
 
 		if (pl.dd)
@@ -124,10 +130,7 @@ namespace GlCore
 			//Make the lines stand out
 			glLineWidth(5.0f);
 
-			if (!pl.model_on_uniform_buffer)
-				pl.shd->UniformMat4f(glm::scale(pl.model, glm::vec3(1.02f)), g_ModelUniformName);
-			else
-				pl.shd->SendDataToUniformBuffer(0, sizeof(glm::mat4), 0, glm::value_ptr(glm::scale(pl.model, glm::vec3(1.02f))));
+			pl.shd->UniformMat4f(glm::scale(pl.model, glm::vec3(1.02f)), g_ModelUniformName);
 
 			glDrawArrays(GL_TRIANGLES, 0, pl.vm->GetIndicesCount());
 			//Reverting crucial changes

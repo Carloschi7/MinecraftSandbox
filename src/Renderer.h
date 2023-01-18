@@ -21,7 +21,6 @@ namespace GlCore
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = true;
-	static constexpr bool g_UpdateBlockModelWithUniformBuffer = true;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
@@ -39,9 +38,11 @@ namespace GlCore
 		static void SetGameWindow(Window* game_window_);
 		static void SetGameCamera(Camera* game_camera_);
 		static void SetBlockShader(std::shared_ptr<Shader> block_shader_);
+		static void SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_);
 		static Window& GameWindow();
 		static Camera& GameCamera();
 		static std::shared_ptr<Shader> BlockShader();
+		static std::shared_ptr<VertexManager> BlockVM();
 	private:
 		Root();
 		~Root();
@@ -50,6 +51,7 @@ namespace GlCore
 			Window* game_window;
 			Camera* camera;
 			std::shared_ptr<Shader> block_shader;
+			std::shared_ptr<VertexManager> block_vm;
 		};
 		static RootImpl m_InternalPayload;
 	};
@@ -63,7 +65,6 @@ namespace GlCore
 		CubeMap* cubemap;
 		const GlCore::DrawableData* dd;
 		const bool block_selected;
-		const bool model_on_uniform_buffer;
 	};
 
 	class Renderer
