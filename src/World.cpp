@@ -45,10 +45,17 @@ World::World()
 
 	//Set proj matrix, won't vary for now in the app
 	m_WorldStructure.UniformProjMatrix();
+
+	//Create matrix and tex indices dynamic buffers to ease the process of
+	//instanced rendering
+	GlCore::g_DynamicMatrixBuffer = new glm::mat4[GlCore::g_MaxInstancedObjs]{};
+	GlCore::g_DynamicTextureIndicesBuffer = new uint32_t[GlCore::g_MaxInstancedObjs]{};
 }
 
 World::~World()
 {
+	delete[] GlCore::g_DynamicMatrixBuffer;
+	delete[] GlCore::g_DynamicTextureIndicesBuffer;
 }
 
 void World::DrawRenderable()

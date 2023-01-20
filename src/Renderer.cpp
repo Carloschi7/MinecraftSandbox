@@ -11,6 +11,8 @@ GlCore::Root::RootImpl GlCore::Root::m_InternalPayload;
 namespace GlCore
 {
 	std::atomic_bool g_LogicThreadShouldRun = true;
+	glm::mat4* g_DynamicMatrixBuffer = nullptr;
+	uint32_t* g_DynamicTextureIndicesBuffer = nullptr;
 
 	//Root
 
@@ -83,6 +85,11 @@ namespace GlCore
 		GetInstance().IRender(pl);
 	}
 
+	void Renderer::RenderInstanced(uint32_t count)
+	{
+		GetInstance().IRenderInstanced(count);
+	}
+
 	void Renderer::IRender(const RendererPayload& pl)
 	{
 		pl.shd->Use();
@@ -119,24 +126,12 @@ namespace GlCore
 		{
 			glDrawArrays(GL_TRIANGLES, 0, pl.vm->GetIndicesCount());
 		}
+	}
+	void Renderer::IRenderInstanced(uint32_t count)
+	{
+		Root::BlockShader()->Use();
+		Root::BlockVM()->BindVertexArray();
 
-		if (pl.block_selected)
-		{
-			//Giving to the selection that minecraft edgy feel
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			//Deselect the bound texture so it appears black
-			glBindTexture(GL_TEXTURE_2D, 0);
-			pl.shd->Uniform1i(0, g_DiffuseTextureUniformName);
-			//Make the lines stand out
-			glLineWidth(5.0f);
-
-			pl.shd->UniformMat4f(glm::scale(pl.model, glm::vec3(1.02f)), g_ModelUniformName);
-
-			glDrawArrays(GL_TRIANGLES, 0, pl.vm->GetIndicesCount());
-			//Reverting crucial changes
-			Texture::ForceBind();
-			glLineWidth(1.0f);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, count);
 	}
 }

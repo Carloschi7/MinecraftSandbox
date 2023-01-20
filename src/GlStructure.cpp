@@ -116,6 +116,28 @@ namespace GlCore
         m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
         m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
 
+        std::string tex_names[5]{
+            "texture_dirt",
+            "texture_grass",
+            "texture_sand",
+            "texture_trunk",
+            "texture_leaves"
+        };
+
+        for (uint32_t i = 0; i < m_Textures.size(); i++)
+        {
+            m_Textures[i].Bind(i);
+            m_ShaderPtr->Uniform1i(i, tex_names[i]);
+        }
+
+        //Create instance buffer for model matrices
+        m_VertexManagerPtr->PushInstancedMatrixBuffer(nullptr, sizeof(glm::mat4) * g_MaxInstancedObjs,
+            m_ShaderPtr->GetAttributeLocation("model_matrix"));
+
+        LayoutElement el{ 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0 };
+        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(uint32_t) * g_MaxInstancedObjs,
+            m_ShaderPtr->GetAttributeLocation("tex_index"), el);
+
         //Root management
         Root::SetBlockShader(m_ShaderPtr);
         Root::SetBlockVM(m_VertexManagerPtr);

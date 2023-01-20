@@ -36,6 +36,11 @@ const glm::vec3& Block::Position() const
     return m_Position;
 }
 
+const Gd::BlockType& Block::Type() const
+{
+    return m_BlockType;
+}
+
 const GlCore::DrawableData& Block::DrawableSides() const
 {
     return m_DrawableSides;
@@ -63,7 +68,11 @@ void Block::RemoveNormal(float x, float y, float z)
 
 bool Block::HasNormals() const
 {
-    return !m_ExposedNormals.empty();
+    for (const bool& b : m_ExposedNormals)
+        if (b)
+            return true;
+
+    return false;
 }
 
 bool Block::IsDrawable() const

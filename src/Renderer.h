@@ -21,6 +21,7 @@ namespace GlCore
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = true;
+	static constexpr uint32_t g_MaxInstancedObjs = 500;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
@@ -29,6 +30,9 @@ namespace GlCore
 	static constexpr glm::vec3 g_NegY{	0.0f,  -1.0f,	0.0f };
 	static constexpr glm::vec3 g_PosZ{	0.0f,	0.0f,	1.0f };
 	static constexpr glm::vec3 g_NegZ{	0.0f,	0.0f,  -1.0f };
+	//Large data buffers
+	extern glm::mat4* g_DynamicMatrixBuffer;
+	extern uint32_t* g_DynamicTextureIndicesBuffer;
 
 	//Static handler of the most used game system entities,
 	//Gets initialised by the user with the Init static function
@@ -74,10 +78,13 @@ namespace GlCore
 		static void Init();
 		static Renderer& GetInstance();
 		static void Render(const RendererPayload& p);
+		//Chunk optimized rendering
+		static void RenderInstanced(uint32_t count);
 	private:
 		Renderer();
 		~Renderer();
 		void IRender(const RendererPayload& p);
+		void IRenderInstanced(uint32_t count);
 	};
 }
 

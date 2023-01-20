@@ -15,6 +15,7 @@ public:
     void UpdateRenderableSides(const glm::vec3& camera_pos);
 
     const glm::vec3& Position() const;
+    const Gd::BlockType& Type() const;
 
     const GlCore::DrawableData& DrawableSides() const;
     void AddNormal(const glm::vec3& norm);

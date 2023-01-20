@@ -89,6 +89,13 @@ namespace GlCore
         return { vertices_crossaim, lyt };
     }
 
+    inline Layout MatrixAttributeLayout()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 16, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), 0});
+        return lyt;
+    }
+
     //Starting index of respective cube face
     inline uint8_t GetNormVertexBegin(const glm::vec3& vec)
     {
