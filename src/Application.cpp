@@ -2,7 +2,11 @@
 #include "Entrypoint.h"
 #include "World.h"
 #include "Renderer.h"
-#include <filesystem>
+#ifdef __linux__
+#   include <experimental/filesystem>
+#else
+#   include <filesystem>
+#endif
 
 //We create the window alongside with the whole OpenGL context
 Application::Application() :
@@ -28,7 +32,11 @@ void Application::OnUserCreate()
     GlCore::Renderer::Init();
 
     //Create needed dirs
+#ifdef __linux__
+    using namespace std::experimental::filesystem;
+#else
     using namespace std::filesystem;
+#endif
 
     path p{ "runtime_files" };
     if(!is_directory(p))
@@ -91,7 +99,11 @@ void Application::OnUserRun()
     }
 
     //Remove serialization dir
+#ifdef __linux__
+    using namespace std::experimental::filesystem;
+#else
     using namespace std::filesystem;
+#endif
 
     path p{ "runtime_files" };
     remove_all(p);

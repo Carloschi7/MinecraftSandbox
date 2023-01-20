@@ -32,6 +32,9 @@ else() #default linux ubuntu for now (STILL WORK IN PROGRESS)
 	set(C7ENGINE_OPENGL_LIB ${UBUNTU_LIB_PATH}/libGL.so)
 	set(C7ENGINE_DEPENDENCIES glfw GLEW ${UBUNTU_LIB_PATH}/libassimp.so)
 	set(C7ENGINE_LIB_PATH  ${ENGINE_BUILD_PATH}/libC7Engine.so Threads::Threads)
+
+	#Filesystem support
+	link_libraries(stdc++fs)
 endif()
 
 

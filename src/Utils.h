@@ -313,7 +313,7 @@ namespace Utils
 	public:
 		Serializer(const std::string& filename, const char* mode)
 		{
-			fopen_s(&m_File, filename.c_str(), mode);
+			m_File = std::fopen(filename.c_str(), mode);
 		}
 		~Serializer()
 		{

@@ -34,7 +34,7 @@
 //between threads upon pushing heap reallocations on containers
 //Trying to provide stronger thread safety on configurations who neeed it more
 
-#if defined _DEBUG || defined __linux__
+#if defined _DEBUG
 #	define STRONG_THREAD_SAFETY
 #endif
 
