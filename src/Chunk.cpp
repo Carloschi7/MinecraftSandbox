@@ -454,7 +454,7 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 
 void Chunk::Draw(bool selected) const
 {
-	auto mats = GlCore::g_DynamicMatrixBuffer;
+	auto dyn_pos = GlCore::g_DynamicPositionBuffer;
 	auto tex = GlCore::g_DynamicTextureIndicesBuffer;
 	uint32_t count = 0;
 
@@ -467,19 +467,19 @@ void Chunk::Draw(bool selected) const
 
 		//block.Draw(selected && i == s_InternalSelectedBlock);
 		tex[count] = static_cast<uint32_t>(block.Type());
-		mats[count++] = glm::translate(GlCore::g_IdentityMatrix, block.Position());
+		dyn_pos[count++] = block.Position();
 
 		//Handle selection by pushing another matrix and a null index
 		if (selected && i == s_InternalSelectedBlock)
 		{
 			tex[count] = 256 + tex[count - 1];
-			mats[count] = glm::scale(mats[count - 1], glm::vec3(1.02f));
+			dyn_pos[count] = dyn_pos[count - 1];
 			count++;
 		}
 	}
 
 	//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
-	GlCore::Root::BlockVM()->EditInstance(0, mats, sizeof(glm::mat4) * count, 0);
+	GlCore::Root::BlockVM()->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
 	GlCore::Root::BlockVM()->EditInstance(1, tex, sizeof(uint32_t) * count, 0);
 	GlCore::Renderer::RenderInstanced(count);
 }

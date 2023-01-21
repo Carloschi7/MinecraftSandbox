@@ -31,7 +31,7 @@ namespace GlCore
 	static constexpr glm::vec3 g_PosZ{	0.0f,	0.0f,	1.0f };
 	static constexpr glm::vec3 g_NegZ{	0.0f,	0.0f,  -1.0f };
 	//Large data buffers
-	extern glm::mat4* g_DynamicMatrixBuffer;
+	extern glm::vec3* g_DynamicPositionBuffer;
 	extern uint32_t* g_DynamicTextureIndicesBuffer;
 
 	//Static handler of the most used game system entities,

@@ -48,13 +48,13 @@ World::World()
 
 	//Create matrix and tex indices dynamic buffers to ease the process of
 	//instanced rendering
-	GlCore::g_DynamicMatrixBuffer = new glm::mat4[GlCore::g_MaxInstancedObjs]{};
+	GlCore::g_DynamicPositionBuffer = new glm::vec3[GlCore::g_MaxInstancedObjs]{};
 	GlCore::g_DynamicTextureIndicesBuffer = new uint32_t[GlCore::g_MaxInstancedObjs]{};
 }
 
 World::~World()
 {
-	delete[] GlCore::g_DynamicMatrixBuffer;
+	delete[] GlCore::g_DynamicPositionBuffer;
 	delete[] GlCore::g_DynamicTextureIndicesBuffer;
 }
 
@@ -170,8 +170,19 @@ void World::UpdateScene()
 		}
 	}
 
-	//Block Selection & normal updating
+	//normal updating
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+	{
+		auto& chunk = m_Chunks[i];
+		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
+			continue;
+
+		//We update blocks drawing conditions only if we move or if we break blocks
+		chunk.UpdateBlocks();
+	}
+
 	HandleSelection();
+
 	m_LastPos = camera_position;
 
 	//Serialization (Working but still causing random crashes sometimes)
@@ -200,7 +211,6 @@ void World::HandleSelection()
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
 
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
 	bool left_click = GlCore::Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
@@ -210,10 +220,6 @@ void World::HandleSelection()
 			continue;
 
 		float current_selection = chunk.BlockCollisionLogic(left_click);
-
-		//We update blocks drawing conditions only if we move or if we break blocks
-		//if (camera_position != m_LastPos || left_click)
-			chunk.UpdateBlocks();
 
 		if (current_selection < nearest_selection)
 		{

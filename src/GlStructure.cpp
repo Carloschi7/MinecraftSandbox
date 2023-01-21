@@ -131,12 +131,13 @@ namespace GlCore
         }
 
         //Create instance buffer for model matrices
-        m_VertexManagerPtr->PushInstancedMatrixBuffer(nullptr, sizeof(glm::mat4) * g_MaxInstancedObjs,
-            m_ShaderPtr->GetAttributeLocation("model_matrix"));
+        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+            m_ShaderPtr->GetAttributeLocation("model_pos"), el);
 
-        LayoutElement el{ 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0 };
+        LayoutElement el2{ 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0 };
         m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(uint32_t) * g_MaxInstancedObjs,
-            m_ShaderPtr->GetAttributeLocation("tex_index"), el);
+            m_ShaderPtr->GetAttributeLocation("tex_index"), el2);
 
         //Root management
         Root::SetBlockShader(m_ShaderPtr);

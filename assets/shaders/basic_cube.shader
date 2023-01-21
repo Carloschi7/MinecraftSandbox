@@ -5,7 +5,7 @@ layout(location = 0) in vec3 pos;
 layout(location = 1) in vec3 norm;
 layout(location = 2) in vec2 tex_coords;
 
-in mat4 model_matrix;
+in vec3 model_pos;
 in uint tex_index;
 
 uniform mat4 view;
@@ -20,6 +20,26 @@ void main()
 	TexCoords = tex_coords;
 	TexIndex = tex_index;
 	Norm = normalize(norm);
+
+	mat4 model_matrix = mat4(
+		vec4(1.0f, 0.0f, 0.0f, 0.0f),
+		vec4(0.0f, 1.0f, 0.0f, 0.0f),
+		vec4(0.0f, 0.0f, 1.0f, 0.0f),
+		vec4(model_pos, 1.0f));
+
+	//Scale selection
+	if (int(TexIndex) >= 256)
+	{
+		float fact = 1.05f;
+
+		mat4 scale_matrix = mat4(
+			vec4(fact, 0.0f, 0.0f, 0.0f),
+			vec4(0.0f, fact, 0.0f, 0.0f),
+			vec4(0.0f, 0.0f, fact, 0.0f),
+			vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+		model_matrix = model_matrix * scale_matrix;
+	}
 
 	gl_Position = proj * view * model_matrix * vec4(pos, 1.0f);
 }

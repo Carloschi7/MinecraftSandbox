@@ -11,7 +11,7 @@ GlCore::Root::RootImpl GlCore::Root::m_InternalPayload;
 namespace GlCore
 {
 	std::atomic_bool g_LogicThreadShouldRun = true;
-	glm::mat4* g_DynamicMatrixBuffer = nullptr;
+	glm::vec3* g_DynamicPositionBuffer = nullptr;
 	uint32_t* g_DynamicTextureIndicesBuffer = nullptr;
 
 	//Root
