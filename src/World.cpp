@@ -14,7 +14,7 @@ World::World()
 
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
-			m_Chunks.emplace_back(this, glm::vec2(float(i), float(j)));
+			m_Chunks.emplace_back(std::make_shared<Chunk>(this, glm::vec2(float(i), float(j))));
 
 	HandleSectionData();
 	//Set safe iterable size for the rendering thread(set in all cases by default)
@@ -27,8 +27,9 @@ World::World()
 	};
 
 	//Init spawnable chunks
-	for (auto& chunk : m_Chunks)
+	for (auto& chunk_ptr : m_Chunks)
 	{
+		auto& chunk = *chunk_ptr;
 		const glm::vec2& chunk_pos = chunk.GetChunkOrigin();
 
 		if (!IsChunk(chunk, ChunkLocation::PLUS_X).has_value())
@@ -62,22 +63,22 @@ void World::DrawRenderable()
 {
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
-	
 	m_WorldStructure.UniformViewMatrix();
 
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();
-	
-	//Asserting chunks are not getting serialized if
-	//we are in multithreading mode (temporary solution)
-	if constexpr (GlCore::g_MultithreadedRendering)
+
+#if MC_MULTITHREADING 1
+	for (uint32_t i = 0; i < m_SafeChunkSize; i++)
+#else
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+#endif
+	{
+		//Wait if the vector is being modified
 		while (m_ChunkMemoryOperations) {}
 
-	std::size_t size = GlCore::g_MultithreadedRendering ? m_SafeChunkSize.load() : m_Chunks.size();
-	for (uint32_t i = 0; i < size; i++)
-	{
-		const auto& chunk = m_Chunks[i];
+		const auto& chunk = *m_Chunks[i];
 		if (chunk.IsChunkRenderable() && chunk.IsChunkVisible())
 			chunk.Draw(ch == i);
 	}
@@ -102,21 +103,21 @@ void World::UpdateScene()
 			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
 			glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
-#ifdef STRONG_THREAD_SAFETY
-			bool needs_lock = m_Chunks.size() == m_Chunks.capacity();
-			if (needs_lock)
-				if constexpr (GlCore::g_MultithreadedRendering)
-					m_Chunks.lock();
-#endif
-			m_Chunks.emplace_back(this, chunk_pos);
+			if constexpr (GlCore::g_MultithreadedRendering)
+			{
+				if (m_Chunks.size() == m_Chunks.capacity())
+				{
+					m_ChunkMemoryOperations = true;
+					m_Chunks.reserve(m_Chunks.capacity() + m_Chunks.capacity() / 2);
+					m_ChunkMemoryOperations = false;
+				}
+			}
+
+			m_Chunks.emplace_back(std::make_shared<Chunk>(this, chunk_pos));
 			m_SafeChunkSize++;
 			HandleSectionData();
-#ifdef STRONG_THREAD_SAFETY
-			if (needs_lock)
-				if constexpr (GlCore::g_MultithreadedRendering)
-					m_Chunks.unlock();
-#endif
-			auto& this_chunk = m_Chunks.back();
+
+			auto& this_chunk = *m_Chunks.back();
 			this_chunk.InitBlockNormals();
 			
 			//Removing previously visible normals from old chunks && update local chunks
@@ -173,7 +174,7 @@ void World::UpdateScene()
 	//normal updating
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
-		auto& chunk = m_Chunks[i];
+		auto& chunk = *m_Chunks[i];
 		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
 			continue;
 
@@ -181,6 +182,7 @@ void World::UpdateScene()
 		chunk.UpdateBlocks();
 	}
 
+	//Determine selection
 	HandleSelection();
 
 	m_LastPos = camera_position;
@@ -192,7 +194,7 @@ void World::UpdateScene()
 		if (data.loaded && glm::length(camera_2d - data.central_position) > 750.0f)
 		{
 			SerializeSector(data.index);
-			std::cout << "Serialize:" << m_Chunks.size() << std::endl;
+			std::cout << "Serialized:" << m_Chunks.size() << std::endl;
 			data.loaded = false;
 		}
 
@@ -200,7 +202,7 @@ void World::UpdateScene()
 		if (!data.loaded && glm::length(camera_2d - data.central_position) < 650.0f)
 		{
 			DeserializeSector(data.index);
-			std::cout << "Deserialize:" << m_Chunks.size() << std::endl;
+			std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
 			data.loaded = true;
 		}
 	}
@@ -213,9 +215,13 @@ void World::HandleSelection()
 
 	bool left_click = GlCore::Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 
+#if MC_MULTITHREADING 1
+	for (uint32_t i = 0; i < m_SafeChunkSize; i++)
+#else
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+#endif
 	{
-		auto& chunk = m_Chunks[i];
+		auto& chunk = *m_Chunks[i];
 		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
 			continue;
 
@@ -232,7 +238,7 @@ void World::HandleSelection()
 	Gd::g_SelectedChunk = involved_chunk;
 	if (involved_chunk != static_cast<uint32_t>(-1))
 	{
-		Gd::g_SelectedBlock = m_Chunks[involved_chunk].LastSelectedBlock();
+		Gd::g_SelectedBlock = m_Chunks[involved_chunk]->LastSelectedBlock();
 	}
 }
 
@@ -260,8 +266,8 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 	{
 		for (uint32_t i = 0; i < m_Chunks.size(); i++)
 		{
-			if (m_Chunks[i].GetChunkOrigin() == pos)
-				return m_Chunks[i].Index();
+			if (m_Chunks[i]->GetChunkOrigin() == pos)
+				return m_Chunks[i]->Index();
 		}
 
 		return std::nullopt;
@@ -285,12 +291,12 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 Chunk& World::GetChunk(uint32_t index)
 {
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
-		[index](const Chunk& c) {return c.Index() == index; });
+		[index](std::shared_ptr<Chunk> c) {return c->Index() == index; });
 
 	if (iter == m_Chunks.end())
 		throw std::runtime_error("Chunk element with this index not found");
 
-	return *iter;
+	return **iter;
 }
 
 Gd::WorldSeed& World::Seed()
@@ -306,6 +312,7 @@ const Gd::WorldSeed& World::Seed() const
 void World::SerializeSector(uint32_t index)
 {
 	//Load sector's serializer
+	std::cout << "Serializing:" << m_Chunks.size() << std::endl;
 	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "wb");
 	uint32_t serialized_chunks = 0;
 
@@ -316,7 +323,8 @@ void World::SerializeSector(uint32_t index)
 		m_ChunkMemoryOperations = true;
 
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [&](const Chunk& ch) {return ch.SectorIndex() != index; });
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
+			[&](const std::shared_ptr<Chunk>& ch) {return ch->SectorIndex() != index; });
 		//Determine safe iteration range for the renderer thread
 		m_SafeChunkSize = static_cast<uint32_t>(iter - m_Chunks.begin());
 
@@ -327,7 +335,7 @@ void World::SerializeSector(uint32_t index)
 	sz.Serialize<uint32_t>(0);
 	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end();)
 	{
-		Chunk& chunk = *iter;
+		Chunk& chunk = **iter;
 		if (chunk.SectorIndex() == index)
 		{
 			chunk & sz;
@@ -341,13 +349,13 @@ void World::SerializeSector(uint32_t index)
 	//Write the amount of chunks serialized
 	sz.Seek(0);
 	sz& serialized_chunks;
-
 	m_SafeChunkSize = m_Chunks.size();
 }
 
 void World::DeserializeSector(uint32_t index)
 {
 	//Load sector's serializer
+	std::cout << "Deserializing:" << m_Chunks.size() << std::endl;
 	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "rb");
 
 	if constexpr (GlCore::g_MultithreadedRendering)
@@ -369,7 +377,7 @@ void World::DeserializeSector(uint32_t index)
 
 	while (!sz.Eof())
 	{
-		m_Chunks.emplace_back(this, sz, index);
+		m_Chunks.emplace_back(std::make_shared<Chunk>(this, sz, index));
 		m_SafeChunkSize++;
 	}
 }

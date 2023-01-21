@@ -32,7 +32,11 @@ private:
     glm::vec2 SectionCentralPosFrom(uint32_t index);
     
 private:
-    VecType<Chunk> m_Chunks;
+    //We prefer a vector of shared pointers instead of a vector
+    //of stack allocated objects because when we are reallocating
+    //the vector and the render thread is doing stuff with a chunk,
+    //the chunk object is not invalidated
+    std::vector<std::shared_ptr<Chunk>> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     std::vector<glm::vec3> m_SpawnableChunks;

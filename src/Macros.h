@@ -15,6 +15,9 @@
 #	endif
 #endif
 
+//Determine if the app is multithreadable
+#define MC_MULTITHREADING 1
+
 //Generic linux platforms
 #if defined __linux__ && !defined ENV64
 #	define ENV64

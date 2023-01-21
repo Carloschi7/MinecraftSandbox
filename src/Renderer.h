@@ -20,7 +20,7 @@ namespace GlCore
 	const std::string g_SkyboxUniformName = "skybox";
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
-	static constexpr bool g_MultithreadedRendering = true;
+	static constexpr bool g_MultithreadedRendering = MC_MULTITHREADING;
 	static constexpr uint32_t g_MaxInstancedObjs = 500;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//Basic normals
