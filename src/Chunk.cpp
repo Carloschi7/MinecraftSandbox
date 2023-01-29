@@ -368,6 +368,15 @@ bool Chunk::IsChunkVisible() const
 		glm::length(camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
 }
 
+bool Chunk::IsChunkVisibleByShadow() const
+{
+	glm::vec3 camera_position = GlCore::Root::GameCamera().GetPosition() + GlCore::g_FramebufferPlayerOffset;
+	const glm::vec3& camera_direction = GlCore::g_NegY;
+	
+	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
+	return (glm::dot(camera_to_midway, camera_direction) > 0.8f);
+}
+
 void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 {
 	//Function that determines if a block normal towards the chunk can be removed,
@@ -452,10 +461,10 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 	}
 }
 
-void Chunk::Draw(bool selected) const
+void Chunk::Draw(bool depth_buf_draw, bool selected) const
 {
-	auto dyn_pos = GlCore::g_DynamicPositionBuffer;
-	auto tex = GlCore::g_DynamicTextureIndicesBuffer;
+	auto* dyn_pos = GlCore::g_DynamicPositionBuffer;
+	auto* tex = GlCore::g_DynamicTextureIndicesBuffer;
 	uint32_t count = 0;
 
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
@@ -465,22 +474,48 @@ void Chunk::Draw(bool selected) const
 		if (!block.IsDrawable())
 			continue;
 
-		//block.Draw(selected && i == s_InternalSelectedBlock);
-		tex[count] = static_cast<uint32_t>(block.Type());
-		dyn_pos[count++] = block.Position();
-
-		//Handle selection by pushing another matrix and a null index
-		if (selected && i == s_InternalSelectedBlock)
+		if (!depth_buf_draw)
 		{
-			tex[count] = 256 + tex[count - 1];
-			dyn_pos[count] = dyn_pos[count - 1];
-			count++;
+			tex[count] = static_cast<uint32_t>(block.Type());
+			dyn_pos[count++] = block.Position();
+
+			//Handle selection by pushing another matrix and a null index
+			if (selected && i == s_InternalSelectedBlock)
+			{
+				tex[count] = 256 + tex[count - 1];
+				dyn_pos[count] = dyn_pos[count - 1];
+				count++;
+			}
+		}
+		else
+		{
+			dyn_pos[count++] = block.Position();
 		}
 	}
 
-	//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
-	GlCore::Root::BlockVM()->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
-	GlCore::Root::BlockVM()->EditInstance(1, tex, sizeof(uint32_t) * count, 0);
+	if (count == 0)
+		return;
+
+	auto block_vm = GlCore::Root::BlockVM();
+	auto depth_vm = GlCore::Root::DepthVM();
+
+	//Decide which shader to use depending on the context
+	if (!depth_buf_draw)
+	{
+		GlCore::Root::BlockShader()->Use();
+		//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
+		block_vm->BindVertexArray();
+		block_vm->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
+		block_vm->EditInstance(1, tex, sizeof(uint32_t) * count, 0);
+	}
+	else
+	{
+		GlCore::Root::DepthShader()->Use();
+		depth_vm->BindVertexArray();
+		depth_vm->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
+	}
+	
+
 	GlCore::Renderer::RenderInstanced(count);
 }
 

@@ -11,6 +11,10 @@ GlCore::Root::RootImpl GlCore::Root::m_InternalPayload;
 namespace GlCore
 {
 	std::atomic_bool g_LogicThreadShouldRun = true;
+
+	glm::vec3 g_FramebufferPlayerOffset = glm::vec3(0.0f, 50.0f, 0.0f);
+	glm::mat4 g_DepthSpaceMatrix(1.0f);
+
 	glm::vec3* g_DynamicPositionBuffer = nullptr;
 	uint32_t* g_DynamicTextureIndicesBuffer = nullptr;
 
@@ -28,9 +32,21 @@ namespace GlCore
 	{
 		m_InternalPayload.block_shader = block_shader_;
 	}
+	void Root::SetDepthShader(std::shared_ptr<Shader> depth_shader_)
+	{
+		m_InternalPayload.depth_shader = depth_shader_;
+	}
 	void Root::SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
 		m_InternalPayload.block_vm = vertex_manager_;
+	}
+	void Root::SetDepthVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		m_InternalPayload.depth_vm = vertex_manager_;
+	}
+	void Root::SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_)
+	{
+		m_InternalPayload.shadow_framebuffer = shadow_framebuffer_;
 	}
 	Window& Root::GameWindow()
 	{
@@ -46,9 +62,24 @@ namespace GlCore
 		return m_InternalPayload.block_shader;
 	}
 
+	std::shared_ptr<Shader> Root::DepthShader()
+	{
+		return m_InternalPayload.depth_shader;
+	}
+
 	std::shared_ptr<VertexManager> Root::BlockVM()
 	{
 		return m_InternalPayload.block_vm;
+	}
+
+	std::shared_ptr<VertexManager> Root::DepthVM()
+	{
+		return m_InternalPayload.depth_vm;
+	}
+
+	std::shared_ptr<FrameBuffer> Root::DepthFramebuffer()
+	{
+		return m_InternalPayload.shadow_framebuffer;
 	}
 	
 	Root::Root()
@@ -102,19 +133,19 @@ namespace GlCore
 		if (pl.texture)
 		{
 			pl.texture->Bind();
-			pl.shd->Uniform1i(0, g_DiffuseTextureUniformName);
+			pl.shd->Uniform1i(0, "texture_diffuse");
 		}
 		if (pl.cubemap)
 		{
 			pl.cubemap->BindTexture();
-			pl.shd->Uniform1i(0, g_SkyboxUniformName);
+			pl.shd->Uniform1i(0, "skybox");
 		}
 
 
 		//If we uniform something the shader gets bound automatically
 		if (pl.model != g_NullMatrix)
 		{
-			pl.shd->UniformMat4f(pl.model, g_ModelUniformName);
+			pl.shd->UniformMat4f(pl.model, "model");
 		}
 
 		if (pl.dd)
@@ -129,9 +160,6 @@ namespace GlCore
 	}
 	void Renderer::IRenderInstanced(uint32_t count)
 	{
-		Root::BlockShader()->Use();
-		Root::BlockVM()->BindVertexArray();
-
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, count);
 	}
 }

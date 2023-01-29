@@ -82,6 +82,13 @@ namespace GlCore
         return { pos_and_tex_coord_sided, lyt };
     }
 
+    inline VertexData CubeForDepth()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
+        return { pos_and_tex_coord_sided, lyt };
+    }
+
     inline VertexData CrossAim()
     {
         Layout lyt;

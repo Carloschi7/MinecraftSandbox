@@ -12,12 +12,6 @@
 namespace GlCore
 {
 	//Uniform names definitions
-	const std::string g_ModelUniformName = "model";
-	const std::string g_EntitySelectedUniformName = "entity_selected";
-	const std::string g_DiffuseTextureUniformName = "diffuse_texture";
-	const std::string g_ViewUniformName = "view";
-	const std::string g_ProjUniformName = "proj";
-	const std::string g_SkyboxUniformName = "skybox";
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = MC_MULTITHREADING;
@@ -30,6 +24,9 @@ namespace GlCore
 	static constexpr glm::vec3 g_NegY{	0.0f,  -1.0f,	0.0f };
 	static constexpr glm::vec3 g_PosZ{	0.0f,	0.0f,	1.0f };
 	static constexpr glm::vec3 g_NegZ{	0.0f,	0.0f,  -1.0f };
+	//Framebuffer data
+	extern glm::vec3 g_FramebufferPlayerOffset;
+	extern glm::mat4 g_DepthSpaceMatrix;
 	//Large data buffers
 	extern glm::vec3* g_DynamicPositionBuffer;
 	extern uint32_t* g_DynamicTextureIndicesBuffer;
@@ -42,11 +39,17 @@ namespace GlCore
 		static void SetGameWindow(Window* game_window_);
 		static void SetGameCamera(Camera* game_camera_);
 		static void SetBlockShader(std::shared_ptr<Shader> block_shader_);
+		static void SetDepthShader(std::shared_ptr<Shader> depth_shader_);
 		static void SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_);
+		static void SetDepthVM(std::shared_ptr<VertexManager> vertex_manager_);
+		static void SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_);
 		static Window& GameWindow();
 		static Camera& GameCamera();
 		static std::shared_ptr<Shader> BlockShader();
+		static std::shared_ptr<Shader> DepthShader();
 		static std::shared_ptr<VertexManager> BlockVM();
+		static std::shared_ptr<VertexManager> DepthVM();
+		static std::shared_ptr<FrameBuffer> DepthFramebuffer();
 	private:
 		Root();
 		~Root();
@@ -55,7 +58,10 @@ namespace GlCore
 			Window* game_window;
 			Camera* camera;
 			std::shared_ptr<Shader> block_shader;
+			std::shared_ptr<Shader> depth_shader;
 			std::shared_ptr<VertexManager> block_vm;
+			std::shared_ptr<VertexManager> depth_vm;
+			std::shared_ptr<FrameBuffer> shadow_framebuffer;
 		};
 		static RootImpl m_InternalPayload;
 	};

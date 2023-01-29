@@ -61,26 +61,51 @@ World::~World()
 
 void World::DrawRenderable()
 {
+	//Draw to depth framebuffer
+	auto& window = GlCore::Root::GameWindow();
+
+	glViewport(0, 0, 2000, 2000);
+	GlCore::Root::DepthFramebuffer()->Bind();
+	Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+
+	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+	{
+		while (m_ChunkMemoryOperations) {}
+
+		const auto& chunk = *m_Chunks[i];
+		if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
+			chunk.Draw(true);
+	}
+
+	GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
+	GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
+
+	glViewport(0, 0, window.Width(), window.Height());
+	FrameBuffer::BindDefault();
+	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
 	m_WorldStructure.UniformViewMatrix();
+	//Update depth framebuffer
+	m_WorldStructure.UpdateShadowFramebuffer();
 
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
-	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();
+	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();	
 
-#if MC_MULTITHREADING 1
-	for (uint32_t i = 0; i < m_SafeChunkSize; i++)
-#else
-	for (uint32_t i = 0; i < m_Chunks.size(); i++)
-#endif
+	//Uniform light space matrix
+	GlCore::Root::BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
+
+	//Draw to scene
+	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
 		//Wait if the vector is being modified
 		while (m_ChunkMemoryOperations) {}
 
 		const auto& chunk = *m_Chunks[i];
 		if (chunk.IsChunkRenderable() && chunk.IsChunkVisible())
-			chunk.Draw(ch == i);
+			chunk.Draw(false, ch == i);
 	}
 
 	//Drawing crossaim
@@ -161,6 +186,7 @@ void World::UpdateScene()
 				return glm::length(camera_position - v1) < glm::length(camera_position - v2);
 			};
 
+			//Sort the vector each second, doing this every frame would be pointless
 			if (m_SortingTimer.GetElapsedSeconds() > 1.0f)
 			{
 				std::sort(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), spawner_sorter);
@@ -170,6 +196,9 @@ void World::UpdateScene()
 			break;
 		}
 	}
+
+	//Determine selection
+	HandleSelection();
 
 	//normal updating
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
@@ -181,9 +210,6 @@ void World::UpdateScene()
 		//We update blocks drawing conditions only if we move or if we break blocks
 		chunk.UpdateBlocks();
 	}
-
-	//Determine selection
-	HandleSelection();
 
 	m_LastPos = camera_position;
 
@@ -215,11 +241,7 @@ void World::HandleSelection()
 
 	bool left_click = GlCore::Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 
-#if MC_MULTITHREADING 1
-	for (uint32_t i = 0; i < m_SafeChunkSize; i++)
-#else
-	for (uint32_t i = 0; i < m_Chunks.size(); i++)
-#endif
+	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
 		auto& chunk = *m_Chunks[i];
 		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())

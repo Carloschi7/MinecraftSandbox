@@ -70,8 +70,6 @@ void Application::OnUserRun()
     Utils::Timer timer;
     while (!m_Window.ShouldClose())
     {   
-        m_Window.ClearScreen();
-        
         timer.StartTimer();
         if constexpr (GlCore::g_MultithreadedRendering)
         {

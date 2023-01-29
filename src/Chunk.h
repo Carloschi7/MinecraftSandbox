@@ -32,6 +32,8 @@ public:
 	bool IsChunkRenderable() const;
 	//Checks if this chunk (within the renderable space) is visible by the player
 	bool IsChunkVisible() const;
+	//Determines if the chunk is visible by the shadow shader
+	bool IsChunkVisibleByShadow() const;
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
 
@@ -39,7 +41,7 @@ public:
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
 	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
 	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
-	void Draw(bool selected = false) const;
+	void Draw(bool depth_buf_draw, bool selected = false) const;
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 	uint32_t LastSelectedBlock() const;
 

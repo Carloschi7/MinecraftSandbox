@@ -22,6 +22,7 @@ namespace GlCore
         void UpdateCamera();
         void RenderSkybox() const;
         void RenderCrossaim() const;
+        void UpdateShadowFramebuffer() const;
 
         void UniformProjMatrix() const;
         void UniformViewMatrix() const;
@@ -32,6 +33,10 @@ namespace GlCore
         //Crossaim stuff
         static std::shared_ptr<Shader> m_CrossaimShaderPtr;
         static std::shared_ptr<VertexManager> m_CrossaimVmPtr;
+        //Shadow framebuffer
+        static std::shared_ptr<FrameBuffer> m_DepthFramebufferPtr;
+        static std::shared_ptr<Shader> m_FramebufferShaderPtr;
+        static std::shared_ptr<VertexManager> m_DepthVMPtr;
         friend class World;
     };
 

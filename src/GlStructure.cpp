@@ -6,6 +6,9 @@ std::shared_ptr<CubeMap> GlCore::WorldStructure::m_CubemapPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CubemapShaderPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
 std::shared_ptr<VertexManager> GlCore::WorldStructure::m_CrossaimVmPtr = nullptr;
+std::shared_ptr<FrameBuffer> GlCore::WorldStructure::m_DepthFramebufferPtr = nullptr;
+std::shared_ptr<Shader> GlCore::WorldStructure::m_FramebufferShaderPtr = nullptr;
+std::shared_ptr<VertexManager> GlCore::WorldStructure::m_DepthVMPtr = nullptr;
 
 std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
@@ -27,34 +30,48 @@ namespace GlCore
         cam.SetKeyboardFunction(Gd::KeyboardFunction);
         cam.SetMouseFunction(Gd::MouseFunction);
         
-        //Loading static members
-        if (m_CrossaimShaderPtr.get() == nullptr)
+        //Static data already initialized
+        if (m_CrossaimShaderPtr.get() != nullptr)
+            return;
+        
+        //Loading cubemap data
+        std::vector<std::string> skybox_files =
         {
-            //Loading cubemap data
-            std::vector<std::string> skybox_files =
-            {
-                "assets/textures/ShadedBackground.png",
-                "assets/textures/ShadedBackground.png",
-                "assets/textures/BotBackground.png",
-                "assets/textures/TopBackground.png",
-                "assets/textures/ShadedBackground.png",
-                "assets/textures/ShadedBackground.png",
-            };
-            m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, Gd::g_RenderDistance / 2.0f);
+            "assets/textures/ShadedBackground.png",
+            "assets/textures/ShadedBackground.png",
+            "assets/textures/BotBackground.png",
+            "assets/textures/TopBackground.png",
+            "assets/textures/ShadedBackground.png",
+            "assets/textures/ShadedBackground.png",
+        };
+        m_CubemapPtr = std::make_shared<CubeMap>(skybox_files, Gd::g_RenderDistance / 2.0f);
 
-            m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
-            m_CubemapShaderPtr->UniformMat4f(cam.GetProjMatrix(), g_ProjUniformName);
+        m_CubemapShaderPtr = std::make_shared<Shader>("assets/shaders/cubemap.shader");
+        m_CubemapShaderPtr->UniformMat4f(cam.GetProjMatrix(), "proj");
 
-            //Loading crossaim data
-            m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
-            //We set the crossaim model matrix here, for now this shader is used only 
-            //for drawing this
-            m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), g_ModelUniformName);
+        //Loading crossaim data
+        m_CrossaimShaderPtr = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
+        //We set the crossaim model matrix here, for now this shader is used only 
+        //for drawing this
+        m_CrossaimShaderPtr->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
 
-            VertexData rd = CrossAim();
-            //VM init only the first time
-            m_CrossaimVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
-        }
+        VertexData rd = CrossAim();
+        m_CrossaimVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        rd = CubeForDepth();
+        m_DepthVMPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+
+        //Init framebuffer
+        m_DepthFramebufferPtr = std::make_shared<FrameBuffer>(2000, 2000, FrameBufferType::DEPTH_ATTACHMENT);
+        m_FramebufferShaderPtr = std::make_shared<Shader>("assets/shaders/basic_shadow.shader");
+
+        //Instanced attribute for block positions in the depth shader
+        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        m_DepthVMPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+            m_FramebufferShaderPtr->GetAttributeLocation("model_depth_pos"), el);
+
+        Root::SetShadowFramebuffer(m_DepthFramebufferPtr);
+        Root::SetDepthShader(m_FramebufferShaderPtr);
+        Root::SetDepthVM(m_DepthVMPtr);
     }
 
 
@@ -84,16 +101,28 @@ namespace GlCore
         Renderer::Render(pl);
     }
 
+    void WorldStructure::UpdateShadowFramebuffer() const
+    {
+        auto& pos = Root::GameCamera().GetPosition();
+        glm::vec3 light_eye = glm::vec3(pos.x, 100.0f, pos.z);
+
+        static glm::mat4 proj = glm::ortho(-300.0f, 300.0f, -300.0f, 300.0f, 0.1f, 250.0f);
+        glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosX);
+        g_DepthSpaceMatrix = proj * view;
+
+        m_FramebufferShaderPtr->UniformMat4f(g_DepthSpaceMatrix, "lightSpace");
+    }
+
     void WorldStructure::UniformProjMatrix() const
     {
         auto block_shader = Root::BlockShader();
-        block_shader->UniformMat4f(Root::GameCamera().GetProjMatrix(), g_ProjUniformName);
+        block_shader->UniformMat4f(Root::GameCamera().GetProjMatrix(), "proj");
     }
 
     void WorldStructure::UniformViewMatrix() const
     {
         auto block_shader = Root::BlockShader();
-        block_shader->UniformMat4f(Root::GameCamera().GetViewMatrix(), g_ViewUniformName);
+        block_shader->UniformMat4f(Root::GameCamera().GetViewMatrix(), "view");
     }
 
 
@@ -107,8 +136,6 @@ namespace GlCore
         m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
 
         m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
-        //Uniforming light direction(static for now)
-        m_ShaderPtr->UniformVec3f(Gd::g_LightDirection, "light_direction");
 
         m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
         m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
