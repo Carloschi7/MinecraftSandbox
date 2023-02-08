@@ -68,6 +68,9 @@ void World::DrawRenderable()
 	GlCore::Root::DepthFramebuffer()->Bind();
 	Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
+	//Update depth framebuffer
+	m_WorldStructure.UpdateShadowFramebuffer();
+
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
 		while (m_ChunkMemoryOperations) {}
@@ -87,8 +90,6 @@ void World::DrawRenderable()
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
 	m_WorldStructure.UniformViewMatrix();
-	//Update depth framebuffer
-	m_WorldStructure.UpdateShadowFramebuffer();
 
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
