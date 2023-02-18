@@ -64,27 +64,27 @@ void World::DrawRenderable()
 	//Draw to depth framebuffer
 	auto& window = GlCore::Root::GameWindow();
 
-	glViewport(0, 0, 2000, 2000);
-	GlCore::Root::DepthFramebuffer()->Bind();
-	Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+	//glViewport(0, 0, 2000, 2000);
+	//GlCore::Root::DepthFramebuffer()->Bind();
+	//Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
-	//Update depth framebuffer
-	m_WorldStructure.UpdateShadowFramebuffer();
+	////Update depth framebuffer
+	//m_WorldStructure.UpdateShadowFramebuffer();
 
-	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
-	{
-		while (m_ChunkMemoryOperations) {}
+	//for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+	//{
+	//	while (m_ChunkMemoryOperations) {}
 
-		const auto& chunk = *m_Chunks[i];
-		if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
-			chunk.Draw(true);
-	}
+	//	const auto& chunk = *m_Chunks[i];
+	//	if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
+	//		chunk.Draw(true);
+	//}
 
-	GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
-	GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
+	//GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
+	//GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
 
-	glViewport(0, 0, window.Width(), window.Height());
-	FrameBuffer::BindDefault();
+	//glViewport(0, 0, window.Width(), window.Height());
+	//FrameBuffer::BindDefault();
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Render skybox
