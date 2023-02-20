@@ -6,7 +6,7 @@ namespace Gd
 	const float g_ChunkRenderingDistance = 300.0f;
 	const float g_CameraCompensation = 10.0f;
 	const float g_RenderDistance = 1500.0f;
-    const float g_FramedPlayerSpeed = 60.0f;
+    const float g_FramedPlayerSpeed = 80.0f;
     const float g_SectionDimension = 512.0f;
     uint32_t g_ChunkProgIndex = 0;
 	const int32_t g_SpawnerBegin = -64;
@@ -15,6 +15,7 @@ namespace Gd
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
+    extern bool g_BlockDestroyed = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<uint32_t> g_PushedSections;
@@ -46,12 +47,12 @@ namespace Gd
         camera->RotateY((y - localy) * dpi * time);
     }
 
-    bool ViewBlockCollision(const glm::vec3 &camera_pos, const glm::vec3 &camera_dir, const glm::vec3 &block_pos,
+    HitDirection ViewBlockCollision(const glm::vec3 &camera_pos, const glm::vec3 &camera_dir, const glm::vec3 &block_pos,
                             float &dist) 	{
         //Calculating distance
         dist = glm::length(camera_pos - block_pos);
         if (dist > 10.0f)
-            return false;
+            return HitDirection::NONE;
 
         static float half_cube_diag = 0.5f;
         glm::vec3 cube_min = block_pos - glm::vec3(half_cube_diag);
@@ -70,7 +71,7 @@ namespace Gd
             std::swap(t0y, t1y);
 
         if (t1x < t0y || t1y < t0x)
-            return false;
+            return HitDirection::NONE;
 
         float t0z = (cube_min.z - camera_pos.z) / camera_dir.z;
         float t1z = (cube_max.z - camera_pos.z) / camera_dir.z;
@@ -82,9 +83,40 @@ namespace Gd
         float tc1 = std::min(t1x, t1y);
 
         if (t0z > tc1 || t1z < tc0)
-            return false;
+            return HitDirection::NONE;
 
-        return true;
+        glm::vec3 hitpoint = camera_pos + camera_dir * std::max(tc0, t0z);
+        glm::vec3 dir = hitpoint - block_pos;
+        glm::vec3 abs_dir = glm::abs(dir);
+
+        static auto max3 = [](float f1, float f2, float f3) {
+            if (f1 > f2 && f1 > f3)
+                return 1;
+            else if (f2 > f1 && f2 > f3)
+                return 2;
+            else return 3;
+        };
+
+        switch (max3(abs_dir.x, abs_dir.y, abs_dir.z))
+        {
+        case 1:
+            if (dir.x > 0.0f)
+                return HitDirection::POS_X;
+            else
+                return HitDirection::NEG_X;
+        case 2:
+            if (dir.y > 0.0f)
+                return HitDirection::POS_Y;
+            else
+                return HitDirection::NEG_Y;
+        case 3:
+            if (dir.z > 0.0f)
+                return HitDirection::POS_Z;
+            else
+                return HitDirection::NEG_Z;
+        }
+
+        return HitDirection::NONE;
     }
 
     uint32_t ChunkSectorIndex(const glm::vec2& pos)

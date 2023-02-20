@@ -1,6 +1,7 @@
 #include "World.h"
 #include "Renderer.h"
 #include <atomic>
+#include "TexExporter.h"
 
 //Initializing a single block for now
 World::World()
@@ -41,7 +42,7 @@ World::World()
 		if (!IsChunk(chunk, ChunkLocation::MINUS_Z).has_value())
 			add_spawnable_chunk(glm::vec3(chunk_pos.x, 0.0f, g_SpawnerBegin - g_SpawnerIncrement));
 
-		chunk.InitBlockNormals();
+		chunk.InitGlobalNorms();
 	}
 
 	//Set proj matrix, won't vary for now in the app
@@ -63,28 +64,37 @@ void World::DrawRenderable()
 {
 	//Draw to depth framebuffer
 	auto& window = GlCore::Root::GameWindow();
+	auto& camera = GlCore::Root::GameCamera();
 
-	//glViewport(0, 0, 2000, 2000);
-	//GlCore::Root::DepthFramebuffer()->Bind();
-	//Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+	if (Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
+	{
+		//Reset state
+		Gd::g_BlockDestroyed = false;
+		m_LastPos = camera.GetPosition();
 
-	////Update depth framebuffer
-	//m_WorldStructure.UpdateShadowFramebuffer();
+		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
+		GlCore::Root::DepthFramebuffer()->Bind();
+		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
-	//for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
-	//{
-	//	while (m_ChunkMemoryOperations) {}
+		//Update depth framebuffer
+		m_WorldStructure.UpdateShadowFramebuffer();
 
-	//	const auto& chunk = *m_Chunks[i];
-	//	if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
-	//		chunk.Draw(true);
-	//}
+		for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+		{
+			//Interrupt for a moment if m_Chunks is being resized by the logic thread
+			while (m_ChunkMemoryOperations) {}
 
-	//GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
-	//GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
+			const auto& chunk = *m_Chunks[i];
+			if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
+				chunk.Draw(true);
+		}
 
-	//glViewport(0, 0, window.Width(), window.Height());
-	//FrameBuffer::BindDefault();
+		GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
+		GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
+
+		glViewport(0, 0, window.Width(), window.Height());
+		FrameBuffer::BindDefault();
+	}
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Render skybox
@@ -144,7 +154,7 @@ void World::UpdateScene()
 			HandleSectionData();
 
 			auto& this_chunk = *m_Chunks.back();
-			this_chunk.InitBlockNormals();
+			this_chunk.InitGlobalNorms();
 			
 			//Removing previously visible normals from old chunks && update local chunks
 			//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
@@ -212,8 +222,6 @@ void World::UpdateScene()
 		chunk.UpdateBlocks();
 	}
 
-	m_LastPos = camera_position;
-
 	//Serialization (Working but still causing random crashes sometimes)
 	for (Gd::SectionData& data : m_SectionsData)
 	{
@@ -240,7 +248,10 @@ void World::HandleSelection()
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
 
-	bool left_click = GlCore::Root::GameWindow().IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+	auto& window = GlCore::Root::GameWindow();
+
+	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+	bool right_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
 
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
@@ -248,7 +259,7 @@ void World::HandleSelection()
 		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
 			continue;
 
-		float current_selection = chunk.BlockCollisionLogic(left_click);
+		float current_selection = chunk.BlockCollisionLogic(left_click, right_click);
 
 		if (current_selection < nearest_selection)
 		{

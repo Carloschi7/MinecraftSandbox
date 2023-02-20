@@ -16,6 +16,8 @@ namespace GlCore
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = MC_MULTITHREADING;
 	static constexpr uint32_t g_MaxInstancedObjs = 500;
+	static constexpr uint32_t g_DepthMapWidth = 1024;
+	static constexpr uint32_t g_DepthMapHeight = 1024;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };

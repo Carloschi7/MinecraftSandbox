@@ -61,7 +61,7 @@ namespace GlCore
         m_DepthVMPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
 
         //Init framebuffer
-        m_DepthFramebufferPtr = std::make_shared<FrameBuffer>(2000, 2000, FrameBufferType::DEPTH_ATTACHMENT);
+        m_DepthFramebufferPtr = std::make_shared<FrameBuffer>(g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
         m_FramebufferShaderPtr = std::make_shared<Shader>("assets/shaders/basic_shadow.shader");
 
         //Instanced attribute for block positions in the depth shader
@@ -104,10 +104,12 @@ namespace GlCore
     void WorldStructure::UpdateShadowFramebuffer() const
     {
         auto& pos = Root::GameCamera().GetPosition();
-        glm::vec3 light_eye = glm::vec3(pos.x, 100.0f, pos.z);
+        float x = pos.x - std::fmod(pos.x, 32.0f);
+        float z = pos.z - std::fmod(pos.z, 32.0f);
+        glm::vec3 light_eye = glm::vec3(x, 400.0f, z);
 
-        static glm::mat4 proj = glm::ortho(-300.0f, 300.0f, -300.0f, 300.0f, 0.1f, 250.0f);
-        glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosX);
+        static glm::mat4 proj = glm::ortho(-80.0f, 80.0f, -80.0f, 80.0f, 0.1f, 450.0f);
+        glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosZ);
         g_DepthSpaceMatrix = proj * view;
 
         m_FramebufferShaderPtr->UniformMat4f(g_DepthSpaceMatrix, "lightSpace");

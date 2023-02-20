@@ -1,5 +1,4 @@
 #include "Chunk.h"
-
 #include "World.h"
 #include <algorithm>
 #include <chrono>
@@ -103,7 +102,7 @@ Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 	return *this;
 }
 
-void Chunk::InitBlockNormals()
+void Chunk::InitGlobalNorms()
 {
 	//Determining if side chunk exist
 	m_PlusX = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::PLUS_X);
@@ -300,7 +299,46 @@ void Chunk::InitBlockNormals()
 	}
 }
 
-float Chunk::BlockCollisionLogic(bool left_click)
+void Chunk::AddFreshNormals(Block& b)
+{
+	const auto& block_pos = b.Position();
+
+	bool conf_rlfb[4];
+	conf_rlfb[0] = block_pos.x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1;
+	conf_rlfb[1] = block_pos.x == m_ChunkOrigin.x;
+	conf_rlfb[2] = block_pos.z == m_ChunkOrigin.y;
+	conf_rlfb[3] = block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
+
+	auto local_lambda = [&](bool side_check, Gd::ChunkLocation cl, const glm::vec3& dir)
+	{
+		bool add_norm = true;
+		if (side_check)
+		{
+			if (auto opt = m_RelativeWorld->IsChunk(*this, cl); opt.has_value())
+			{
+				if (m_RelativeWorld->GetChunk(opt.value()).IsBlock(block_pos + dir))
+					add_norm = false;
+			}
+		}
+		else
+		{
+			if (IsBlock(block_pos + dir))
+				add_norm = false;
+		}
+
+		if (add_norm)
+			b.AddNormal(dir);
+	};
+
+	local_lambda(conf_rlfb[0], Gd::ChunkLocation::PLUS_X, GlCore::g_PosX);
+	local_lambda(conf_rlfb[1], Gd::ChunkLocation::MINUS_X, GlCore::g_NegX);
+	local_lambda(false, Gd::ChunkLocation::NONE, GlCore::g_PosY);
+	local_lambda(false, Gd::ChunkLocation::NONE, GlCore::g_NegY);
+	local_lambda(conf_rlfb[2], Gd::ChunkLocation::PLUS_Z, GlCore::g_PosZ);
+	local_lambda(conf_rlfb[3], Gd::ChunkLocation::MINUS_Z, GlCore::g_NegZ);
+}
+
+float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
@@ -309,6 +347,8 @@ float Chunk::BlockCollisionLogic(bool left_click)
 
 	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
 	auto& camera_direction = GlCore::Root::GameCamera().GetFront();
+
+	Gd::HitDirection selection = Gd::HitDirection::NONE;
 
 	//Checking selection
 	for (std::size_t i = 0; i < vec_size; ++i)
@@ -319,21 +359,62 @@ float Chunk::BlockCollisionLogic(bool left_click)
 			continue;
 
 		float dist = 0.0f;
-		bool bSelected = Gd::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
+		Gd::HitDirection local_selection = Gd::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
 		
-		if (bSelected && dist < closest_selected_block_dist)
+		if (local_selection != Gd::HitDirection::NONE && dist < closest_selected_block_dist)
 		{
 			closest_selected_block_dist = dist;
+			selection = local_selection;
 			m_SelectedBlock = i;
 		}
 	}
 
 	//Logic which removes a block
-	if (m_SelectedBlock != static_cast<uint32_t>(-1) && left_click)
+	if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 	{
 		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
 		m_SelectedBlock = static_cast<uint32_t>(-1);
+
+		//Signal block has been destroyed
+		Gd::g_BlockDestroyed = true;
+	}
+
+	//Push a new block
+	if (right_click && m_SelectedBlock != static_cast<uint32_t>(-1))
+	{
+		//if the selected block isn't -1 that means selection is not NONE
+
+		auto bt = Gd::BlockType::DIRT;
+		auto& block = m_LocalBlocks[m_SelectedBlock];
+
+		switch (selection)
+		{
+		case Gd::HitDirection::POS_X:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
+			break;
+		case Gd::HitDirection::NEG_X:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
+			break;
+		case Gd::HitDirection::POS_Y:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
+			break;
+		case Gd::HitDirection::NEG_Y:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
+			break;
+		case Gd::HitDirection::POS_Z:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
+			break;
+		case Gd::HitDirection::NEG_Z:
+			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
+			break;
+
+		case Gd::HitDirection::NONE:
+			//UNREACHABLE
+			break;
+		}
+
+		AddFreshNormals(m_LocalBlocks.back());
 	}
 
 	return closest_selected_block_dist;
@@ -374,7 +455,7 @@ bool Chunk::IsChunkVisibleByShadow() const
 	const glm::vec3& camera_direction = GlCore::g_NegY;
 	
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
-	return (glm::dot(camera_to_midway, camera_direction) > 0.8f);
+	return (glm::dot(camera_to_midway, camera_direction) > 0.5f);
 }
 
 void Chunk::RemoveBorderNorm(const glm::vec3& norm)
@@ -471,11 +552,13 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 	{
 		auto& block = m_LocalBlocks[i];
 		//Discard automatically blocks which cant be drawn
-		if (!block.IsDrawable())
-			continue;
 
 		if (!depth_buf_draw)
 		{
+			//For standard frawcalls, we care about visible blocks
+			if (!block.IsDrawable())
+				continue;
+
 			tex[count] = static_cast<uint32_t>(block.Type());
 			dyn_pos[count++] = block.Position();
 
@@ -489,6 +572,10 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 		}
 		else
 		{
+			//For depth drawcalls, we include every surface block
+			if (!block.HasNormals())
+				continue;
+
 			dyn_pos[count++] = block.Position();
 		}
 	}
@@ -704,3 +791,5 @@ const Block& Chunk::GetBlock(uint32_t index) const
 {
 	return m_LocalBlocks[index];
 }
+
+

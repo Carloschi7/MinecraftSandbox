@@ -24,9 +24,14 @@ public:
 	Chunk& operator=(const Chunk&) = delete;
 	Chunk& operator=(Chunk&& rhs) noexcept;
 
-	//All the chunks need to be loaded in order to use this function
-	void InitBlockNormals();
-	[[nodiscard]] float BlockCollisionLogic(bool left_click);
+	//Normals loaded as the chunk spawns
+	void InitGlobalNorms();
+	//Add new normals for a newly placed block
+	void AddFreshNormals(Block& b);
+	//Add new normals after a block deletion
+	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
+
+	[[nodiscard]] float BlockCollisionLogic(bool left_click, bool right_click);
 	void UpdateBlocks();
 	//Checks if this chunk is near enough to the player to be rendered
 	bool IsChunkRenderable() const;
@@ -42,7 +47,6 @@ public:
 	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
 	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
 	void Draw(bool depth_buf_draw, bool selected = false) const;
-	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 	uint32_t LastSelectedBlock() const;
 
 	uint32_t SectorIndex() const;

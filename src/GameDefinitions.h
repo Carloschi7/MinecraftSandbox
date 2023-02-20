@@ -24,6 +24,7 @@ namespace Gd
 	//Variables for block selection
 	extern std::atomic_uint32_t g_SelectedBlock;
 	extern std::atomic_uint32_t g_SelectedChunk;
+	extern bool g_BlockDestroyed;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<uint32_t> g_PushedSections;
 	extern std::string g_SerializedFileFormat;
@@ -32,6 +33,11 @@ namespace Gd
     {
         DIRT = 0, GRASS, SAND, WOOD, LEAVES
     };
+
+	enum class HitDirection : uint8_t
+	{
+		NONE = 0, POS_X, NEG_X, POS_Y, NEG_Y, POS_Z, NEG_Z,
+	};
 
 	struct MouseInput
 	{
@@ -63,7 +69,7 @@ namespace Gd
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
     void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);
-	bool ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, float& dist);
+	HitDirection ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, float& dist);
 	//Chunks will also be assigned a value in order to be grouped
 	//with other chunks. This is done in order to save RAM, so not
 	//every chunk of the world is loaded at once.
