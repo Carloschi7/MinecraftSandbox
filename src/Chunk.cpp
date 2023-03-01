@@ -369,6 +369,10 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 		}
 	}
 
+	//If some chunks
+	/*if (GlCore::g_SerializationRunning)
+		return closest_selected_block_dist;*/
+
 	//Logic which removes a block
 	if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 	{
@@ -544,8 +548,8 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 
 void Chunk::Draw(bool depth_buf_draw, bool selected) const
 {
-	auto* dyn_pos = GlCore::g_DynamicPositionBuffer;
-	auto* tex = GlCore::g_DynamicTextureIndicesBuffer;
+	auto* dyn_pos = GlCore::g_DynamicPositionBuffer.data();
+	auto* tex = GlCore::g_DynamicTextureIndicesBuffer.data();
 	uint32_t count = 0;
 
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)

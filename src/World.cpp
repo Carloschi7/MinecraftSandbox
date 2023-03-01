@@ -50,14 +50,12 @@ World::World()
 
 	//Create matrix and tex indices dynamic buffers to ease the process of
 	//instanced rendering
-	GlCore::g_DynamicPositionBuffer = new glm::vec3[GlCore::g_MaxInstancedObjs]{};
-	GlCore::g_DynamicTextureIndicesBuffer = new uint32_t[GlCore::g_MaxInstancedObjs]{};
+	GlCore::g_DynamicPositionBuffer.resize(GlCore::g_MaxInstancedObjs);
+	GlCore::g_DynamicTextureIndicesBuffer.resize(GlCore::g_MaxInstancedObjs);
 }
 
 World::~World()
 {
-	delete[] GlCore::g_DynamicPositionBuffer;
-	delete[] GlCore::g_DynamicTextureIndicesBuffer;
 }
 
 void World::DrawRenderable()
@@ -82,11 +80,9 @@ void World::DrawRenderable()
 		for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 		{
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
-			while (m_ChunkMemoryOperations) {}
-
-			const auto& chunk = *m_Chunks[i];
-			if (chunk.IsChunkRenderable() && chunk.IsChunkVisibleByShadow())
-				chunk.Draw(true);
+			std::shared_ptr<Chunk> chunk = m_Chunks[i];
+			if (chunk->IsChunkRenderable() && chunk->IsChunkVisibleByShadow())
+				chunk->Draw(true);
 		}
 
 		GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
@@ -96,6 +92,16 @@ void World::DrawRenderable()
 		FrameBuffer::BindDefault();
 	}
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
+	{
+		GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
+		std::vector<float> vec(GlCore::g_DepthMapWidth * GlCore::g_DepthMapHeight);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, vec.data());
+
+		TexExporter exp("my_texture.ppm");
+		exp.Export(vec.data(), GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight, TexFormat::DEPTH_COMPONENT_F32);
+	}
 
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
@@ -112,11 +118,9 @@ void World::DrawRenderable()
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
 		//Wait if the vector is being modified
-		while (m_ChunkMemoryOperations) {}
-
-		const auto& chunk = *m_Chunks[i];
-		if (chunk.IsChunkRenderable() && chunk.IsChunkVisible())
-			chunk.Draw(false, ch == i);
+		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible())
+			chunk->Draw(false, ch == i);
 	}
 
 	//Drawing crossaim
@@ -127,100 +131,111 @@ void World::UpdateScene()
 {
 	//Chunk dynamic spawning
 	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
-
 	glm::vec2 camera_2d(camera_position.x, camera_position.z);
-	for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
+	
+	if (!GlCore::g_SerializationRunning)
 	{
-		const glm::vec3& vec = m_SpawnableChunks[i];
-		glm::vec2 vec_2d(vec.x, vec.z);
-		//Check if a new chunk can be generated
-		if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
+
+		for (uint32_t i = 0; i < m_SpawnableChunks.size(); i++)
 		{
-			glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
-			glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
-
-			if constexpr (GlCore::g_MultithreadedRendering)
+			const glm::vec3& vec = m_SpawnableChunks[i];
+			glm::vec2 vec_2d(vec.x, vec.z);
+			//Check if a new chunk can be generated
+			if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
 			{
-				if (m_Chunks.size() == m_Chunks.capacity())
+				glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
+				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
+
+				if constexpr (GlCore::g_MultithreadedRendering)
 				{
-					m_ChunkMemoryOperations = true;
-					m_Chunks.reserve(m_Chunks.capacity() + m_Chunks.capacity() / 2);
-					m_ChunkMemoryOperations = false;
+					if (m_Chunks.size() == m_Chunks.capacity())
+					{
+						m_Chunks.lock();
+						m_Chunks.reserve(m_Chunks.capacity() + m_Chunks.capacity() / 2);
+						m_Chunks.unlock();
+					}
 				}
-			}
 
-			m_Chunks.emplace_back(std::make_shared<Chunk>(this, chunk_pos));
-			m_SafeChunkSize++;
-			HandleSectionData();
+				m_Chunks.emplace_back(std::make_shared<Chunk>(this, chunk_pos));
+				m_SafeChunkSize++;
+				HandleSectionData();
 
-			auto& this_chunk = *m_Chunks.back();
-			this_chunk.InitGlobalNorms();
-			
-			//Removing previously visible normals from old chunks && update local chunks
-			//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
-			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_X); opt.has_value())
-			{
-				auto& neighbor_chunk = GetChunk(opt.value());
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, this_chunk.Index());
-			}
-			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
-			{
-				auto& neighbor_chunk = GetChunk(opt.value());
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, this_chunk.Index());
-			}
-			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
-			{
-				auto& neighbor_chunk = GetChunk(opt.value());
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, this_chunk.Index());
-			}
-			if (auto opt = this_chunk.GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
-			{
-				auto& neighbor_chunk = GetChunk(opt.value());
-				neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, this_chunk.Index());
-			}
+				std::shared_ptr<Chunk> this_chunk = m_Chunks.back();
+				this_chunk->InitGlobalNorms();
 
-			//Pushing new spawnable vectors
-			if (IsPushable(this_chunk, Gd::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
-				m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
-			if (IsPushable(this_chunk, Gd::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
-				m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
-			if (IsPushable(this_chunk, Gd::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
-				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
-			if (IsPushable(this_chunk, Gd::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
-				m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
+				//Removing previously visible normals from old chunks && update local chunks
+				//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PLUS_X); opt.has_value())
+				{
+					auto& neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, this_chunk->Index());
+				}
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
+				{
+					auto& neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, this_chunk->Index());
+				}
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
+				{
+					auto& neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, this_chunk->Index());
+				}
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
+				{
+					auto& neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, this_chunk->Index());
+				}
 
-			//Remove the just spawned chunk from the spawnable list
-			m_SpawnableChunks.erase(m_SpawnableChunks.begin() + i);
-			
-			//Order chunk spawning order based on the distance with the player
-			static auto spawner_sorter = [&](const glm::vec3& v1, const glm::vec3& v2) {
-				return glm::length(camera_position - v1) < glm::length(camera_position - v2);
-			};
+				//Pushing new spawnable vectors
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
+					m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
+					m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
+					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
+					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
 
-			//Sort the vector each second, doing this every frame would be pointless
-			if (m_SortingTimer.GetElapsedSeconds() > 1.0f)
-			{
-				std::sort(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), spawner_sorter);
-				m_SortingTimer.StartTimer();
+				//Remove the just spawned chunk from the spawnable list
+				m_SpawnableChunks.erase(m_SpawnableChunks.begin() + i);
+
+				//Order chunk spawning order based on the distance with the player
+				static auto spawner_sorter = [&](const glm::vec3& v1, const glm::vec3& v2) {
+					return glm::length(camera_position - v1) < glm::length(camera_position - v2);
+				};
+
+				//Sort the vector each second, doing this every frame would be pointless
+				if (m_SortingTimer.GetElapsedSeconds() > 1.0f)
+				{
+					std::sort(m_SpawnableChunks.begin(), m_SpawnableChunks.end(), spawner_sorter);
+					m_SortingTimer.StartTimer();
+				}
+
+				break;
 			}
-
-			break;
 		}
+
 	}
 
 	//Determine selection
 	HandleSelection();
 
 	//normal updating
-	for (uint32_t i = 0; i < m_Chunks.size(); i++)
+	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
-		auto& chunk = *m_Chunks[i];
-		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
+		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
 		//We update blocks drawing conditions only if we move or if we break blocks
-		chunk.UpdateBlocks();
+		chunk->UpdateBlocks();
 	}
+
+	if constexpr (GlCore::g_MultithreadedRendering)
+		if (GlCore::g_SerializationRunning)
+			return;
+
+	static int sercount = 0;
 
 	//Serialization (Working but still causing random crashes sometimes)
 	for (Gd::SectionData& data : m_SectionsData)
@@ -228,17 +243,54 @@ void World::UpdateScene()
 		//Serialization zone
 		if (data.loaded && glm::length(camera_2d - data.central_position) > 750.0f)
 		{
-			SerializeSector(data.index);
-			std::cout << "Serialized:" << m_Chunks.size() << std::endl;
 			data.loaded = false;
+
+			if constexpr (GlCore::g_MultithreadedRendering)
+			{
+				auto parallel_serialization = [&]()
+					{
+						std::cout << sercount++ << "\nSerializing:" << m_Chunks.size() << std::endl;
+						SerializeSector(data.index);
+						std::cout << "Serialized:" << m_Chunks.size() << std::endl;
+						GlCore::g_SerializationRunning = false;
+					};
+
+				GlCore::g_SerializationRunning = true;
+				m_SerializingFut = std::async(std::launch::async, parallel_serialization);
+				//let our thread run alone for now
+				break;
+			}
+			else
+			{
+				SerializeSector(data.index);
+				std::cout << "Serialized:" << m_Chunks.size() << std::endl;
+			}
 		}
 
 		//Deserialization zone
 		if (!data.loaded && glm::length(camera_2d - data.central_position) < 650.0f)
 		{
-			DeserializeSector(data.index);
-			std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
 			data.loaded = true;
+
+			if constexpr (GlCore::g_MultithreadedRendering)
+			{
+				auto parallel_serialization = [&]()
+				{
+					std::cout << sercount++ << "\nDeserializing:" << m_Chunks.size() << std::endl;
+					DeserializeSector(data.index);
+					std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
+					GlCore::g_SerializationRunning = false;
+				};
+
+				GlCore::g_SerializationRunning = true;
+				m_SerializingFut = std::async(std::launch::async, parallel_serialization);
+				break;
+			}
+			else
+			{
+				DeserializeSector(data.index);
+				std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
+			}
 		}
 	}
 }
@@ -255,11 +307,11 @@ void World::HandleSelection()
 
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{
-		auto& chunk = *m_Chunks[i];
-		if (!chunk.IsChunkRenderable() || !chunk.IsChunkVisible())
+		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
-		float current_selection = chunk.BlockCollisionLogic(left_click, right_click);
+		float current_selection = chunk->BlockCollisionLogic(left_click, right_click);
 
 		if (current_selection < nearest_selection)
 		{
@@ -346,40 +398,40 @@ const Gd::WorldSeed& World::Seed() const
 void World::SerializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	std::cout << "Serializing:" << m_Chunks.size() << std::endl;
 	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "wb");
 	uint32_t serialized_chunks = 0;
 
 	//(When multithreading) Advertise the render thread m_Chunks 
 	//is undergoing some heavy changes
+	std::vector<std::shared_ptr<Chunk>>::iterator iter{};
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		m_ChunkMemoryOperations = true;
-
+		m_Chunks.lock();
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
+		iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
 			[&](const std::shared_ptr<Chunk>& ch) {return ch->SectorIndex() != index; });
 		//Determine safe iteration range for the renderer thread
 		m_SafeChunkSize = static_cast<uint32_t>(iter - m_Chunks.begin());
-
-		m_ChunkMemoryOperations = false;
+		m_Chunks.unlock();
 	}
+
+	//Nothing to serialize
+	if (m_Chunks.size() == m_SafeChunkSize)
+		return;
 
 	//Number of chunks at the beginning (leave blank for now)
 	sz.Serialize<uint32_t>(0);
-	for (auto iter = m_Chunks.begin(); iter != m_Chunks.end();)
+	for(uint32_t i = 0; i < m_Chunks.size() - m_SafeChunkSize; i++)
 	{
-		Chunk& chunk = **iter;
-		if (chunk.SectorIndex() == index)
-		{
-			chunk & sz;
-			serialized_chunks++;
-			iter = m_Chunks.erase(iter);
-			continue;
-		}
-		++iter;
+		Chunk& chunk = *m_Chunks[m_SafeChunkSize + i];
+		chunk & sz;
+		serialized_chunks++;
 	}
 	
+	m_Chunks.lock();
+	m_Chunks.erase(iter, m_Chunks.end());
+	m_Chunks.unlock();
+
 	//Write the amount of chunks serialized
 	sz.Seek(0);
 	sz& serialized_chunks;
@@ -389,18 +441,15 @@ void World::SerializeSector(uint32_t index)
 void World::DeserializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	std::cout << "Deserializing:" << m_Chunks.size() << std::endl;
 	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "rb");
 
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		m_ChunkMemoryOperations = true;
-
+		m_Chunks.lock();
 		uint32_t deser_size = 0;
 		sz% deser_size;
 		m_Chunks.reserve(m_Chunks.size() + deser_size);
-
-		m_ChunkMemoryOperations = false;
+		m_Chunks.unlock();
 	}
 	else
 	{
@@ -411,7 +460,8 @@ void World::DeserializeSector(uint32_t index)
 
 	while (!sz.Eof())
 	{
-		m_Chunks.emplace_back(std::make_shared<Chunk>(this, sz, index));
+		auto new_chunk = std::make_shared<Chunk>(this, sz, index);
+		m_Chunks.push_back(new_chunk);
 		m_SafeChunkSize++;
 	}
 }

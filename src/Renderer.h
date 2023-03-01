@@ -3,6 +3,7 @@
 #include <list>
 #include <thread>
 #include <mutex>
+#include <map>
 #include "MainIncl.h"
 #include "GameDefinitions.h"
 #include "Vertices.h"
@@ -15,10 +16,13 @@ namespace GlCore
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
 	static constexpr bool g_MultithreadedRendering = MC_MULTITHREADING;
-	static constexpr uint32_t g_MaxInstancedObjs = 500;
+	static constexpr uint32_t g_MaxInstancedObjs = 1500;
 	static constexpr uint32_t g_DepthMapWidth = 1024;
 	static constexpr uint32_t g_DepthMapHeight = 1024;
 	extern std::atomic_bool g_LogicThreadShouldRun;
+	//thread id of the thread which is allowed to modify m_Chunks
+	extern std::atomic_bool g_SerializationRunning;
+	extern std::map<std::string, std::thread::id> g_ThreadPool;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
 	static constexpr glm::vec3 g_NegX{ -1.0f,	0.0f,	0.0f };
@@ -30,8 +34,8 @@ namespace GlCore
 	extern glm::vec3 g_FramebufferPlayerOffset;
 	extern glm::mat4 g_DepthSpaceMatrix;
 	//Large data buffers
-	extern glm::vec3* g_DynamicPositionBuffer;
-	extern uint32_t* g_DynamicTextureIndicesBuffer;
+	extern std::vector<glm::vec3> g_DynamicPositionBuffer;
+	extern std::vector<uint32_t> g_DynamicTextureIndicesBuffer;
 
 	//Static handler of the most used game system entities,
 	//Gets initialised by the user with the Init static function
@@ -95,9 +99,3 @@ namespace GlCore
 		void IRenderInstanced(uint32_t count);
 	};
 }
-
-//Defining types related to multithreading
-template<class T>
-using VecType = typename Utils::ConditionalVector<T, GlCore::g_MultithreadedRendering>;
-template<class T>
-using ListType = typename Utils::ConditionalList<T, GlCore::g_MultithreadedRendering>;

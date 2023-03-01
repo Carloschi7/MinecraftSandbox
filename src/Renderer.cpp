@@ -11,12 +11,14 @@ GlCore::Root::RootImpl GlCore::Root::m_InternalPayload;
 namespace GlCore
 {
 	std::atomic_bool g_LogicThreadShouldRun = true;
+	std::atomic_bool g_SerializationRunning = false;
+	std::map<std::string, std::thread::id> g_ThreadPool;
 
 	glm::vec3 g_FramebufferPlayerOffset = glm::vec3(0.0f, 50.0f, 0.0f);
 	glm::mat4 g_DepthSpaceMatrix(1.0f);
 
-	glm::vec3* g_DynamicPositionBuffer = nullptr;
-	uint32_t* g_DynamicTextureIndicesBuffer = nullptr;
+	std::vector<glm::vec3> g_DynamicPositionBuffer;
+	std::vector<uint32_t> g_DynamicTextureIndicesBuffer;
 
 	//Root
 

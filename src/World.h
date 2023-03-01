@@ -2,6 +2,7 @@
 #include <iostream>
 #include <optional>
 #include <thread>
+#include <future>
 #include "Chunk.h"
 
 class World {
@@ -36,7 +37,11 @@ private:
     //of stack allocated objects because when we are reallocating
     //the vector and the render thread is doing stuff with a chunk,
     //the chunk object is not invalidated
+#ifdef MC_MULTITHREADING
+    Utils::TSVector<std::shared_ptr<Chunk>> m_Chunks;
+#else
     std::vector<std::shared_ptr<Chunk>> m_Chunks;
+#endif
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     std::vector<glm::vec3> m_SpawnableChunks;
@@ -48,12 +53,13 @@ private:
     Gd::WorldSeed m_WorldSeed;
     //Handles section data
     std::vector<Gd::SectionData> m_SectionsData;
-    //Determines whether m_Chunks is serializing/deserializing
-    std::atomic_bool m_ChunkMemoryOperations = false;
     //Safe iteration size(useful when the chunks at the end of the vector are being serialized)
     std::atomic_uint32_t m_SafeChunkSize = 0;
     //Timer used to sort the spawnable chunks vector every now and then
     //(sorting every frame would be pointless)
     Utils::Timer m_SortingTimer;
+
+    //Serialization threads
+    std::future<void> m_SerializingFut;
 };
 

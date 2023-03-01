@@ -10,23 +10,19 @@
 	#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
-#ifdef STRONG_THREAD_SAFETY
-#	define _CHECK_UNLOCKED()\
-		if (m_OwningThreadID != std::this_thread::get_id())\
-			while (m_Locked) {}
-#else
-#	define _CHECK_UNLOCKED()
-#endif
+
+#define _CHECK_UNLOCKED() while (m_OwningThreadID != std::this_thread::get_id() && m_OwningThreadID != std::thread::id{}) {}
+
 
 //Utilities
 namespace Utils
 {
 	//Thread safe vector
-
-	//Implementing only the used methods
-	//the methods here will have the same format as the ones in the standard lib 
-	//for example "push_back", because the container we choose depends on the
-	//app being multithreaded or not. The same goes for TSList
+	//This class is pseudo-safe, locking a mutex each of the many accesses in the TSvector
+	//can be really expensive, expecially with more limited hardware.
+	//So the locking process is explicit and can be performed via the functions lock and unlock
+	//This is done because in the scenario we find ourselves needing to lock the vector only if
+	//we are adding/removing elements
 	template<class T>
 	class TSVector
 	{
@@ -51,13 +47,11 @@ namespace Utils
 		void lock()
 		{
 			_CHECK_UNLOCKED();
-			m_Locked = true;
 			m_OwningThreadID = std::this_thread::get_id();
 		}
 		void unlock()
 		{
 			_CHECK_UNLOCKED();
-			m_Locked = false;
 			m_OwningThreadID = std::thread::id{};
 		}
 
@@ -86,6 +80,11 @@ namespace Utils
 		{
 			_CHECK_UNLOCKED();
 			return m_Container.erase(iter);
+		}
+		iterator erase(const_iterator first, const_iterator last)
+		{
+			_CHECK_UNLOCKED();
+			return m_Container.erase(first, last);
 		}
 		void clear()
 		{
@@ -150,8 +149,7 @@ namespace Utils
 
 	private:
 		std::vector<T> m_Container;
-		mutable std::atomic_bool m_Locked;
-		std::thread::id m_OwningThreadID;
+		mutable std::atomic<std::thread::id> m_OwningThreadID;
 	};
 
 	//Thread safe list
@@ -226,12 +224,6 @@ namespace Utils
 		std::list<T> m_Container;
 		mutable std::mutex m_Lock;
 	};
-
-	//For now TSVector is disabled, mutexes soak up a lot of performance
-	template<class T, bool _Cond>
-	using ConditionalVector = typename std::conditional<_Cond, Utils::TSVector<T>, std::vector<T>>::type;
-	template<class T, bool _Cond>
-	using ConditionalList = typename std::conditional<_Cond, Utils::TSList<T>, std::list<T>>::type;
 
 	static constexpr uint32_t g_PointerBytes = POINTER_BYTES;
 

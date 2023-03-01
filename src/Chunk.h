@@ -77,7 +77,11 @@ private:
 	//Chunk progressive index
 	uint32_t m_ChunkIndex;
 
-	VecType<Block> m_LocalBlocks;
+#ifdef MC_MULTITHREADING
+	Utils::TSVector<Block> m_LocalBlocks;
+#else
+	std::vector<Block> m_LocalBlocks;
+#endif
 	//front-bottom-left block position
 	glm::vec2 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;

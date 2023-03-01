@@ -106,9 +106,9 @@ namespace GlCore
         auto& pos = Root::GameCamera().GetPosition();
         float x = pos.x - std::fmod(pos.x, 32.0f);
         float z = pos.z - std::fmod(pos.z, 32.0f);
-        glm::vec3 light_eye = glm::vec3(x, 400.0f, z);
+        glm::vec3 light_eye = glm::vec3(x, 500.0f, z);
 
-        static glm::mat4 proj = glm::ortho(-80.0f, 80.0f, -80.0f, 80.0f, 0.1f, 450.0f);
+        static glm::mat4 proj = glm::ortho(-80.0f, 80.0f, -80.0f, 80.0f, 0.1f, 550.0f);
         glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosZ);
         g_DepthSpaceMatrix = proj * view;
 
