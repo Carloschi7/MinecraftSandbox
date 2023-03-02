@@ -58,6 +58,7 @@ void Application::OnUserRun()
             timer.StartTimer();
 #endif
             WorldGameInstance.UpdateScene();
+            GlCore::Root::GameWindow().UpdateKeys();
             //LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
     };
