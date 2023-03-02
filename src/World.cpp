@@ -1,7 +1,6 @@
 #include "World.h"
 #include "Renderer.h"
 #include <atomic>
-#include "TexExporter.h"
 
 //Initializing a single block for now
 World::World()
@@ -92,16 +91,6 @@ void World::DrawRenderable()
 		FrameBuffer::BindDefault();
 	}
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
-	{
-		GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
-		std::vector<float> vec(GlCore::g_DepthMapWidth * GlCore::g_DepthMapHeight);
-		glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_FLOAT, vec.data());
-
-		TexExporter exp("my_texture.ppm");
-		exp.Export(vec.data(), GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight, TexFormat::DEPTH_COMPONENT_F32);
-	}
 
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
@@ -303,7 +292,8 @@ void World::HandleSelection()
 	auto& window = GlCore::Root::GameWindow();
 
 	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
-	bool right_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_2, GLFW_PRESS });
+	//One block at a time
+	bool right_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 	{

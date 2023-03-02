@@ -65,7 +65,7 @@ void Application::OnUserRun()
     if constexpr (GlCore::g_MultithreadedRendering)
     {
         m_AppThreads.emplace_back(logic_thread_impl);
-        //Populate thread pool with static threads
+        //Populate thread pool with static threads (currently unused)
         GlCore::g_ThreadPool.insert({ "Renderer thread", std::this_thread::get_id() });
         GlCore::g_ThreadPool.insert({ "Logic thread", m_AppThreads[0].get_id() });
     }
