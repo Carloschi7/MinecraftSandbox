@@ -145,11 +145,11 @@ void World::UpdateScene()
 					}
 				}
 
-				m_Chunks.emplace_back(std::make_shared<Chunk>(this, chunk_pos));
+				std::shared_ptr<Chunk> this_chunk = std::make_shared<Chunk>(this, chunk_pos);
+				m_Chunks.emplace_back(this_chunk);
 				m_SafeChunkSize++;
 				HandleSectionData();
 
-				std::shared_ptr<Chunk> this_chunk = m_Chunks.back();
 				this_chunk->InitGlobalNorms();
 
 				//Removing previously visible normals from old chunks && update local chunks

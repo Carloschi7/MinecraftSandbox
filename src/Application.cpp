@@ -90,7 +90,7 @@ void Application::OnUserRun()
         }
         //LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
 
-        m_Camera.ProcessInput(m_Window, timer.GetElapsedSeconds() * Gd::g_FramedPlayerSpeed, 0.8);
+        m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Gd::g_FramedPlayerSpeed, 0.8);
         m_Window.Update();
     }
 
