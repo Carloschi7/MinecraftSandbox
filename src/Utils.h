@@ -4,14 +4,15 @@
 #include <mutex>
 #include <chrono>
 #include <fstream>
+#include <utility>
 #include "Macros.h"
 
 #ifndef BYTE_INDEX_FOR_BITS
-	#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
+#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
 
-#define _CHECK_UNLOCKED() while (m_OwningThreadID != std::this_thread::get_id() && m_OwningThreadID != std::thread::id{}) {}
+#define WAIT_UNLOCKED() while (m_OwningThreadID != std::this_thread::get_id() && m_OwningThreadID != std::thread::id{}) {}
 
 
 //Utilities
@@ -46,104 +47,104 @@ namespace Utils
 		//Specific features
 		void lock()
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_OwningThreadID = std::this_thread::get_id();
 		}
 		void unlock()
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_OwningThreadID = std::thread::id{};
 		}
 
 		void push_back(const T& ref)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_Container.push_back(ref);
 		}
 		template<class... Args>
 		decltype(auto) emplace_back(Args&&... args)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.emplace_back(std::forward<Args>(args)...);
 		}
 		T& operator[](std::size_t index)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container[index];
 		}
 		const T& operator[](std::size_t index) const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container[index];
 		}
 		iterator erase(const_iterator iter)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.erase(iter);
 		}
 		iterator erase(const_iterator first, const_iterator last)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.erase(first, last);
 		}
 		void clear()
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_Container.clear();
 		}
 
 		iterator begin()
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.begin();
 		}
 		iterator end()
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.end();
 		}
 		const_iterator begin() const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.begin();
 		}
 		const_iterator end() const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.end();
 		}
-		const_iterator cbegin() const { _CHECK_UNLOCKED(); return begin(); }
-		const_iterator cend() const { _CHECK_UNLOCKED(); return end(); }
+		const_iterator cbegin() const { WAIT_UNLOCKED(); return begin(); }
+		const_iterator cend() const { WAIT_UNLOCKED(); return end(); }
 
-		T& front() { _CHECK_UNLOCKED(); return m_Container[0]; }
-		T& back() { _CHECK_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
-		const T& front() const { _CHECK_UNLOCKED(); return m_Container[0]; }
-		const T& back() const { _CHECK_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
+		T& front() { WAIT_UNLOCKED(); return m_Container[0]; }
+		T& back() { WAIT_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
+		const T& front() const { WAIT_UNLOCKED(); return m_Container[0]; }
+		const T& back() const { WAIT_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
 
 		std::size_t size() const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.size();
 		}
 		std::size_t capacity() const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.capacity();
 		}
 		bool empty() const
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			return m_Container.empty();
 		}
 
 		void resize(std::size_t size)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_Container.resize(size);
 		}
 		void reserve(std::size_t size)
 		{
-			_CHECK_UNLOCKED();
+			WAIT_UNLOCKED();
 			m_Container.reserve(size);
 		}
 
@@ -172,57 +173,89 @@ namespace Utils
 			return *this;
 		}
 
+		void lock()
+		{
+			WAIT_UNLOCKED();
+			m_OwningThreadID = std::this_thread::get_id();
+		}
+		void unlock()
+		{
+			WAIT_UNLOCKED();
+			m_OwningThreadID = std::thread::id{};
+		}
+
 		void push_front(const T& p)
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			m_Container.push_front(p);
 		}
 		void push_back(const T& p)
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			m_Container.push_back(p);
 		}
+		template<class... Args>
+		decltype(auto) emplace_back(Args&&... args)
+		{
+			WAIT_UNLOCKED();
+			return m_Container.emplace_back(std::forward<Args>(args)...);
+		}
+		template<class... Args>
+		decltype(auto) emplace_front(Args&&... args)
+		{
+			WAIT_UNLOCKED();
+			return m_Container.emplace_front(std::forward<Args>(args)...);
+		}
+
 		const T& front()
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			return m_Container.front();
 		}
 		const T& back()
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			return m_Container.back();
 		}
 		T pop_front()
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			T ret = m_Container.front();
 			m_Container.pop_front();
 			return ret;
 		}
 		T pop_back()
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			T ret = m_Container.back();
 			m_Container.pop_back();
 			return ret;
 		}
 		void clear()
 		{
-			std::scoped_lock lk(m_Lock);
+			WAIT_UNLOCKED();
 			m_Container.clear();
 		}
 		std::size_t size() const
 		{
+			WAIT_UNLOCKED();
 			return m_Container.size();
 		}
 		bool empty() const
 		{
+			WAIT_UNLOCKED();
 			return m_Container.empty();
+		}
+
+		void resize(std::size_t size)
+		{
+			WAIT_UNLOCKED();
+			m_Container.resize(size);
 		}
 
 	private:
 		std::list<T> m_Container;
-		mutable std::mutex m_Lock;
+		mutable std::atomic<std::thread::id> m_OwningThreadID;
 	};
 
 	static constexpr uint32_t g_PointerBytes = POINTER_BYTES;
@@ -236,14 +269,14 @@ namespace Utils
 		AlignedPtr() { std::memset(m_Data, 0, g_PointerBytes); }
 		AlignedPtr(const AlignedPtr&) = default;
 		AlignedPtr(T* ptr) { operator=(ptr); }
-		
-		operator T*() { return Get(); }
+
+		operator T* () { return Get(); }
 		operator bool() { return Get() != nullptr; }
 
 		T* operator->() { return Get(); }
 		const T* operator->() const { return Get(); }
 
-		T* Get() 
+		T* Get()
 		{
 #ifdef ENV64
 			uint64_t res;
@@ -253,7 +286,7 @@ namespace Utils
 			std::memcpy(&res, m_Data, g_PointerBytes);
 			return reinterpret_cast<T*>(res);
 		}
-		const T* Get() const 
+		const T* Get() const
 		{
 #ifdef ENV64
 			uint64_t res;
@@ -264,14 +297,14 @@ namespace Utils
 			return reinterpret_cast<T*>(res);
 		}
 		AlignedPtr& operator=(const AlignedPtr& rhs) { std::memcpy(m_Data, rhs.m_Data, g_PointerBytes); return *this; }
-		AlignedPtr& operator=(T* ptr) 
+		AlignedPtr& operator=(T* ptr)
 		{
 #ifdef ENV64
 			uint64_t pointer_val = reinterpret_cast<uint64_t>(ptr);
 #else
 			uint32_t pointer_val = reinterpret_cast<uint32_t>(ptr);
 #endif
-			std::memcpy(m_Data, &pointer_val, g_PointerBytes); 
+			std::memcpy(m_Data, &pointer_val, g_PointerBytes);
 			return *this;
 		}
 	private:
@@ -309,11 +342,21 @@ namespace Utils
 		}
 		~Serializer()
 		{
+			if (!m_File)
+				return;
+
 			std::fclose(m_File);
 		}
 
+		Serializer(const Serializer&) = default;
+		Serializer(Serializer&& rhs) noexcept
+		{
+			std::swap(m_File, rhs.m_File);
+			rhs.m_File = nullptr;
+		}
+
 		//T object needs to be serializable
-		template<typename T, 
+		template<typename T,
 			std::enable_if_t<std::is_integral_v<T> | std::is_floating_point_v<T>,
 			int> = 0>
 		void Serialize(const T& obj) const
@@ -374,7 +417,7 @@ namespace Utils
 			obj = Deserialize<T>();
 			return *this;
 		}
-		
+
 	private:
 		FILE* m_File;
 	};
@@ -388,7 +431,7 @@ namespace Utils
 	//	bit 0			bit 15
 	//
 	//	Implicit big endian conversion performed to preserv continuity
-	
+
 	//Calculates a u8 array dimension for the given number of bits
 	//In this project, helps with block normal serialization
 	template<uint32_t Bits>
