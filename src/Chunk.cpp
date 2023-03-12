@@ -30,7 +30,10 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	{
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
-			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(static_cast<float>(i), static_cast<float>(k), m_RelativeWorld->Seed());
+			float fx = static_cast<float>(i), fy = static_cast<float>(k);
+
+			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld->Seed());
+
 			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
 			for (int32_t j = 0; j < final_height; j++)
@@ -46,6 +49,20 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 					break;
 				}
 			}
+
+			if (perlin_data.in_water)
+			{
+				float water_level = Gd::WaterRegionLevel(fx, fy, -0.2f, m_RelativeWorld->Seed());
+				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f);
+
+				for (uint32_t j = final_height; j < water_height; j++)
+				{
+					m_LocalBlocks.emplace_back(glm::vec3(i, j, k), Gd::BlockType::WATER);
+				}
+			}
+
+			if (perlin_data.in_water)
+				continue;
 
 			//Spawn a tree in the center
 			if (perlin_data.biome == Gd::Biome::PLAINS &&

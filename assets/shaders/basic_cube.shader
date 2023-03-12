@@ -56,6 +56,7 @@ uniform sampler2D texture_grass;
 uniform sampler2D texture_sand;
 uniform sampler2D texture_trunk;
 uniform sampler2D texture_leaves;
+uniform sampler2D texture_water;
 
 uniform sampler2D texture_depth;
 
@@ -81,6 +82,8 @@ vec4 choose_tex(int index)
 		return texture(texture_trunk, TexCoords);
 	case 4:
 		return texture(texture_leaves, TexCoords);
+	case 5:
+		return texture(texture_water, TexCoords);
 		//Darker versions
 	case 256 + 0:
 		return texture(texture_dirt, TexCoords) * 0.4f;
@@ -92,6 +95,8 @@ vec4 choose_tex(int index)
 		return texture(texture_trunk, TexCoords) * 0.4f;
 	case 256 + 4:
 		return texture(texture_leaves, TexCoords) * 0.4f;
+	case 256 + 5:
+		return texture(texture_water, TexCoords);
 	}
 
 	return vec4(0.0f);

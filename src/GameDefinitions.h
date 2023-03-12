@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_set>
+#include <optional>
 
 //Game defintions
 namespace Gd
@@ -29,9 +30,13 @@ namespace Gd
 	extern std::unordered_set<uint32_t> g_PushedSections;
 	extern std::string g_SerializedFileFormat;
 
+	//Perlin variables
+	static float landmap_density = 1000.0f;
+	static float watermap_density = 900.0f;
+
     enum class BlockType : uint8_t
     {
-        DIRT = 0, GRASS, SAND, WOOD, LEAVES
+        DIRT = 0, GRASS, SAND, WOOD, LEAVES, WATER
     };
 
 	enum class HitDirection : uint8_t
@@ -64,6 +69,24 @@ namespace Gd
 		bool loaded = true;
 	};
 
+	struct WaterArea
+	{
+		glm::vec2 pos_xz;
+		glm::vec2 neg_xz;
+		float water_height;
+
+		float Length() const
+		{
+			return glm::length(pos_xz - neg_xz);
+		}
+
+		bool Contains(float x, float y) const
+		{
+			return x >= neg_xz.x && y >= neg_xz.y &&
+				x <= pos_xz.x && y <= pos_xz.y;
+		}
+	};
+
 	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};
 	enum class Biome {PLAINS = 0, DESERT};
 
@@ -76,6 +99,10 @@ namespace Gd
 	//If the player is far enough from a chunk sector, the chunks
 	//will be serialized on the disk
 	uint32_t ChunkSectorIndex(const glm::vec2& pos);
+	//Given an underwater tile coordinate, determines and caches the water level for that
+	//water region. The return value is internally cached to avoid computing the value
+	//for each tile in the water region
+	float WaterRegionLevel(float sx, float sy, float border_val, const WorldSeed& seed);
 
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise
@@ -84,6 +111,7 @@ namespace Gd
 		{
 			float altitude;
 			Biome biome;
+			bool in_water;
 		};
 
 		void InitSeedMap(WorldSeed& seed);

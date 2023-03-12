@@ -144,13 +144,15 @@ namespace GlCore
         m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
         m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
         m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
+        m_Textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
 
-        std::string tex_names[5]{
+        std::string tex_names[6]{
             "texture_dirt",
             "texture_grass",
             "texture_sand",
             "texture_trunk",
-            "texture_leaves"
+            "texture_leaves",
+            "texture_water"
         };
 
         for (uint32_t i = 0; i < m_Textures.size(); i++)
@@ -198,6 +200,9 @@ namespace GlCore
             break;
         case Gd::BlockType::LEAVES:
             current_texture = &m_Textures[4];
+            break;
+        case Gd::BlockType::WATER:
+            current_texture = &m_Textures[5];
             break;
         default:
             throw std::runtime_error("Texture preset for this block not found!");

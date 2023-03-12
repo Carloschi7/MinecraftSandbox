@@ -84,8 +84,8 @@ void World::DrawRenderable()
 				chunk->Draw(true);
 		}
 
-		GlCore::Root::DepthFramebuffer()->BindFrameTexture(5);
-		GlCore::Root::BlockShader()->Uniform1i(5, "texture_depth");
+		GlCore::Root::DepthFramebuffer()->BindFrameTexture(6);
+		GlCore::Root::BlockShader()->Uniform1i(6, "texture_depth");
 
 		glViewport(0, 0, window.Width(), window.Height());
 		FrameBuffer::BindDefault();

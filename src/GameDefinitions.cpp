@@ -131,6 +131,136 @@ namespace Gd
         return ret;
     }
 
+    float WaterRegionLevel(float sx, float sy, float border_val, const WorldSeed& seed)
+    {
+        static std::vector<WaterArea> pushed_areas;
+        static float watermap_unit = 1.0f / watermap_density;
+        
+        for (auto& area : pushed_areas)
+            if (area.Contains(sx, sy))
+                return area.water_height;
+
+        static std::vector<glm::vec2> directions =
+        {
+            glm::vec2(1.0f, -1.0f),glm::vec2(1.0f, 0.0f),glm::vec2(1.0f, 1.0f),glm::vec2(0.0f, 1.0f),
+            glm::vec2(-1.0f, 1.0f),glm::vec2(-1.0f, 0.0f),glm::vec2(-1.0f, -1.0f),glm::vec2(0.0f, -1.0f), glm::vec2(1.0f, -1.0f)
+        };
+
+        //check for extra borders(should be rarely called)
+        auto check_extra = [&](const glm::vec2& vec)
+        {
+            for (auto v : { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) })
+            {
+                glm::vec2 pos = vec + v * watermap_unit;
+                float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
+
+                if (map_val > border_val)
+                    return true;
+            }
+
+            return false;
+        };
+
+        WaterArea wa;
+        glm::vec2 prev_selection{ 0 };
+        glm::vec2 curr_selection{ sx,sy };
+        uint32_t iterations = 0;
+
+        wa.pos_xz = curr_selection;
+        wa.neg_xz = curr_selection;
+        wa.water_height = INFINITY;
+
+        
+        //Search closest shoreline
+        glm::vec2 search_vec{ 1.0f };
+        float f0 = PerlNoise::GenerateSingleNoise(sx / landmap_density, sy / landmap_density, seed.seed_value);
+        float f1 = PerlNoise::GenerateSingleNoise((sx + 10.0f) / landmap_density, sy / landmap_density, seed.seed_value);
+        float f2 = PerlNoise::GenerateSingleNoise(sx / landmap_density, (sy + 10.0f) / landmap_density, seed.seed_value);
+
+        if (f0 > f1)
+            search_vec.x = -1.0f;
+
+        if (f2 > f0)
+            search_vec.y = -1.0f;
+
+        bool alt = true;
+        float lx = sx, ly = sy;
+        while (PerlNoise::GenerateSingleNoise(lx / watermap_density, ly / watermap_density, seed.secundary_seeds[0]) < -0.2f)
+        {
+            if(alt)
+                lx += search_vec.x;
+            else
+                ly += search_vec.y;
+
+            alt = !alt;
+        }
+
+        //variable setup
+        glm::vec2 static_selection{ lx,ly };
+        curr_selection = {lx, ly};
+
+        //At the end of the coast scanning process, the selected coordinates
+        //may be a little off, so we check if the selection is near enough to the
+        //start after a good number of iterations
+        while (!(iterations > 10 && glm::length(static_selection - curr_selection) < 5.0f))
+        {
+            bool found = false;
+            bool good_border = false;
+            //Start search from region 0
+            for (auto vec : directions)
+            {
+                glm::vec2 pos = curr_selection + vec;
+                if (pos == prev_selection)
+                    continue;
+
+                float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
+
+                if (map_val > border_val)
+                    good_border = true;
+                else
+                {
+                    //this flag tells us that if we meet an underwater tile region we can skip
+                    //the border check, because during the previous iteration we scanned a surface
+                    //block, so the condition is met automatically
+                    if (good_border)
+                        found = true;
+                    else
+                        if (check_extra(pos))
+                            found = true;
+                }
+
+                if (found)
+                {
+                    prev_selection = curr_selection;
+                    curr_selection = pos;
+
+                    float cur_val = PerlNoise::GenerateSingleNoise(pos.x / landmap_density, pos.y / landmap_density, seed.seed_value);
+                    if (cur_val < wa.water_height)
+                        wa.water_height = cur_val;
+
+                    //Adjust water area
+                    if (pos.x < wa.neg_xz.x)
+                        wa.neg_xz.x = pos.x;
+                    if(pos.y < wa.neg_xz.y)
+                        wa.neg_xz.y = pos.y;
+                    if (pos.x > wa.pos_xz.x)
+                        wa.pos_xz.x = pos.x;
+                    if (pos.y > wa.pos_xz.y)
+                        wa.pos_xz.y = pos.y;
+
+                    break;
+                }
+            }
+
+            iterations++;
+        }
+
+        pushed_areas.push_back(wa);
+        //This is done so that if there are smaller ponds which overlap with a bigger lake region, those ones have a bigger priority
+        std::sort(pushed_areas.begin(), pushed_areas.end(), [](const WaterArea& a1, const WaterArea& a2) {return a1.Length() < a2.Length(); });
+        return wa.water_height;
+    }
+
     namespace PerlNoise
     {
         //Init the seed with premultiplied constants,
@@ -192,20 +322,28 @@ namespace Gd
         Generation GetBlockAltitude(float x, float y, const WorldSeed& seed)
         {
             //Biome distribution
-            float biome_map = GenerateSingleNoise(x / 1000.0f, y / 1000.0f, seed.seed_value);
+            float biome_map = GenerateSingleNoise(x / landmap_density, y / landmap_density, seed.seed_value);
             Biome local_biome = biome_map < -0.2f ? Biome::DESERT : Biome::PLAINS;
+
+            float water_map = GenerateSingleNoise(x / watermap_density, y / watermap_density, seed.secundary_seeds[0]);
 
             //Terrain generation
             float fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
             float fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
             float fz = GenerateSingleNoise(x / 80.0f, y / 80.0f, seed.secundary_seeds[1]) * 3.0f;
-
             float terrain_output = fx + fy + fz;
             //Smoothing the landscape's slopes as we approach the desert
             if (biome_map < 0.0f)
                 terrain_output *= glm::max(glm::exp(biome_map * 6.0f), 0.1f);
 
-            return { terrain_output, local_biome };
+            if (water_map < -0.2f)
+            {
+                terrain_output -= glm::log(1.0f + std::abs(water_map) - 0.2f) * 18.0f;
+                if (terrain_output < -4.0f)
+                    terrain_output = -4.0f;
+            }
+
+            return { terrain_output, local_biome, water_map < -0.2f };
         }
     }
 }
