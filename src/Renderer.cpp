@@ -17,9 +17,6 @@ namespace GlCore
 	glm::vec3 g_FramebufferPlayerOffset = glm::vec3(0.0f, 50.0f, 0.0f);
 	glm::mat4 g_DepthSpaceMatrix(1.0f);
 
-	std::vector<glm::vec3> g_DynamicPositionBuffer;
-	std::vector<uint32_t> g_DynamicTextureIndicesBuffer;
-
 	//Root
 
 	void Root::SetGameWindow(Window* game_window_)

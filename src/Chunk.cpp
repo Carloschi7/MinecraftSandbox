@@ -565,8 +565,9 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 
 void Chunk::Draw(bool depth_buf_draw, bool selected) const
 {
-	auto* dyn_pos = GlCore::g_DynamicPositionBuffer.data();
-	auto* tex = GlCore::g_DynamicTextureIndicesBuffer.data();
+	//Data containers for instanced rendering
+	static std::vector<glm::vec3> position_buffer(GlCore::g_MaxInstancedObjs);
+	static std::vector<uint32_t> texture_buffer(GlCore::g_MaxInstancedObjs);
 	uint32_t count = 0;
 
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
@@ -580,14 +581,14 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 			if (!block.IsDrawable())
 				continue;
 
-			tex[count] = static_cast<uint32_t>(block.Type());
-			dyn_pos[count++] = block.Position();
+			texture_buffer[count] = static_cast<uint32_t>(block.Type());
+			position_buffer[count++] = block.Position();
 
 			//Handle selection by pushing another matrix and a null index
 			if (selected && i == s_InternalSelectedBlock)
 			{
-				tex[count] = 256 + tex[count - 1];
-				dyn_pos[count] = dyn_pos[count - 1];
+				texture_buffer[count] = 256 + texture_buffer[count - 1];
+				position_buffer[count] = position_buffer[count - 1];
 				count++;
 			}
 		}
@@ -597,7 +598,7 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 			if (!block.HasNormals())
 				continue;
 
-			dyn_pos[count++] = block.Position();
+			position_buffer[count++] = block.Position();
 		}
 	}
 
@@ -613,14 +614,14 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 		GlCore::Root::BlockShader()->Use();
 		//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
 		block_vm->BindVertexArray();
-		block_vm->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
-		block_vm->EditInstance(1, tex, sizeof(uint32_t) * count, 0);
+		block_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
+		block_vm->EditInstance(1, texture_buffer.data(), sizeof(uint32_t) * count, 0);
 	}
 	else
 	{
 		GlCore::Root::DepthShader()->Use();
 		depth_vm->BindVertexArray();
-		depth_vm->EditInstance(0, dyn_pos, sizeof(glm::vec3) * count, 0);
+		depth_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
 	}
 	
 

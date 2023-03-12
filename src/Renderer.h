@@ -33,9 +33,6 @@ namespace GlCore
 	//Framebuffer data
 	extern glm::vec3 g_FramebufferPlayerOffset;
 	extern glm::mat4 g_DepthSpaceMatrix;
-	//Large data buffers
-	extern std::vector<glm::vec3> g_DynamicPositionBuffer;
-	extern std::vector<uint32_t> g_DynamicTextureIndicesBuffer;
 
 	//Static handler of the most used game system entities,
 	//Gets initialised by the user with the Init static function
