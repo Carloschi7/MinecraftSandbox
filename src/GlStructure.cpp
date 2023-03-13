@@ -6,13 +6,14 @@ std::shared_ptr<CubeMap> GlCore::WorldStructure::m_CubemapPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CubemapShaderPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_CrossaimShaderPtr = nullptr;
 std::shared_ptr<VertexManager> GlCore::WorldStructure::m_CrossaimVmPtr = nullptr;
+std::shared_ptr<Shader> GlCore::WorldStructure::m_WaterShader = nullptr;
+std::shared_ptr<VertexManager> GlCore::WorldStructure::m_WaterVmPtr = nullptr;
 std::shared_ptr<FrameBuffer> GlCore::WorldStructure::m_DepthFramebufferPtr = nullptr;
 std::shared_ptr<Shader> GlCore::WorldStructure::m_FramebufferShaderPtr = nullptr;
 std::shared_ptr<VertexManager> GlCore::WorldStructure::m_DepthVMPtr = nullptr;
 
 std::shared_ptr<VertexManager> GlCore::BlockStructure::m_VertexManagerPtr = nullptr;
 std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
-std::vector<Texture> GlCore::BlockStructure::m_Textures = {};
 
 namespace GlCore
 {
@@ -57,15 +58,26 @@ namespace GlCore
 
         VertexData rd = CrossAim();
         m_CrossaimVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+
+        //Load water stuff
+        rd = WaterLayer();
+        m_WaterVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        m_WaterShader = std::make_shared<Shader>("assets/shaders/water.shader");
+        m_WaterShader->UniformMat4f(cam.GetProjMatrix(), "proj");
+
+        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        m_WaterVmPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+            m_WaterShader->GetAttributeLocation("model_pos"), el);
+
+        //Init framebuffer
         rd = CubeForDepth();
         m_DepthVMPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
 
-        //Init framebuffer
         m_DepthFramebufferPtr = std::make_shared<FrameBuffer>(g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
         m_FramebufferShaderPtr = std::make_shared<Shader>("assets/shaders/basic_shadow.shader");
 
         //Instanced attribute for block positions in the depth shader
-        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        el = { 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
         m_DepthVMPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
             m_FramebufferShaderPtr->GetAttributeLocation("model_depth_pos"), el);
 
@@ -125,6 +137,7 @@ namespace GlCore
     {
         auto block_shader = Root::BlockShader();
         block_shader->UniformMat4f(Root::GameCamera().GetViewMatrix(), "view");
+        m_WaterShader->UniformMat4f(Root::GameCamera().GetViewMatrix(), "view");
     }
 
 
@@ -136,29 +149,26 @@ namespace GlCore
         
         VertexData cd = Cube();
         m_VertexManagerPtr = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
-
         m_ShaderPtr = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
 
-        m_Textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
-        m_Textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
-        m_Textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
-        m_Textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
-        m_Textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
-        m_Textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
-
-        std::string tex_names[6]{
-            "texture_dirt",
-            "texture_grass",
-            "texture_sand",
-            "texture_trunk",
-            "texture_leaves",
-            "texture_water"
+        //Load textures
+        using TextureLoaderType = std::pair<std::string, Gd::TextureBinding>;
+        std::vector<TextureLoaderType> textures
+        { 
+            {"texture_dirt",     Gd::TextureBinding::TextureDirt},
+            {"texture_grass",    Gd::TextureBinding::TextureGrass},
+            {"texture_sand",     Gd::TextureBinding::TextureSand},
+            {"texture_trunk",    Gd::TextureBinding::TextureWood},
+            {"texture_leaves",   Gd::TextureBinding::TextureLeaves}
         };
 
-        for (uint32_t i = 0; i < m_Textures.size(); i++)
+        //The binding matches the vector position
+        auto& game_textures = LoadGameTextures();
+        for (auto& elem : textures)
         {
-            m_Textures[i].Bind(i);
-            m_ShaderPtr->Uniform1i(i, tex_names[i]);
+            uint32_t tex_index = static_cast<uint32_t>(elem.second);
+            game_textures[tex_index].Bind(tex_index);
+            m_ShaderPtr->Uniform1i(tex_index, elem.first);
         }
 
         //Create instance buffer for model matrices
@@ -175,34 +185,27 @@ namespace GlCore
         Root::SetBlockVM(m_VertexManagerPtr);
     }
 
-    const std::vector<Texture>& BlockStructure::GetBlockTextures() const
-    {
-        return m_Textures;
-    }
-
     void BlockStructure::Draw(const glm::vec3& pos, const Gd::BlockType& bt,
         const DrawableData& exp_norms, bool is_block_selected) const
     {
-        Texture* current_texture = nullptr;
+        auto& game_textures = LoadGameTextures();
+        const Texture* current_texture = nullptr;
         switch (bt)
         {
-        case Gd::BlockType::DIRT:
-            current_texture = &m_Textures[0];
+        case Gd::BlockType::Dirt:
+            current_texture = &game_textures[0];
             break;
-        case Gd::BlockType::GRASS:
-            current_texture = &m_Textures[1];
+        case Gd::BlockType::Grass:
+            current_texture = &game_textures[1];
             break;
-        case Gd::BlockType::SAND:
-            current_texture = &m_Textures[2];
+        case Gd::BlockType::Sand:
+            current_texture = &game_textures[2];
             break;
-        case Gd::BlockType::WOOD:
-            current_texture = &m_Textures[3];
+        case Gd::BlockType::Wood:
+            current_texture = &game_textures[3];
             break;
-        case Gd::BlockType::LEAVES:
-            current_texture = &m_Textures[4];
-            break;
-        case Gd::BlockType::WATER:
-            current_texture = &m_Textures[5];
+        case Gd::BlockType::Leaves:
+            current_texture = &game_textures[4];
             break;
         default:
             throw std::runtime_error("Texture preset for this block not found!");
@@ -219,5 +222,21 @@ namespace GlCore
 
 
         Renderer::Render(pl);
+    }
+    const std::vector<Texture>& LoadGameTextures()
+    {
+        static std::vector<Texture> textures;
+
+        if (textures.empty())
+        {
+            textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
+        }
+
+        return textures;
     }
 }

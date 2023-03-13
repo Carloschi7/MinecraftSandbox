@@ -52,7 +52,7 @@ namespace Gd
         //Calculating distance
         dist = glm::length(camera_pos - block_pos);
         if (dist > 10.0f)
-            return HitDirection::NONE;
+            return HitDirection::None;
 
         static float half_cube_diag = 0.5f;
         glm::vec3 cube_min = block_pos - glm::vec3(half_cube_diag);
@@ -71,7 +71,7 @@ namespace Gd
             std::swap(t0y, t1y);
 
         if (t1x < t0y || t1y < t0x)
-            return HitDirection::NONE;
+            return HitDirection::None;
 
         float t0z = (cube_min.z - camera_pos.z) / camera_dir.z;
         float t1z = (cube_max.z - camera_pos.z) / camera_dir.z;
@@ -83,7 +83,7 @@ namespace Gd
         float tc1 = std::min(t1x, t1y);
 
         if (t0z > tc1 || t1z < tc0)
-            return HitDirection::NONE;
+            return HitDirection::None;
 
         glm::vec3 hitpoint = camera_pos + camera_dir * std::max(tc0, t0z);
         glm::vec3 dir = hitpoint - block_pos;
@@ -101,22 +101,22 @@ namespace Gd
         {
         case 1:
             if (dir.x > 0.0f)
-                return HitDirection::POS_X;
+                return HitDirection::PosX;
             else
-                return HitDirection::NEG_X;
+                return HitDirection::NegX;
         case 2:
             if (dir.y > 0.0f)
-                return HitDirection::POS_Y;
+                return HitDirection::PosY;
             else
-                return HitDirection::NEG_Y;
+                return HitDirection::NegY;
         case 3:
             if (dir.z > 0.0f)
-                return HitDirection::POS_Z;
+                return HitDirection::PosZ;
             else
-                return HitDirection::NEG_Z;
+                return HitDirection::NegZ;
         }
 
-        return HitDirection::NONE;
+        return HitDirection::None;
     }
 
     uint32_t ChunkSectorIndex(const glm::vec2& pos)
@@ -323,7 +323,7 @@ namespace Gd
         {
             //Biome distribution
             float biome_map = GenerateSingleNoise(x / landmap_density, y / landmap_density, seed.seed_value);
-            Biome local_biome = biome_map < -0.2f ? Biome::DESERT : Biome::PLAINS;
+            Biome local_biome = biome_map < -0.2f ? Biome::Desert : Biome::Plains;
 
             float water_map = GenerateSingleNoise(x / watermap_density, y / watermap_density, seed.secundary_seeds[0]);
 

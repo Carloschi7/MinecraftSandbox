@@ -63,6 +63,16 @@ namespace GlCore
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
     };
 
+    static const std::vector<float> water_layer
+    {               
+        -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
+         0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    one_third,
+         0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
+         0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
+        -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    2.0f * one_third,
+        -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
+    };
+
     static const std::vector<float> vertices_crossaim = {
         -0.5f, -0.5f,
          0.5f, -0.5f,
@@ -80,6 +90,15 @@ namespace GlCore
         lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
         lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
         return { pos_and_tex_coord_sided, lyt };
+    }
+
+    inline VertexData WaterLayer()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
+        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
+        return { water_layer, lyt };
     }
 
     inline VertexData CubeForDepth()

@@ -36,12 +36,23 @@ namespace Gd
 
     enum class BlockType : uint8_t
     {
-        DIRT = 0, GRASS, SAND, WOOD, LEAVES, WATER
+        Dirt = 0, Grass, Sand, Wood, Leaves
     };
 
 	enum class HitDirection : uint8_t
 	{
-		NONE = 0, POS_X, NEG_X, POS_Y, NEG_Y, POS_Z, NEG_Z,
+		None = 0, PosX, NegX, PosY, NegY, PosZ, NegZ,
+	};
+
+	enum class TextureBinding : uint8_t
+	{
+		TextureDirt = 0,
+		TextureGrass,
+		TextureSand,
+		TextureWood,
+		TextureLeaves,
+		TextureWater,
+		TextureDepth
 	};
 
 	struct MouseInput
@@ -87,8 +98,8 @@ namespace Gd
 		}
 	};
 
-	enum class ChunkLocation {NONE = 0, PLUS_X, MINUS_X, PLUS_Z, MINUS_Z};
-	enum class Biome {PLAINS = 0, DESERT};
+	enum class ChunkLocation {None = 0, PlusX, MinusX, PlusZ, MinusZ};
+	enum class Biome {Plains = 0, Desert};
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
     void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);

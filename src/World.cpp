@@ -32,13 +32,13 @@ World::World()
 		auto& chunk = *chunk_ptr;
 		const glm::vec2& chunk_pos = chunk.GetChunkOrigin();
 
-		if (!IsChunk(chunk, ChunkLocation::PLUS_X).has_value())
+		if (!IsChunk(chunk, ChunkLocation::PlusX).has_value())
 			add_spawnable_chunk(glm::vec3(g_SpawnerEnd, 0.0f, chunk_pos.y));
-		if (!IsChunk(chunk, ChunkLocation::MINUS_X).has_value())
+		if (!IsChunk(chunk, ChunkLocation::MinusX).has_value())
 			add_spawnable_chunk(glm::vec3(g_SpawnerBegin - g_SpawnerIncrement, 0.0f, chunk_pos.y));
-		if (!IsChunk(chunk, ChunkLocation::PLUS_Z).has_value())
+		if (!IsChunk(chunk, ChunkLocation::PlusZ).has_value())
 			add_spawnable_chunk(glm::vec3(chunk_pos.x, 0.0f, g_SpawnerEnd));
-		if (!IsChunk(chunk, ChunkLocation::MINUS_Z).has_value())
+		if (!IsChunk(chunk, ChunkLocation::MinusZ).has_value())
 			add_spawnable_chunk(glm::vec3(chunk_pos.x, 0.0f, g_SpawnerBegin - g_SpawnerIncrement));
 
 		chunk.InitGlobalNorms();
@@ -46,6 +46,13 @@ World::World()
 
 	//Set proj matrix, won't vary for now in the app
 	m_WorldStructure.UniformProjMatrix();
+
+	//Load water texture
+	auto& textures = GlCore::LoadGameTextures();
+
+	uint32_t water_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureWater);
+	textures[water_binding].Bind(water_binding);
+	m_WorldStructure.m_WaterShader->Uniform1i(water_binding, "texture_water");
 }
 
 World::~World()
@@ -79,8 +86,9 @@ void World::DrawRenderable()
 				chunk->Draw(true);
 		}
 
-		GlCore::Root::DepthFramebuffer()->BindFrameTexture(6);
-		GlCore::Root::BlockShader()->Uniform1i(6, "texture_depth");
+		uint32_t depth_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureDepth);
+		GlCore::Root::DepthFramebuffer()->BindFrameTexture(depth_binding);
+		GlCore::Root::BlockShader()->Uniform1i(depth_binding, "texture_depth");
 
 		glViewport(0, 0, window.Width(), window.Height());
 		FrameBuffer::BindDefault();
@@ -107,6 +115,22 @@ void World::DrawRenderable()
 			chunk->Draw(false, ch == i);
 	}
 
+	//Draw water layers
+	glEnable(GL_BLEND);
+	m_WorldStructure.m_WaterShader->Use();
+	m_WorldStructure.m_WaterVmPtr->BindVertexArray();
+	for (auto vec : m_DrawableWaterLayers)
+	{
+		if (vec->size() == 0)
+			continue;
+
+		m_WorldStructure.m_WaterVmPtr->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
+		GlCore::Renderer::RenderInstanced(vec->size());
+	}
+	glDisable(GL_BLEND);
+
+	//Remove pointers from vector, no deletion involved
+	m_DrawableWaterLayers.clear();
 	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
 }
@@ -149,35 +173,35 @@ void World::UpdateScene()
 
 				//Removing previously visible normals from old chunks && update local chunks
 				//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PLUS_X); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PlusX); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_X, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MinusX, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MINUS_X); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MinusX); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_X, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PlusX, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PLUS_Z); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PlusZ); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MINUS_Z, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MinusZ, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MINUS_Z); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MinusZ); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PLUS_Z, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PlusZ, this_chunk->Index());
 				}
 
 				//Pushing new spawnable vectors
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::PLUS_X, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::PlusX, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::MINUS_X, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::MinusX, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::PLUS_Z, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::PlusZ, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::MINUS_Z, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
+				if (IsPushable(*this_chunk, Gd::ChunkLocation::MinusZ, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
 
 				//Remove the just spawned chunk from the spawnable list
@@ -330,6 +354,11 @@ void World::HandleSectionData()
 	Gd::g_PushedSections.clear();
 }
 
+void World::PushWaterLayer(const std::vector<glm::vec3>* vec)
+{
+	m_DrawableWaterLayers.push_back(vec);
+}
+
 std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)
 {
 	const glm::vec2& origin = chunk.GetChunkOrigin();
@@ -346,13 +375,13 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 
 	switch (cl)
 	{
-	case Gd::ChunkLocation::PLUS_X:
+	case Gd::ChunkLocation::PlusX:
 		return find_alg(origin + glm::vec2(16.0f, 0.0f));
-	case Gd::ChunkLocation::MINUS_X:
+	case Gd::ChunkLocation::MinusX:
 		return find_alg(origin - glm::vec2(16.0f, 0.0f));
-	case Gd::ChunkLocation::PLUS_Z:
+	case Gd::ChunkLocation::PlusZ:
 		return find_alg(origin + glm::vec2(0.0f, 16.0f));
-	case Gd::ChunkLocation::MINUS_Z:
+	case Gd::ChunkLocation::MinusZ:
 		return find_alg(origin - glm::vec2(0.0f, 16.0f));
 	}
 

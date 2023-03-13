@@ -33,6 +33,9 @@ namespace GlCore
         //Crossaim stuff
         static std::shared_ptr<Shader> m_CrossaimShaderPtr;
         static std::shared_ptr<VertexManager> m_CrossaimVmPtr;
+        //Water stuff
+        static std::shared_ptr<Shader> m_WaterShader;
+        static std::shared_ptr<VertexManager> m_WaterVmPtr;
         //Shadow framebuffer
         static std::shared_ptr<FrameBuffer> m_DepthFramebufferPtr;
         static std::shared_ptr<Shader> m_FramebufferShaderPtr;
@@ -46,17 +49,14 @@ namespace GlCore
         BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt);
         void Draw(const glm::vec3& pos, const Gd::BlockType& bt, 
             const DrawableData& exp_norms, bool is_block_selected) const;
-        
-        const std::vector<Texture>& GetBlockTextures() const;
-
     private:
         //Cube geometry
         //The core OpenGL structures which is designed to do actual drawing/rendering
         static std::shared_ptr<VertexManager> m_VertexManagerPtr;
         //Instructions on how to draw the cube
         static std::shared_ptr<Shader> m_ShaderPtr;
-        //Various cube textures
-        static std::vector<Texture> m_Textures;
         friend class Block;
     };
+
+    const std::vector<Texture>& LoadGameTextures();
 }
