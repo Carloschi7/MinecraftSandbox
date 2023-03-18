@@ -16,9 +16,9 @@
 #endif
 
 //Determine if the app is multithreadable
-#define MC_MULTITHREADING 1
+#define MC_MULTITHREADING
 
-#if MC_MULTITHREADING 1
+#ifdef MC_MULTITHREADING
 #	define MC_CHUNK_SIZE m_SafeChunkSize
 #else
 #	define MC_CHUNK_SIZE m_Chunks.size()

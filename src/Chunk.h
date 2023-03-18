@@ -82,8 +82,8 @@ private:
 #else
 	std::vector<Block> m_LocalBlocks;
 #endif
-	//Eventual water layer
-	std::vector<glm::vec3> m_WaterLayerPositions{};
+	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
+	std::shared_ptr<std::vector<glm::vec3>> m_WaterLayerPositions;
 	//front-bottom-left block position
 	glm::vec2 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;

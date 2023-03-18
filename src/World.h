@@ -15,7 +15,7 @@ public:
     void HandleSelection();
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
-    void PushWaterLayer(const std::vector<glm::vec3>* vec);
+    void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);
 
     //Returns the corresponding chunk index if exists
     std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);
@@ -47,7 +47,7 @@ private:
     //player gets near enough
     std::vector<glm::vec3> m_SpawnableChunks;
     //Water layers pushed for current iteration
-    std::vector<const std::vector<glm::vec3>*> m_DrawableWaterLayers;
+    std::vector<std::shared_ptr<std::vector<glm::vec3>>> m_DrawableWaterLayers;
 
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;

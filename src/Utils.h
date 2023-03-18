@@ -11,9 +11,16 @@
 #define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
-
 #define WAIT_UNLOCKED() while (m_OwningThreadID != std::this_thread::get_id() && m_OwningThreadID != std::thread::id{}) {}
 
+//Lock utilities useful for context switching
+#ifdef MC_MULTITHREADING
+#	define MC_LOCK(vec) vec.lock()
+#	define MC_UNLOCK(vec) vec.unlock()
+#else
+#	define MC_LOCK(vec)
+#	define MC_UNLOCK(vec)
+#endif
 
 //Utilities
 namespace Utils

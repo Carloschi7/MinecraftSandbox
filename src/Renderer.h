@@ -15,7 +15,11 @@ namespace GlCore
 	//Uniform names definitions
 	const glm::mat4 g_NullMatrix{};
 	const glm::mat4 g_IdentityMatrix{ 1.0f };
-	static constexpr bool g_MultithreadedRendering = MC_MULTITHREADING;
+#ifdef MC_MULTITHREADING
+	static constexpr bool g_MultithreadedRendering = true;
+#else
+	static constexpr bool g_MultithreadedRendering = false;
+#endif
 	static constexpr uint32_t g_MaxInstancedObjs = 1500;
 	static constexpr uint32_t g_DepthMapWidth = 1024;
 	static constexpr uint32_t g_DepthMapHeight = 1024;

@@ -121,9 +121,7 @@ void World::DrawRenderable()
 	m_WorldStructure.m_WaterVmPtr->BindVertexArray();
 	for (auto vec : m_DrawableWaterLayers)
 	{
-		if (vec->size() == 0)
-			continue;
-
+		//Should never be empty
 		m_WorldStructure.m_WaterVmPtr->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
 		GlCore::Renderer::RenderInstanced(vec->size());
 	}
@@ -158,9 +156,9 @@ void World::UpdateScene()
 				{
 					if (m_Chunks.size() == m_Chunks.capacity())
 					{
-						m_Chunks.lock();
+						MC_LOCK(m_Chunks);
 						m_Chunks.reserve(m_Chunks.capacity() + m_Chunks.capacity() / 2);
-						m_Chunks.unlock();
+						MC_UNLOCK(m_Chunks);
 					}
 				}
 
@@ -354,7 +352,7 @@ void World::HandleSectionData()
 	Gd::g_PushedSections.clear();
 }
 
-void World::PushWaterLayer(const std::vector<glm::vec3>* vec)
+void World::PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec)
 {
 	m_DrawableWaterLayers.push_back(vec);
 }
@@ -420,13 +418,13 @@ void World::SerializeSector(uint32_t index)
 	std::vector<std::shared_ptr<Chunk>>::iterator iter{};
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		m_Chunks.lock();
+		MC_LOCK(m_Chunks);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
 		iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
 			[&](const std::shared_ptr<Chunk>& ch) {return ch->SectorIndex() != index; });
 		//Determine safe iteration range for the renderer thread
 		m_SafeChunkSize = static_cast<uint32_t>(iter - m_Chunks.begin());
-		m_Chunks.unlock();
+		MC_UNLOCK(m_Chunks);
 	}
 
 	//Nothing to serialize
@@ -442,9 +440,9 @@ void World::SerializeSector(uint32_t index)
 		serialized_chunks++;
 	}
 	
-	m_Chunks.lock();
+	MC_LOCK(m_Chunks);
 	m_Chunks.erase(iter, m_Chunks.end());
-	m_Chunks.unlock();
+	MC_UNLOCK(m_Chunks);
 
 	//Write the amount of chunks serialized
 	sz.Seek(0);
@@ -459,11 +457,11 @@ void World::DeserializeSector(uint32_t index)
 
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		m_Chunks.lock();
+		MC_LOCK(m_Chunks);
 		uint32_t deser_size = 0;
 		sz% deser_size;
 		m_Chunks.reserve(m_Chunks.size() + deser_size);
-		m_Chunks.unlock();
+		MC_UNLOCK(m_Chunks);
 	}
 	else
 	{

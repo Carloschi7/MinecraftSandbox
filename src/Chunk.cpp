@@ -24,6 +24,9 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 		s_DiagonalLenght = glm::sqrt(lower_diag_squared + glm::pow(s_ChunkDepth, 2)) * 0.5f;
 	}
 
+	//Init water layer position vector
+	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
+
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
 	for (int32_t i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
@@ -56,7 +59,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f);
 
 				if (water_height >= final_height)
-					m_WaterLayerPositions.push_back(glm::vec3(i, water_height, k));
+					m_WaterLayerPositions->push_back(glm::vec3(i, water_height, k));
 			}
 
 			if (perlin_data.in_water)
@@ -87,6 +90,9 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 Chunk::Chunk(World* father, const Utils::Serializer& sz, uint32_t index) :
 	m_RelativeWorld(father), m_SectorIndex(index), m_SelectedBlock(static_cast<uint32_t>(-1))
 {
+	//Init water layer position vector
+	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
+
 	//Simply forward everithing to the deserializing operator
 	*this % sz;
 }
@@ -614,6 +620,10 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 		block_vm->BindVertexArray();
 		block_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
 		block_vm->EditInstance(1, texture_buffer.data(), sizeof(uint32_t) * count, 0);
+
+		//In the end, push water layers for the world to render them at the end
+		if (!m_WaterLayerPositions->empty())
+			m_RelativeWorld->PushWaterLayer(m_WaterLayerPositions);
 	}
 	else
 	{
@@ -623,10 +633,6 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 	}
 	
 	GlCore::Renderer::RenderInstanced(count);
-
-	//In the end, push water layers for the world to render them at the end
-	if(!m_WaterLayerPositions.empty())
-		m_RelativeWorld->PushWaterLayer(&m_WaterLayerPositions);
 }
 
 void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check)
@@ -691,7 +697,7 @@ const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
 	//Serializing components
 	//At first we tell how many blocks and water layers the chunk has
 	sz& m_LocalBlocks.size();
-	sz& m_WaterLayerPositions.size();
+	sz& m_WaterLayerPositions->size();
 
 	sz& m_ChunkIndex;
 	//World address does not need to be serialized
@@ -708,7 +714,7 @@ const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
 	}
 
 	//Serialize water layers
-	for (auto& layer : m_WaterLayerPositions)
+	for (auto& layer : *m_WaterLayerPositions)
 		sz& layer.x& layer.y& layer.z;
 
 	sz& m_ChunkOrigin.x & m_ChunkOrigin.y;
@@ -766,7 +772,7 @@ const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
 	{
 		float x, y, z;
 		sz% x; sz% y; sz% z;
-		m_WaterLayerPositions.emplace_back(x, y, z);
+		m_WaterLayerPositions->emplace_back(x, y, z);
 	}
 
 	sz% m_ChunkOrigin.x% m_ChunkOrigin.y;
