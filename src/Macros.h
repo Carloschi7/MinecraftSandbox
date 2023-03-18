@@ -48,9 +48,11 @@
 #endif
 
 #ifdef _DEBUG
-#	define LOG_DEBUG(fmt, ...) std::printf(fmt, __VA_ARGS__);
+#	define LOG_DEBUG(fmt, ...) std::printf(fmt, __VA_ARGS__)
+#	define LOG_WARNING(fmt, ...) std::printf(fmt, __VA_ARGS__)
 #else
 #	define LOG_DEBUG(fmt, ...)
+#	define LOG_WARNING(fmt, ...) std::printf(fmt, __VA_ARGS__)
 #endif
 
 #ifdef _DEBUG

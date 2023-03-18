@@ -31,6 +31,7 @@ namespace Gd
 	extern std::string g_SerializedFileFormat;
 
 	//Perlin variables
+	extern float water_limit;
 	static float landmap_density = 1000.0f;
 	static float watermap_density = 900.0f;
 
@@ -113,7 +114,7 @@ namespace Gd
 	//Given an underwater tile coordinate, determines and caches the water level for that
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
-	float WaterRegionLevel(float sx, float sy, float border_val, const WorldSeed& seed);
+	float WaterRegionLevel(float sx, float sy, const WorldSeed& seed);
 
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise

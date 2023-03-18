@@ -34,9 +34,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
 			float fx = static_cast<float>(i), fy = static_cast<float>(k);
-
 			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld->Seed());
-
 			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
 			for (int32_t j = 0; j < final_height; j++)
@@ -55,15 +53,14 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 
 			if (perlin_data.in_water)
 			{
-				float water_level = Gd::WaterRegionLevel(fx, fy, -0.2f, m_RelativeWorld->Seed());
-				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f);
+				float water_level = Gd::WaterRegionLevel(fx, fy, m_RelativeWorld->Seed());
+				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)
 					m_WaterLayerPositions->push_back(glm::vec3(i, water_height, k));
-			}
 
-			if (perlin_data.in_water)
 				continue;
+			}
 
 			//Spawn a tree in the center
 			if (perlin_data.biome == Gd::Biome::Plains &&
@@ -389,10 +386,6 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 			m_SelectedBlock = i;
 		}
 	}
-
-	//If some chunks
-	/*if (GlCore::g_SerializationRunning)
-		return closest_selected_block_dist;*/
 
 	//Logic which removes a block
 	if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))

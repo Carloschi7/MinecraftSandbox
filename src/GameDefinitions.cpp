@@ -20,6 +20,8 @@ namespace Gd
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<uint32_t> g_PushedSections;
 
+    float water_limit = -0.25f;
+
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
         float fScalar = 0.6f;
@@ -131,7 +133,7 @@ namespace Gd
         return ret;
     }
 
-    float WaterRegionLevel(float sx, float sy, float border_val, const WorldSeed& seed)
+    float WaterRegionLevel(float sx, float sy, const WorldSeed& seed)
     {
         static std::vector<WaterArea> pushed_areas;
         static float watermap_unit = 1.0f / watermap_density;
@@ -154,7 +156,7 @@ namespace Gd
                 glm::vec2 pos = vec + v * watermap_unit;
                 float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
 
-                if (map_val > border_val)
+                if (map_val > water_limit)
                     return true;
             }
 
@@ -185,7 +187,7 @@ namespace Gd
 
         bool alt = true;
         float lx = sx, ly = sy;
-        while (PerlNoise::GenerateSingleNoise(lx / watermap_density, ly / watermap_density, seed.secundary_seeds[0]) < -0.2f)
+        while (PerlNoise::GenerateSingleNoise(lx / watermap_density, ly / watermap_density, seed.secundary_seeds[0]) < water_limit)
         {
             if(alt)
                 lx += search_vec.x;
@@ -213,9 +215,13 @@ namespace Gd
                 if (pos == prev_selection)
                     continue;
 
+                //We could GetBlockAltitude already here, but by retrieving only the water level and
+                //calling that function anly when we have hit a new valid block saves us some performances
+
+                //load water map value
                 float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
 
-                if (map_val > border_val)
+                if (map_val > water_limit)
                     good_border = true;
                 else
                 {
@@ -234,7 +240,9 @@ namespace Gd
                     prev_selection = curr_selection;
                     curr_selection = pos;
 
-                    float cur_val = PerlNoise::GenerateSingleNoise(pos.x / landmap_density, pos.y / landmap_density, seed.seed_value);
+                    //Need to load the final terrain height, already parsed with exponentials and 
+                    //logarithms
+                    float cur_val = PerlNoise::GetBlockAltitude(pos.x, pos.y, seed).altitude;
                     if (cur_val < wa.water_height)
                         wa.water_height = cur_val;
 
@@ -336,14 +344,14 @@ namespace Gd
             if (biome_map < 0.0f)
                 terrain_output *= glm::max(glm::exp(biome_map * 6.0f), 0.1f);
 
-            if (water_map < -0.2f)
+            if (water_map < water_limit)
             {
-                terrain_output -= glm::log(1.0f + std::abs(water_map) - 0.2f) * 18.0f;
+                terrain_output -= glm::log(1.0f + std::abs(water_map) + water_limit) * 23.0f;
                 if (terrain_output < -4.0f)
                     terrain_output = -4.0f;
             }
 
-            return { terrain_output, local_biome, water_map < -0.2f };
+            return { terrain_output, local_biome, water_map < water_limit };
         }
     }
 }
