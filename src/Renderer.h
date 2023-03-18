@@ -47,15 +47,20 @@ namespace GlCore
 		static void SetGameCamera(Camera* game_camera_);
 		static void SetBlockShader(std::shared_ptr<Shader> block_shader_);
 		static void SetDepthShader(std::shared_ptr<Shader> depth_shader_);
+		static void SetWaterShader(std::shared_ptr<Shader> water_shader_);
 		static void SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_);
 		static void SetDepthVM(std::shared_ptr<VertexManager> vertex_manager_);
+		static void SetWaterVM(std::shared_ptr<VertexManager> vertex_manager_);
 		static void SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_);
+
 		static Window& GameWindow();
 		static Camera& GameCamera();
 		static std::shared_ptr<Shader> BlockShader();
 		static std::shared_ptr<Shader> DepthShader();
+		static std::shared_ptr<Shader> WaterShader();
 		static std::shared_ptr<VertexManager> BlockVM();
 		static std::shared_ptr<VertexManager> DepthVM();
+		static std::shared_ptr<VertexManager> WaterVM();
 		static std::shared_ptr<FrameBuffer> DepthFramebuffer();
 	private:
 		Root();
@@ -66,8 +71,10 @@ namespace GlCore
 			Camera* camera;
 			std::shared_ptr<Shader> block_shader;
 			std::shared_ptr<Shader> depth_shader;
+			std::shared_ptr<Shader> water_shader;
 			std::shared_ptr<VertexManager> block_vm;
 			std::shared_ptr<VertexManager> depth_vm;
+			std::shared_ptr<VertexManager> water_vm;
 			std::shared_ptr<FrameBuffer> shadow_framebuffer;
 		};
 		static RootImpl m_InternalPayload;

@@ -62,7 +62,9 @@ namespace GlCore
         //Load water stuff
         rd = WaterLayer();
         m_WaterVmPtr = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        std::cout << "Shader loading\n";
         m_WaterShader = std::make_shared<Shader>("assets/shaders/water.shader");
+        std::cout << "Shader end\n";
         m_WaterShader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
@@ -84,6 +86,8 @@ namespace GlCore
         Root::SetShadowFramebuffer(m_DepthFramebufferPtr);
         Root::SetDepthShader(m_FramebufferShaderPtr);
         Root::SetDepthVM(m_DepthVMPtr);
+        Root::SetWaterShader(m_WaterShader);
+        Root::SetWaterVM(m_WaterVmPtr);
     }
 
 

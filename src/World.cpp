@@ -52,7 +52,7 @@ World::World()
 
 	uint32_t water_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureWater);
 	textures[water_binding].Bind(water_binding);
-	m_WorldStructure.m_WaterShader->Uniform1i(water_binding, "texture_water");
+	GlCore::Root::WaterShader()->Uniform1i(water_binding, "texture_water");
 }
 
 World::~World()
@@ -117,12 +117,12 @@ void World::DrawRenderable()
 
 	//Draw water layers
 	glEnable(GL_BLEND);
-	m_WorldStructure.m_WaterShader->Use();
-	m_WorldStructure.m_WaterVmPtr->BindVertexArray();
+	GlCore::Root::WaterShader()->Use();
+	GlCore::Root::WaterVM()->BindVertexArray();
 	for (auto vec : m_DrawableWaterLayers)
 	{
 		//Should never be empty
-		m_WorldStructure.m_WaterVmPtr->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
+		GlCore::Root::WaterVM()->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
 		GlCore::Renderer::RenderInstanced(vec->size());
 	}
 	glDisable(GL_BLEND);

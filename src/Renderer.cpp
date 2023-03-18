@@ -35,6 +35,10 @@ namespace GlCore
 	{
 		m_InternalPayload.depth_shader = depth_shader_;
 	}
+	void Root::SetWaterShader(std::shared_ptr<Shader> water_shader_)
+	{
+		m_InternalPayload.water_shader = water_shader_;
+	}
 	void Root::SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
 		m_InternalPayload.block_vm = vertex_manager_;
@@ -43,10 +47,16 @@ namespace GlCore
 	{
 		m_InternalPayload.depth_vm = vertex_manager_;
 	}
+	void Root::SetWaterVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		m_InternalPayload.water_vm = vertex_manager_;
+	}
 	void Root::SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_)
 	{
 		m_InternalPayload.shadow_framebuffer = shadow_framebuffer_;
 	}
+
+
 	Window& Root::GameWindow()
 	{
 		return *m_InternalPayload.game_window;
@@ -65,6 +75,10 @@ namespace GlCore
 	{
 		return m_InternalPayload.depth_shader;
 	}
+	std::shared_ptr<Shader> Root::WaterShader()
+	{
+		return m_InternalPayload.water_shader;
+	}
 
 	std::shared_ptr<VertexManager> Root::BlockVM()
 	{
@@ -74,6 +88,11 @@ namespace GlCore
 	std::shared_ptr<VertexManager> Root::DepthVM()
 	{
 		return m_InternalPayload.depth_vm;
+	}
+
+	std::shared_ptr<VertexManager> Root::WaterVM()
+	{
+		return m_InternalPayload.water_vm;
 	}
 
 	std::shared_ptr<FrameBuffer> Root::DepthFramebuffer()
