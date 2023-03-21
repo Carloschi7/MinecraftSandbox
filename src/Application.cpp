@@ -2,6 +2,7 @@
 #include "Entrypoint.h"
 #include "World.h"
 #include "Renderer.h"
+#include "State.h"
 #ifdef __linux__
 #   include <experimental/filesystem>
 #else
@@ -26,9 +27,6 @@ Application::~Application()
 
 void Application::OnUserCreate()
 {
-    //Setting the window in the environment vars
-    GlCore::Root::SetGameWindow(&m_Window);
-    GlCore::Root::SetGameCamera(&m_Camera);
     GlCore::Renderer::Init();
 
     //Create needed dirs
@@ -45,7 +43,11 @@ void Application::OnUserCreate()
 
 void Application::OnUserRun()
 {
-    //TODO find a way to initialize this in the thread with the opnegl context
+    //Init global vars
+    GlCore::State& state = GlCore::State::GetState();
+    state.SetGameWindow(&m_Window);
+    state.SetGameCamera(&m_Camera);
+
     World WorldGameInstance;
 
     //Logic thread function
@@ -58,7 +60,7 @@ void Application::OnUserRun()
             timer.StartTimer();
 #endif
             WorldGameInstance.UpdateScene();
-            GlCore::Root::GameWindow().UpdateKeys();
+            state.GameWindow().UpdateKeys();
             //LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
     };

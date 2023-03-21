@@ -1,8 +1,9 @@
 #pragma once
 #include <optional>
+#include "glm/glm.hpp"
 
 #include "Block.h"
-#include "glm/glm.hpp"
+#include "State.h"
 
 class World;
 
@@ -14,9 +15,9 @@ public:
 	//generating blocks(only dirt generated for now)
 	//the y axis is not considered, so the y component of the origin vector
 	//will be used as an alias of z
-	Chunk(World* father, glm::vec2 origin);
+	Chunk(World& father, glm::vec2 origin);
 	//Construct by deserialization
-	Chunk(World* father, const Utils::Serializer& sz, uint32_t index);
+	Chunk(World& father, const Utils::Serializer& sz, uint32_t index);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&& rhs) noexcept;
 	~Chunk();
@@ -56,8 +57,8 @@ public:
 	static glm::vec3 GetHalfWayVector();
 
 	//Serializing & and deserializing % function
-	const Utils::Serializer& operator&(const Utils::Serializer& sz);
-	const Utils::Serializer& operator%(const Utils::Serializer& sz);
+	const Utils::Serializer& Serialize(const Utils::Serializer& sz);
+	const Utils::Serializer& Deserialize(const Utils::Serializer& sz);
 public:
 	//Variable used to determine which chunk holds the selected block
 	//used instead of Gd::g_SelectedChunk in multiple iterations so we
@@ -71,8 +72,10 @@ private:
 	Block& GetBlock(uint32_t index);
 	const Block& GetBlock(uint32_t index) const;
 private:
-	//Father world
-	World* m_RelativeWorld;
+	//Global OpenGL environment state
+	GlCore::State& m_State;
+	//Belonging world
+	World& m_RelativeWorld;
 
 	//Chunk progressive index
 	uint32_t m_ChunkIndex;

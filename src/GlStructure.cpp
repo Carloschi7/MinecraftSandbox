@@ -18,13 +18,14 @@ std::shared_ptr<Shader> GlCore::BlockStructure::m_ShaderPtr = nullptr;
 namespace GlCore
 {
     //World definitions
-    WorldStructure::WorldStructure()
+    WorldStructure::WorldStructure() :
+        m_State(State::GetState())
     {
-        Camera& cam = Root::GameCamera();
+        Camera& cam = m_State.GameCamera();
         cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
         cam.SetPerspectiveValues(glm::radians(45.0f),
-            float(Root::GameWindow().Width()) / float(Root::GameWindow().Height()),
+            float(m_State.GameWindow().Width()) / float(m_State.GameWindow().Height()),
             0.1f,
             Gd::g_RenderDistance);
 
@@ -81,23 +82,23 @@ namespace GlCore
         m_DepthVMPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
             m_FramebufferShaderPtr->GetAttributeLocation("model_depth_pos"), el);
 
-        Root::SetShadowFramebuffer(m_DepthFramebufferPtr);
-        Root::SetDepthShader(m_FramebufferShaderPtr);
-        Root::SetDepthVM(m_DepthVMPtr);
-        Root::SetWaterShader(m_WaterShader);
-        Root::SetWaterVM(m_WaterVmPtr);
+        m_State.SetShadowFramebuffer(m_DepthFramebufferPtr);
+        m_State.SetDepthShader(m_FramebufferShaderPtr);
+        m_State.SetDepthVM(m_DepthVMPtr);
+        m_State.SetWaterShader(m_WaterShader);
+        m_State.SetWaterVM(m_WaterVmPtr);
     }
 
 
     void WorldStructure::UpdateCamera()
     {
-        Root::GameCamera().ProcessInput(Root::GameWindow(), 1.0f);
+        m_State.GameCamera().ProcessInput(m_State.GameWindow(), 1.0f);
     }
 
     void WorldStructure::RenderSkybox() const
     {
         //SetViewMatrix with no translation
-        glm::mat4 view = glm::mat4(glm::mat3(Root::GameCamera().GetViewMatrix()));
+        glm::mat4 view = glm::mat4(glm::mat3(m_State.GameCamera().GetViewMatrix()));
         RendererPayload pl{ view,
             &m_CubemapPtr->GetVertexManager(),
             m_CubemapShaderPtr.get(),
@@ -117,7 +118,7 @@ namespace GlCore
 
     void WorldStructure::UpdateShadowFramebuffer() const
     {
-        auto& pos = Root::GameCamera().GetPosition();
+        auto& pos = m_State.GameCamera().GetPosition();
         float x = pos.x - std::fmod(pos.x, 32.0f);
         float z = pos.z - std::fmod(pos.z, 32.0f);
         glm::vec3 light_eye = glm::vec3(x, 500.0f, z);
@@ -131,15 +132,15 @@ namespace GlCore
 
     void WorldStructure::UniformProjMatrix() const
     {
-        auto block_shader = Root::BlockShader();
-        block_shader->UniformMat4f(Root::GameCamera().GetProjMatrix(), "proj");
+        auto block_shader = m_State.BlockShader();
+        block_shader->UniformMat4f(m_State.GameCamera().GetProjMatrix(), "proj");
     }
 
     void WorldStructure::UniformViewMatrix() const
     {
-        auto block_shader = Root::BlockShader();
-        block_shader->UniformMat4f(Root::GameCamera().GetViewMatrix(), "view");
-        m_WaterShader->UniformMat4f(Root::GameCamera().GetViewMatrix(), "view");
+        auto block_shader = m_State.BlockShader();
+        block_shader->UniformMat4f(m_State.GameCamera().GetViewMatrix(), "view");
+        m_WaterShader->UniformMat4f(m_State.GameCamera().GetViewMatrix(), "view");
     }
 
 
@@ -183,8 +184,9 @@ namespace GlCore
             m_ShaderPtr->GetAttributeLocation("tex_index"), el2);
 
         //Root management
-        Root::SetBlockShader(m_ShaderPtr);
-        Root::SetBlockVM(m_VertexManagerPtr);
+        State& state = State::GetState();
+        state.SetBlockShader(m_ShaderPtr);
+        state.SetBlockVM(m_VertexManagerPtr);
     }
 
     void BlockStructure::Draw(const glm::vec3& pos, const Gd::BlockType& bt,

@@ -34,6 +34,8 @@ private:
     glm::vec2 SectionCentralPosFrom(uint32_t index);
     
 private:
+    //Global OpenGL environment state
+    GlCore::State& m_State;
     //We prefer a vector of shared pointers instead of a vector
     //of stack allocated objects because when we are reallocating
     //the vector and the render thread is doing stuff with a chunk,
@@ -66,4 +68,3 @@ private:
     //Serialization threads
     std::future<void> m_SerializingFut;
 };
-

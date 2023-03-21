@@ -46,6 +46,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/GlStructure.cpp src/GlStructure.h
 		src/Renderer.h src/Renderer.cpp
 		src/GameDefinitions.h src/GameDefinitions.cpp
+		src/State.h src/State.cpp
 		src/Macros.h
 		src/Utils.h
 		src/Vertices.h

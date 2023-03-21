@@ -4,7 +4,7 @@
 
 //Initializing a single block for now
 World::World()
-	: m_LastPos(0.0f)
+	: m_State(GlCore::State::GetState()), m_LastPos(0.0f)
 {
 	using namespace Gd;
 
@@ -14,7 +14,7 @@ World::World()
 
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
-			m_Chunks.emplace_back(std::make_shared<Chunk>(this, glm::vec2(float(i), float(j))));
+			m_Chunks.emplace_back(std::make_shared<Chunk>(*this, glm::vec2(float(i), float(j))));
 
 	HandleSectionData();
 	//Set safe iterable size for the rendering thread(set in all cases by default)
@@ -52,7 +52,7 @@ World::World()
 
 	uint32_t water_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureWater);
 	textures[water_binding].Bind(water_binding);
-	GlCore::Root::WaterShader()->Uniform1i(water_binding, "texture_water");
+	m_State.WaterShader()->Uniform1i(water_binding, "texture_water");
 }
 
 World::~World()
@@ -62,8 +62,8 @@ World::~World()
 void World::DrawRenderable()
 {
 	//Draw to depth framebuffer
-	auto& window = GlCore::Root::GameWindow();
-	auto& camera = GlCore::Root::GameCamera();
+	auto& window = m_State.GameWindow();
+	auto& camera = m_State.GameCamera();
 
 	if (Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
 	{
@@ -72,7 +72,7 @@ void World::DrawRenderable()
 		m_LastPos = camera.GetPosition();
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
-		GlCore::Root::DepthFramebuffer()->Bind();
+		m_State.DepthFramebuffer()->Bind();
 		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
 		//Update depth framebuffer
@@ -87,8 +87,8 @@ void World::DrawRenderable()
 		}
 
 		uint32_t depth_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureDepth);
-		GlCore::Root::DepthFramebuffer()->BindFrameTexture(depth_binding);
-		GlCore::Root::BlockShader()->Uniform1i(depth_binding, "texture_depth");
+		m_State.DepthFramebuffer()->BindFrameTexture(depth_binding);
+		m_State.BlockShader()->Uniform1i(depth_binding, "texture_depth");
 
 		glViewport(0, 0, window.Width(), window.Height());
 		FrameBuffer::BindDefault();
@@ -104,7 +104,7 @@ void World::DrawRenderable()
 	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();	
 
 	//Uniform light space matrix
-	GlCore::Root::BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
+	m_State.BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
 
 	//Draw to scene
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
@@ -117,12 +117,12 @@ void World::DrawRenderable()
 
 	//Draw water layers
 	glEnable(GL_BLEND);
-	GlCore::Root::WaterShader()->Use();
-	GlCore::Root::WaterVM()->BindVertexArray();
+	m_State.WaterShader()->Use();
+	m_State.WaterVM()->BindVertexArray();
 	for (auto vec : m_DrawableWaterLayers)
 	{
 		//Should never be empty
-		GlCore::Root::WaterVM()->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
+		m_State.WaterVM()->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
 		GlCore::Renderer::RenderInstanced(vec->size());
 	}
 	glDisable(GL_BLEND);
@@ -136,7 +136,7 @@ void World::DrawRenderable()
 void World::UpdateScene()
 {
 	//Chunk dynamic spawning
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	auto& camera_position = m_State.GameCamera().GetPosition();
 	glm::vec2 camera_2d(camera_position.x, camera_position.z);
 	
 	if (!GlCore::g_SerializationRunning)
@@ -162,7 +162,7 @@ void World::UpdateScene()
 					}
 				}
 
-				std::shared_ptr<Chunk> this_chunk = std::make_shared<Chunk>(this, chunk_pos);
+				std::shared_ptr<Chunk> this_chunk = std::make_shared<Chunk>(*this, chunk_pos);
 				m_Chunks.emplace_back(this_chunk);
 				m_SafeChunkSize++;
 				HandleSectionData();
@@ -306,7 +306,7 @@ void World::HandleSelection()
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
 
-	auto& window = GlCore::Root::GameWindow();
+	auto& window = m_State.GameWindow();
 
 	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 	//One block at a time
@@ -436,7 +436,7 @@ void World::SerializeSector(uint32_t index)
 	for(uint32_t i = 0; i < m_Chunks.size() - m_SafeChunkSize; i++)
 	{
 		Chunk& chunk = *m_Chunks[m_SafeChunkSize + i];
-		chunk & sz;
+		chunk.Serialize(sz);
 		serialized_chunks++;
 	}
 	
@@ -472,7 +472,7 @@ void World::DeserializeSector(uint32_t index)
 
 	while (!sz.Eof())
 	{
-		auto new_chunk = std::make_shared<Chunk>(this, sz, index);
+		auto new_chunk = std::make_shared<Chunk>(*this, sz, index);
 		m_Chunks.push_back(new_chunk);
 		m_SafeChunkSize++;
 	}

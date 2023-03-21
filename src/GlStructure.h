@@ -5,6 +5,7 @@
 #include "GameDefinitions.h"
 #include "Vertices.h"
 #include "Renderer.h"
+#include "State.h"
 
 class Block;
 class World;
@@ -27,6 +28,7 @@ namespace GlCore
         void UniformProjMatrix() const;
         void UniformViewMatrix() const;
     private:
+        State& m_State;
         //Cubemap Stuff
         static std::shared_ptr<CubeMap> m_CubemapPtr;
         static std::shared_ptr<Shader> m_CubemapShaderPtr;

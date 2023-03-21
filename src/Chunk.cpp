@@ -7,10 +7,10 @@
 float Chunk::s_DiagonalLenght = 0.0f;
 uint32_t Chunk::s_InternalSelectedBlock = static_cast<uint32_t>(-1);
 
-Chunk::Chunk(World* father, glm::vec2 origin)
-	:m_RelativeWorld(father), m_ChunkOrigin(origin),
-	m_SelectedBlock(static_cast<uint32_t>(-1)), m_ChunkCenter(0.0f),
-	m_SectorIndex(0)
+Chunk::Chunk(World& father, glm::vec2 origin)
+	:m_RelativeWorld(father), m_State(GlCore::State::GetState()),
+	m_ChunkOrigin(origin), m_SelectedBlock(static_cast<uint32_t>(-1)),
+	m_ChunkCenter(0.0f), m_SectorIndex(0)
 {
 	//Assigning chunk index
 	m_ChunkIndex = Gd::g_ChunkProgIndex++;
@@ -34,7 +34,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
 			float fx = static_cast<float>(i), fy = static_cast<float>(k);
-			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld->Seed());
+			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
 			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
 			for (int32_t j = 0; j < final_height; j++)
@@ -53,7 +53,7 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 
 			if (perlin_data.in_water)
 			{
-				float water_level = Gd::WaterRegionLevel(fx, fy, m_RelativeWorld->Seed());
+				float water_level = Gd::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
 				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)
@@ -84,17 +84,19 @@ Chunk::Chunk(World* father, glm::vec2 origin)
 	Gd::g_PushedSections.insert(m_SectorIndex);
 }
 
-Chunk::Chunk(World* father, const Utils::Serializer& sz, uint32_t index) :
-	m_RelativeWorld(father), m_SectorIndex(index), m_SelectedBlock(static_cast<uint32_t>(-1))
+Chunk::Chunk(World& father, const Utils::Serializer& sz, uint32_t index) :
+	m_RelativeWorld(father), m_State(GlCore::State::GetState()),
+	m_SectorIndex(index), m_SelectedBlock(static_cast<uint32_t>(-1))
 {
 	//Init water layer position vector
 	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
 
 	//Simply forward everithing to the deserializing operator
-	*this % sz;
+	Deserialize(sz);
 }
 
-Chunk::Chunk(Chunk&& rhs) noexcept
+Chunk::Chunk(Chunk&& rhs) noexcept :
+	m_State(GlCore::State::GetState()), m_RelativeWorld(rhs.m_RelativeWorld)
 {
 	*this = std::move(rhs);
 }
@@ -105,7 +107,6 @@ Chunk::~Chunk()
 
 Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 {
-	m_RelativeWorld = rhs.m_RelativeWorld;
 	m_ChunkIndex = rhs.m_ChunkIndex;
 
 	m_LocalBlocks = std::move(rhs.m_LocalBlocks);
@@ -123,16 +124,16 @@ Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 void Chunk::InitGlobalNorms()
 {
 	//Determining if side chunk exist
-	m_PlusX = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::PlusX);
-	m_MinusX = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::MinusX);
-	m_PlusZ = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::PlusZ);
-	m_MinusZ = m_RelativeWorld->IsChunk(*this, Gd::ChunkLocation::MinusZ);
+	m_PlusX = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::PlusX);
+	m_MinusX = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::MinusX);
+	m_PlusZ = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::PlusZ);
+	m_MinusZ = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::MinusZ);
 
 	//Getting the relative ptr(can be nullptr obv)
-	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld->GetChunk(m_PlusX.value()) : nullptr;
-	Chunk* chunk_minus_x = m_MinusX.has_value() ? &m_RelativeWorld->GetChunk(m_MinusX.value()) : nullptr;
-	Chunk* chunk_plus_z = m_PlusZ.has_value() ? &m_RelativeWorld->GetChunk(m_PlusZ.value()) : nullptr;
-	Chunk* chunk_minus_z = m_MinusZ.has_value() ? &m_RelativeWorld->GetChunk(m_MinusZ.value()) : nullptr;
+	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld.GetChunk(m_PlusX.value()) : nullptr;
+	Chunk* chunk_minus_x = m_MinusX.has_value() ? &m_RelativeWorld.GetChunk(m_MinusX.value()) : nullptr;
+	Chunk* chunk_plus_z = m_PlusZ.has_value() ? &m_RelativeWorld.GetChunk(m_PlusZ.value()) : nullptr;
+	Chunk* chunk_minus_z = m_MinusZ.has_value() ? &m_RelativeWorld.GetChunk(m_MinusZ.value()) : nullptr;
 
 	//Get normals
 	const glm::vec3& pos_x = GlCore::g_PosX;
@@ -332,9 +333,9 @@ void Chunk::AddFreshNormals(Block& b)
 		bool add_norm = true;
 		if (side_check)
 		{
-			if (auto opt = m_RelativeWorld->IsChunk(*this, cl); opt.has_value())
+			if (auto opt = m_RelativeWorld.IsChunk(*this, cl); opt.has_value())
 			{
-				if (m_RelativeWorld->GetChunk(opt.value()).IsBlock(block_pos + dir))
+				if (m_RelativeWorld.GetChunk(opt.value()).IsBlock(block_pos + dir))
 					add_norm = false;
 			}
 		}
@@ -363,8 +364,8 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	std::size_t vec_size = m_LocalBlocks.size();
 	m_SelectedBlock = static_cast<uint32_t>(-1);
 
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
-	auto& camera_direction = GlCore::Root::GameCamera().GetFront();
+	auto& camera_position = m_State.GameCamera().GetPosition();
+	auto& camera_direction = m_State.GameCamera().GetFront();
 
 	Gd::HitDirection selection = Gd::HitDirection::None;
 
@@ -440,7 +441,7 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 
 void Chunk::UpdateBlocks()
 {
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	auto& camera_position = m_State.GameCamera().GetPosition();
 
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
@@ -449,7 +450,7 @@ void Chunk::UpdateBlocks()
 
 bool Chunk::IsChunkRenderable() const
 {
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
+	auto& camera_position = m_State.GameCamera().GetPosition();
 
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(camera_position.x, camera_position.z);
@@ -459,8 +460,8 @@ bool Chunk::IsChunkRenderable() const
 
 bool Chunk::IsChunkVisible() const
 {
-	auto& camera_position = GlCore::Root::GameCamera().GetPosition();
-	auto& camera_direction = GlCore::Root::GameCamera().GetFront();
+	auto& camera_position = m_State.GameCamera().GetPosition();
+	auto& camera_direction = m_State.GameCamera().GetFront();
 
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
 	return (glm::dot(camera_to_midway, camera_direction) > 0.4f ||
@@ -469,7 +470,7 @@ bool Chunk::IsChunkVisible() const
 
 bool Chunk::IsChunkVisibleByShadow() const
 {
-	glm::vec3 camera_position = GlCore::Root::GameCamera().GetPosition() + GlCore::g_FramebufferPlayerOffset;
+	glm::vec3 camera_position = m_State.GameCamera().GetPosition() + GlCore::g_FramebufferPlayerOffset;
 	const glm::vec3& camera_direction = GlCore::g_NegY;
 	
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
@@ -485,7 +486,7 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	{
 		uint32_t index = GetLoadedChunk(loc).value_or(0);
 		glm::vec3 block_pos = block.Position() + vec;
-		bool is_block = m_RelativeWorld->GetChunk(index).IsBlock(block_pos);
+		bool is_block = m_RelativeWorld.GetChunk(index).IsBlock(block_pos);
 
 		if (is_block)
 			block.RemoveNormal(norm);
@@ -602,13 +603,13 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 	if (count == 0)
 		return;
 
-	auto block_vm = GlCore::Root::BlockVM();
-	auto depth_vm = GlCore::Root::DepthVM();
+	auto block_vm = m_State.BlockVM();
+	auto depth_vm = m_State.DepthVM();
 
 	//Decide which shader to use depending on the context
 	if (!depth_buf_draw)
 	{
-		GlCore::Root::BlockShader()->Use();
+		m_State.BlockShader()->Use();
 		//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
 		block_vm->BindVertexArray();
 		block_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
@@ -616,11 +617,11 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 
 		//In the end, push water layers for the world to render them at the end
 		if (!m_WaterLayerPositions->empty())
-			m_RelativeWorld->PushWaterLayer(m_WaterLayerPositions);
+			m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
 	}
 	else
 	{
-		GlCore::Root::DepthShader()->Use();
+		m_State.DepthShader()->Use();
 		depth_vm->BindVertexArray();
 		depth_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
 	}
@@ -642,13 +643,13 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 			if (!side_chunk_check)
 			{
 				if (m_PlusX.has_value() && norm == GlCore::g_PosX)
-					m_RelativeWorld->GetChunk(m_PlusX.value()).AddNewExposedNormals(pos, true);
+					m_RelativeWorld.GetChunk(m_PlusX.value()).AddNewExposedNormals(pos, true);
 				if (m_MinusX.has_value() && norm == GlCore::g_NegX)
-					m_RelativeWorld->GetChunk(m_MinusX.value()).AddNewExposedNormals(pos, true);
+					m_RelativeWorld.GetChunk(m_MinusX.value()).AddNewExposedNormals(pos, true);
 				if (m_PlusZ.has_value() && norm == GlCore::g_PosZ)
-					m_RelativeWorld->GetChunk(m_PlusZ.value()).AddNewExposedNormals(pos, true);
+					m_RelativeWorld.GetChunk(m_PlusZ.value()).AddNewExposedNormals(pos, true);
 				if (m_MinusZ.has_value() && norm == GlCore::g_NegZ)
-					m_RelativeWorld->GetChunk(m_MinusZ.value()).AddNewExposedNormals(pos, true);
+					m_RelativeWorld.GetChunk(m_MinusZ.value()).AddNewExposedNormals(pos, true);
 			}
 		}
 		else
@@ -685,7 +686,7 @@ glm::vec3 Chunk::GetHalfWayVector()
 	return glm::vec3(s_ChunkWidthAndHeight / 2.0f, s_ChunkDepth / 2.0f, s_ChunkWidthAndHeight / 2.0f);
 }
 
-const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
+const Utils::Serializer& Chunk::Serialize(const Utils::Serializer& sz)
 {
 	//Serializing components
 	//At first we tell how many blocks and water layers the chunk has
@@ -722,7 +723,7 @@ const Utils::Serializer& Chunk::operator&(const Utils::Serializer& sz)
 	return sz;
 }
 
-const Utils::Serializer& Chunk::operator%(const Utils::Serializer& sz)
+const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 {
 	std::size_t blk_vec_size;
 	std::size_t water_layer_size;
