@@ -561,34 +561,31 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 	}
 }
 
-void Chunk::Draw(bool depth_buf_draw, bool selected) const
+void Chunk::ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected) const
 {
-	//Data containers for instanced rendering
-	static std::vector<glm::vec3> position_buffer(GlCore::g_MaxInstancedObjs);
-	static std::vector<uint32_t> texture_buffer(GlCore::g_MaxInstancedObjs);
-	uint32_t count = 0;
-
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{
 		auto& block = m_LocalBlocks[i];
-		//Discard automatically blocks which cant be drawn
-
 		if (!depth_buf_draw)
 		{
-			//For standard frawcalls, we care about visible blocks
+			//For standard drawcalls, we care about visible blocks
 			if (!block.IsDrawable())
 				continue;
 
-			texture_buffer[count] = static_cast<uint32_t>(block.Type());
-			position_buffer[count++] = block.Position();
+			texindex_buf[count] = static_cast<uint32_t>(block.Type());
+			position_buf[count++] = block.Position();
 
 			//Handle selection by pushing another matrix and a null index
 			if (selected && i == s_InternalSelectedBlock)
 			{
-				texture_buffer[count] = 256 + texture_buffer[count - 1];
-				position_buffer[count] = position_buffer[count - 1];
+				texindex_buf[count] = 256 + texindex_buf[count - 1];
+				position_buf[count] = position_buf[count - 1];
 				count++;
 			}
+
+			//Send water layer if present
+			if (!m_WaterLayerPositions->empty())
+				m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
 		}
 		else
 		{
@@ -596,37 +593,18 @@ void Chunk::Draw(bool depth_buf_draw, bool selected) const
 			if (!block.HasNormals())
 				continue;
 
-			position_buffer[count++] = block.Position();
+			position_buf[count++] = block.Position();
+		}
+
+		//Render data if buffers are full
+		if (count == GlCore::g_MaxRenderedObjCount)
+		{
+			if (depth_buf_draw)
+				GlCore::DispatchDepthRendering(position_buf, count);
+			else
+				GlCore::DispatchBlockRendering(position_buf, texindex_buf, count);
 		}
 	}
-
-	if (count == 0)
-		return;
-
-	auto block_vm = m_State.BlockVM();
-	auto depth_vm = m_State.DepthVM();
-
-	//Decide which shader to use depending on the context
-	if (!depth_buf_draw)
-	{
-		m_State.BlockShader()->Use();
-		//Send all the matrices to the VertexManager, then draw everything in one instanced drawcall
-		block_vm->BindVertexArray();
-		block_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
-		block_vm->EditInstance(1, texture_buffer.data(), sizeof(uint32_t) * count, 0);
-
-		//In the end, push water layers for the world to render them at the end
-		if (!m_WaterLayerPositions->empty())
-			m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
-	}
-	else
-	{
-		m_State.DepthShader()->Use();
-		depth_vm->BindVertexArray();
-		depth_vm->EditInstance(0, position_buffer.data(), sizeof(glm::vec3) * count, 0);
-	}
-	
-	GlCore::Renderer::RenderInstanced(count);
 }
 
 void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check)

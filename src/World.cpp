@@ -59,13 +59,29 @@ World::~World()
 {
 }
 
-void World::DrawRenderable()
+void World::Render()
 {
 	//Draw to depth framebuffer
 	auto& window = m_State.GameWindow();
 	auto& camera = m_State.GameCamera();
+	auto& block_vm = m_State.BlockVM();
+	auto& depth_vm = m_State.DepthVM();
 
-	if (Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
+	//Static buffers where render data is being sent to, 
+	//to avoid making too many drawcalls
+	static std::unique_ptr<glm::vec3[]> position_buffer;
+	static std::unique_ptr<uint32_t[]> texture_buffer;
+	uint32_t count = 0;
+
+	//Populate the buffers the first iteration
+	if (position_buffer == nullptr)
+	{
+		position_buffer = std::make_unique<glm::vec3[]>(GlCore::g_MaxRenderedObjCount);
+		texture_buffer = std::make_unique<uint32_t[]>(GlCore::g_MaxRenderedObjCount);
+	}
+
+	bool depth_buffer_needs_update = Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f;
+	if (depth_buffer_needs_update)
 	{
 		//Reset state
 		Gd::g_BlockDestroyed = false;
@@ -83,8 +99,11 @@ void World::DrawRenderable()
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
 			std::shared_ptr<Chunk> chunk = m_Chunks[i];
 			if (chunk->IsChunkRenderable() && chunk->IsChunkVisibleByShadow())
-				chunk->Draw(true);
+				chunk->ForwardRenderableData(position_buffer.get(), texture_buffer.get(), count, true);
 		}
+
+		//Render any leftover data
+		GlCore::DispatchDepthRendering(position_buffer.get(), count);
 
 		uint32_t depth_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureDepth);
 		m_State.DepthFramebuffer()->BindFrameTexture(depth_binding);
@@ -98,11 +117,9 @@ void World::DrawRenderable()
 	//Render skybox
 	m_WorldStructure.RenderSkybox();
 	m_WorldStructure.UniformViewMatrix();
-
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();	
-
 	//Uniform light space matrix
 	m_State.BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
 
@@ -112,10 +129,13 @@ void World::DrawRenderable()
 		//Wait if the vector is being modified
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
 		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible())
-			chunk->Draw(false, ch == i);
+			chunk->ForwardRenderableData(position_buffer.get(), texture_buffer.get(), count, false, ch == i);
 	}
 
-	//Draw water layers
+	//Render any leftover data
+	GlCore::DispatchBlockRendering(position_buffer.get(), texture_buffer.get(), count);
+
+	//Draw water layers(normal instanced rendering for the water layer)
 	glEnable(GL_BLEND);
 	m_State.WaterShader()->Use();
 	m_State.WaterVM()->BindVertexArray();
@@ -126,7 +146,7 @@ void World::DrawRenderable()
 		GlCore::Renderer::RenderInstanced(vec->size());
 	}
 	glDisable(GL_BLEND);
-
+	GlCore::g_Drawcalls = 0;
 	//Remove pointers from vector, no deletion involved
 	m_DrawableWaterLayers.clear();
 	//Drawing crossaim

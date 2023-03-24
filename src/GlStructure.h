@@ -12,7 +12,7 @@ class World;
 
 namespace GlCore 
 {
-    //Also handles the game window and other stuff which should technlically not be defined here.
+    //Also handles the game window and other stuff which should technically not be defined here.
     //For the time being, the project is very small, and up until a certain point there will
     //only be one world, so up until the project gets to be something bigger, we will be sticking
     //to this method
@@ -49,8 +49,6 @@ namespace GlCore
     {
     public:
         BlockStructure(const glm::vec3& pos, const Gd::BlockType& bt);
-        void Draw(const glm::vec3& pos, const Gd::BlockType& bt, 
-            const DrawableData& exp_norms, bool is_block_selected) const;
     private:
         //Cube geometry
         //The core OpenGL structures which is designed to do actual drawing/rendering

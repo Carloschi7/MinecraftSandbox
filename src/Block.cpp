@@ -7,11 +7,6 @@ Block::Block(const glm::vec3& position, const Gd::BlockType& bt)
 {
 }
 
-void Block::Draw(bool bIsBlockSelected) const
-{
-    m_BlockStructure.Draw(m_Position, m_BlockType, m_DrawableSides, bIsBlockSelected);
-}
-
 void Block::UpdateRenderableSides(const glm::vec3& camera_pos)
 {
     uint8_t& counter = m_DrawableSides.second;
@@ -68,7 +63,7 @@ void Block::RemoveNormal(float x, float y, float z)
 
 bool Block::HasNormals() const
 {
-    for (const bool& b : m_ExposedNormals)
+    for (bool b : m_ExposedNormals)
         if (b)
             return true;
 

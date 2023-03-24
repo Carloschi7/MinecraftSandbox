@@ -90,12 +90,12 @@ void Application::OnUserRun()
             //No need to render every frame, while the logic thread computes,
             //sleeping every few milliseconds can save lots of performances without
             //resulting too slow
-            WorldGameInstance.DrawRenderable();
+            WorldGameInstance.Render();
         }
         else
         {
             WorldGameInstance.UpdateScene();
-            WorldGameInstance.DrawRenderable();
+            WorldGameInstance.Render();
         }
         //LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
 

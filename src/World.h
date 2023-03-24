@@ -9,8 +9,8 @@ class World {
 public:
     World();
     ~World();
-    //Draws the number of chunks visible to the player
-    void DrawRenderable();
+    //Renders visible world
+    void Render();
     void UpdateScene();
     void HandleSelection();
     //Pushes setion data to eventually help with serialization

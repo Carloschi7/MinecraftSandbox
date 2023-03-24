@@ -67,7 +67,7 @@ namespace GlCore
         m_WaterShader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
-        m_WaterVmPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+        m_WaterVmPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxWaterLayersCount,
             m_WaterShader->GetAttributeLocation("model_pos"), el);
 
         //Init framebuffer
@@ -79,8 +79,10 @@ namespace GlCore
 
         //Instanced attribute for block positions in the depth shader
         el = { 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
-        m_DepthVMPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+        m_DepthVMPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
             m_FramebufferShaderPtr->GetAttributeLocation("model_depth_pos"), el);
+        //Map the instance
+
 
         m_State.SetShadowFramebuffer(m_DepthFramebufferPtr);
         m_State.SetDepthShader(m_FramebufferShaderPtr);
@@ -99,21 +101,12 @@ namespace GlCore
     {
         //SetViewMatrix with no translation
         glm::mat4 view = glm::mat4(glm::mat3(m_State.GameCamera().GetViewMatrix()));
-        RendererPayload pl{ view,
-            &m_CubemapPtr->GetVertexManager(),
-            m_CubemapShaderPtr.get(),
-            nullptr,
-            m_CubemapPtr.get(),
-            nullptr,
-            false};
-
-        Renderer::Render(pl);
+        Renderer::Render(m_CubemapShaderPtr, m_CubemapPtr->GetVertexManager(), m_CubemapPtr, view);
     }
 
     void WorldStructure::RenderCrossaim() const
     {
-        RendererPayload pl{ {}, m_CrossaimVmPtr.get(), m_CrossaimShaderPtr.get(), nullptr, nullptr, nullptr, false };
-        Renderer::Render(pl);
+        Renderer::Render(m_CrossaimShaderPtr, *m_CrossaimVmPtr, nullptr, {});
     }
 
     void WorldStructure::UpdateShadowFramebuffer() const
@@ -176,56 +169,17 @@ namespace GlCore
 
         //Create instance buffer for model matrices
         LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
-        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxInstancedObjs,
+        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
             m_ShaderPtr->GetAttributeLocation("model_pos"), el);
 
         LayoutElement el2{ 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0 };
-        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(uint32_t) * g_MaxInstancedObjs,
+        m_VertexManagerPtr->PushInstancedAttribute(nullptr, sizeof(uint32_t) * g_MaxRenderedObjCount,
             m_ShaderPtr->GetAttributeLocation("tex_index"), el2);
 
         //Root management
         State& state = State::GetState();
         state.SetBlockShader(m_ShaderPtr);
         state.SetBlockVM(m_VertexManagerPtr);
-    }
-
-    void BlockStructure::Draw(const glm::vec3& pos, const Gd::BlockType& bt,
-        const DrawableData& exp_norms, bool is_block_selected) const
-    {
-        auto& game_textures = LoadGameTextures();
-        const Texture* current_texture = nullptr;
-        switch (bt)
-        {
-        case Gd::BlockType::Dirt:
-            current_texture = &game_textures[0];
-            break;
-        case Gd::BlockType::Grass:
-            current_texture = &game_textures[1];
-            break;
-        case Gd::BlockType::Sand:
-            current_texture = &game_textures[2];
-            break;
-        case Gd::BlockType::Wood:
-            current_texture = &game_textures[3];
-            break;
-        case Gd::BlockType::Leaves:
-            current_texture = &game_textures[4];
-            break;
-        default:
-            throw std::runtime_error("Texture preset for this block not found!");
-        }
-
-
-        RendererPayload pl{ glm::translate(g_IdentityMatrix, pos),
-                            m_VertexManagerPtr.get(),
-                            m_ShaderPtr.get(),
-                            current_texture,
-                            nullptr,
-                            &exp_norms,
-                            is_block_selected };
-
-
-        Renderer::Render(pl);
     }
     const std::vector<Texture>& LoadGameTextures()
     {

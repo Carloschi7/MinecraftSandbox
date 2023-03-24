@@ -10,8 +10,6 @@ class Block
 {
 public:
     Block(const glm::vec3& position, const Gd::BlockType& bt);
-
-    void Draw(bool bIsBlockSelected = false) const;
     void UpdateRenderableSides(const glm::vec3& camera_pos);
 
     const glm::vec3& Position() const;

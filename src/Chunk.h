@@ -25,6 +25,9 @@ public:
 	Chunk& operator=(const Chunk&) = delete;
 	Chunk& operator=(Chunk&& rhs) noexcept;
 
+	//Stores render data and presents it if the buffers are full
+	void ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected = false) const;
+
 	//Normals loaded as the chunk spawns
 	void InitGlobalNorms();
 	//Add new normals for a newly placed block
@@ -47,7 +50,6 @@ public:
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
 	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
 	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
-	void Draw(bool depth_buf_draw, bool selected = false) const;
 	uint32_t LastSelectedBlock() const;
 
 	uint32_t SectorIndex() const;
