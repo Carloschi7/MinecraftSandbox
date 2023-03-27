@@ -564,7 +564,8 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 void Chunk::ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected) const
 {
 	//We let this algorithm fill the buffers of the instanced shader attributes
-	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
+	std::size_t size = m_LocalBlocks.size();
+	for (std::size_t i = 0; i < size; ++i)
 	{
 		auto& block = m_LocalBlocks[i];
 		if (!depth_buf_draw)

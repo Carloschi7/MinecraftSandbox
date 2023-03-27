@@ -81,12 +81,8 @@ private:
 
 	//Chunk progressive index
 	uint32_t m_ChunkIndex;
-
-#ifdef MC_MULTITHREADING
-	Utils::TSVector<Block> m_LocalBlocks;
-#else
 	std::vector<Block> m_LocalBlocks;
-#endif
+
 	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
 	std::shared_ptr<std::vector<glm::vec3>> m_WaterLayerPositions;
 	//front-bottom-left block position
