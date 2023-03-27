@@ -67,18 +67,13 @@ void World::Render()
 	auto& block_vm = m_State.BlockVM();
 	auto& depth_vm = m_State.DepthVM();
 
-	//Static buffers where render data is being sent to, 
-	//to avoid making too many drawcalls
-	static std::unique_ptr<glm::vec3[]> position_buffer;
-	static std::unique_ptr<uint32_t[]> texture_buffer;
-	uint32_t count = 0;
+	//Map the shader buffers so we can use them to write data
+	glm::vec3* block_positions = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
+	glm::vec3* depth_positions = static_cast<glm::vec3*>(depth_vm->InstancedAttributePointer(0));
+	glm::vec3* water_positions = static_cast<glm::vec3*>(m_State.WaterVM()->InstancedAttributePointer(0));
+	uint32_t* block_texindices = static_cast<uint32_t*>(block_vm->InstancedAttributePointer(1));
 
-	//Populate the buffers the first iteration
-	if (position_buffer == nullptr)
-	{
-		position_buffer = std::make_unique<glm::vec3[]>(GlCore::g_MaxRenderedObjCount);
-		texture_buffer = std::make_unique<uint32_t[]>(GlCore::g_MaxRenderedObjCount);
-	}
+	uint32_t count = 0;
 
 	bool depth_buffer_needs_update = Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f;
 	if (depth_buffer_needs_update)
@@ -99,11 +94,11 @@ void World::Render()
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
 			std::shared_ptr<Chunk> chunk = m_Chunks[i];
 			if (chunk->IsChunkRenderable() && chunk->IsChunkVisibleByShadow())
-				chunk->ForwardRenderableData(position_buffer.get(), texture_buffer.get(), count, true);
+				chunk->ForwardRenderableData(depth_positions, block_texindices, count, true);
 		}
 
 		//Render any leftover data
-		GlCore::DispatchDepthRendering(position_buffer.get(), count);
+		GlCore::DispatchDepthRendering(depth_positions, count);
 
 		uint32_t depth_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureDepth);
 		m_State.DepthFramebuffer()->BindFrameTexture(depth_binding);
@@ -112,9 +107,9 @@ void World::Render()
 		glViewport(0, 0, window.Width(), window.Height());
 		FrameBuffer::BindDefault();
 	}
-	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Render skybox
+	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	m_WorldStructure.RenderSkybox();
 	m_WorldStructure.UniformViewMatrix();
 	uint32_t ch = Gd::g_SelectedChunk.load();
@@ -129,28 +124,31 @@ void World::Render()
 		//Wait if the vector is being modified
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
 		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible())
-			chunk->ForwardRenderableData(position_buffer.get(), texture_buffer.get(), count, false, ch == i);
+			chunk->ForwardRenderableData(block_positions, block_texindices, count, false, ch == i);
 	}
 
 	//Render any leftover data
-	GlCore::DispatchBlockRendering(position_buffer.get(), texture_buffer.get(), count);
+	GlCore::DispatchBlockRendering(block_positions, block_texindices, count);
 
+	count = 0;
 	//Draw water layers(normal instanced rendering for the water layer)
 	glEnable(GL_BLEND);
 	m_State.WaterShader()->Use();
 	m_State.WaterVM()->BindVertexArray();
 	for (auto vec : m_DrawableWaterLayers)
 	{
-		//Should never be empty
-		m_State.WaterVM()->EditInstance(0, vec->data(), vec->size() * sizeof(glm::vec3), 0);
-		GlCore::Renderer::RenderInstanced(vec->size());
+		std::memcpy(water_positions + count, vec->data(), vec->size() * sizeof(glm::vec3));
+		count += vec->size();
 	}
+	//Render water layers
+	m_State.WaterVM()->UnmapAttributePointer(0);
+	GlCore::Renderer::RenderInstanced(count);
+
 	glDisable(GL_BLEND);
-	GlCore::g_Drawcalls = 0;
-	//Remove pointers from vector, no deletion involved
-	m_DrawableWaterLayers.clear();
-	//Drawing crossaim
 	m_WorldStructure.RenderCrossaim();
+	
+	m_DrawableWaterLayers.clear();
+	GlCore::g_Drawcalls = 0;
 }
 
 void World::UpdateScene()

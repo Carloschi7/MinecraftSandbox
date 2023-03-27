@@ -20,8 +20,8 @@ namespace GlCore
 #else
 	static constexpr bool g_MultithreadedRendering = false;
 #endif
-	static constexpr uint32_t g_MaxRenderedObjCount = 6000;
-	static constexpr uint32_t g_MaxWaterLayersCount = 500;
+	static constexpr uint32_t g_MaxRenderedObjCount = 200000;
+	static constexpr uint32_t g_MaxWaterLayersCount = 200000;
 	static constexpr uint32_t g_DepthMapWidth = 1024;
 	static constexpr uint32_t g_DepthMapHeight = 1024;
 	extern std::atomic_bool g_LogicThreadShouldRun;
@@ -42,8 +42,8 @@ namespace GlCore
 	//For debug purposes
 	extern uint32_t g_Drawcalls;
 
-	void DispatchBlockRendering(glm::vec3* position_buf, uint32_t* texture_buf, uint32_t& count);
-	void DispatchDepthRendering(glm::vec3* position_buf, uint32_t& count);
+	void DispatchBlockRendering(glm::vec3*& position_buf, uint32_t*& texture_buf, uint32_t& count);
+	void DispatchDepthRendering(glm::vec3*& position_buf, uint32_t& count);
 
 	class Renderer
 	{

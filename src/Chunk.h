@@ -26,7 +26,7 @@ public:
 	Chunk& operator=(Chunk&& rhs) noexcept;
 
 	//Stores render data and presents it if the buffers are full
-	void ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected = false) const;
+	void ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected = false) const;
 
 	//Normals loaded as the chunk spawns
 	void InitGlobalNorms();

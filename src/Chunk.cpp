@@ -561,8 +561,9 @@ void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
 	}
 }
 
-void Chunk::ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected) const
+void Chunk::ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected) const
 {
+	//We let this algorithm fill the buffers of the instanced shader attributes
 	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
 	{
 		auto& block = m_LocalBlocks[i];
@@ -583,9 +584,8 @@ void Chunk::ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_bu
 				count++;
 			}
 
-			//Send water layer if present
-			if (!m_WaterLayerPositions->empty())
-				m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
+			if (count == GlCore::g_MaxRenderedObjCount)
+				GlCore::DispatchBlockRendering(position_buf, texindex_buf, count);
 		}
 		else
 		{
@@ -594,17 +594,15 @@ void Chunk::ForwardRenderableData(glm::vec3* position_buf, uint32_t* texindex_bu
 				continue;
 
 			position_buf[count++] = block.Position();
-		}
 
-		//Render data if buffers are full
-		if (count == GlCore::g_MaxRenderedObjCount)
-		{
-			if (depth_buf_draw)
+			if (count == GlCore::g_MaxRenderedObjCount)
 				GlCore::DispatchDepthRendering(position_buf, count);
-			else
-				GlCore::DispatchBlockRendering(position_buf, texindex_buf, count);
 		}
 	}
+
+	//Send water layer if present
+	if (!depth_buf_draw && !m_WaterLayerPositions->empty())
+		m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
 }
 
 void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check)

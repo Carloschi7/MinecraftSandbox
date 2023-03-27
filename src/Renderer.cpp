@@ -86,33 +86,37 @@ namespace GlCore
 	}
 
 
-	void DispatchBlockRendering(glm::vec3* position_buf, uint32_t* texture_buf, uint32_t& count)
+	void DispatchBlockRendering(glm::vec3*& position_buf, uint32_t*& texture_buf, uint32_t& count)
 	{
 		State& state = State::GetState();
 		auto block_vm = state.BlockVM();
 
 		state.BlockShader()->Use();
 		block_vm->BindVertexArray();
-		block_vm->EditInstance(0, position_buf, sizeof(glm::vec3) * count, 0);
-		block_vm->EditInstance(1, texture_buf, sizeof(uint32_t) * count, 0);
 
+		//Unmap buffers for rendering and then remapping them
+		block_vm->UnmapAttributePointer(0);
+		block_vm->UnmapAttributePointer(1);
 		GlCore::Renderer::RenderInstanced(count);
-		g_Drawcalls++;
+		position_buf = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
+		texture_buf = static_cast<uint32_t*>(block_vm->InstancedAttributePointer(1));
 
+		g_Drawcalls++;
 		count = 0;
 	}
-	void DispatchDepthRendering(glm::vec3* position_buf, uint32_t& count)
+	void DispatchDepthRendering(glm::vec3*& position_buf, uint32_t& count)
 	{
 		State& state = State::GetState();
 		auto depth_vm = state.DepthVM();
 
 		state.DepthShader()->Use();
 		depth_vm->BindVertexArray();
-		depth_vm->EditInstance(0, position_buf, sizeof(glm::vec3) * count, 0);
 
+		depth_vm->UnmapAttributePointer(0);
 		GlCore::Renderer::RenderInstanced(count);
+		position_buf = static_cast<glm::vec3*>(depth_vm->InstancedAttributePointer(0));
+		
 		g_Drawcalls++;
-
 		count = 0;
 	}
 }
