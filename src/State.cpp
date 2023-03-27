@@ -24,6 +24,10 @@ namespace GlCore
 	{
 		camera = game_camera_;
 	}
+	void State::SetCubemapShader(std::shared_ptr<Shader> cubemap_shader_)
+	{
+		cubemap_shader = cubemap_shader_;
+	}
 	void State::SetBlockShader(std::shared_ptr<Shader> block_shader_)
 	{
 		block_shader = block_shader_;
@@ -35,6 +39,14 @@ namespace GlCore
 	void State::SetWaterShader(std::shared_ptr<Shader> water_shader_)
 	{
 		water_shader = water_shader_;
+	}
+	void State::SetInventoryShader(std::shared_ptr<Shader> inventory_shader_)
+	{
+		inventory_shader = inventory_shader_;
+	}
+	void State::SetCrossaimShader(std::shared_ptr<Shader> crossaim_shader_)
+	{
+		crossaim_shader = crossaim_shader_;
 	}
 	void State::SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
@@ -48,9 +60,22 @@ namespace GlCore
 	{
 		water_vm = vertex_manager_;
 	}
+	void State::SetInventoryVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		inventory_vm = vertex_manager_;
+	}
+	void State::SetCrossaimVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		crossaim_vm = vertex_manager_;
+	}
 	void State::SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_)
 	{
 		shadow_framebuffer = shadow_framebuffer_;
+	}
+
+	void State::SetCubemap(std::shared_ptr<CubeMap> cubemap_)
+	{
+		cubemap = cubemap_;
 	}
 
 
@@ -61,6 +86,11 @@ namespace GlCore
 	Camera& State::GameCamera()
 	{
 		return *camera;
+	}
+
+	std::shared_ptr<Shader> State::CubemapShader()
+	{
+		return cubemap_shader;
 	}
 
 	std::shared_ptr<Shader> State::BlockShader()
@@ -75,6 +105,16 @@ namespace GlCore
 	std::shared_ptr<Shader> State::WaterShader()
 	{
 		return water_shader;
+	}
+
+	std::shared_ptr<Shader> State::InventoryShader()
+	{
+		return inventory_shader;
+	}
+
+	std::shared_ptr<Shader> State::CrossaimShader()
+	{
+		return crossaim_shader;
 	}
 
 	std::shared_ptr<VertexManager> State::BlockVM()
@@ -92,9 +132,24 @@ namespace GlCore
 		return water_vm;
 	}
 
+	std::shared_ptr<VertexManager> State::InventoryVM()
+	{
+		return inventory_vm;
+	}
+
+	std::shared_ptr<VertexManager> State::CrossaimVM()
+	{
+		return crossaim_vm;
+	}
+
 	std::shared_ptr<FrameBuffer> State::DepthFramebuffer()
 	{
 		return shadow_framebuffer;
+	}
+
+	std::shared_ptr<CubeMap> State::Cubemap()
+	{
+		return cubemap;
 	}
 
 

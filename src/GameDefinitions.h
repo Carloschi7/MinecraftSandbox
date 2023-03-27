@@ -9,36 +9,16 @@
 //Game defintions
 namespace Gd
 {
-	//Game global variables
-	extern const float g_ChunkSpawningDistance;
-	extern const float g_ChunkRenderingDistance;
-	extern const float g_CameraCompensation;
-	extern const float g_RenderDistance;
-	extern const float g_FramedPlayerSpeed;
-	extern const float g_SectionDimension;
-	//Personal index for each chunk
-	extern uint32_t g_ChunkProgIndex;
-	extern const int32_t g_SpawnerBegin;
-	extern const int32_t g_SpawnerEnd;
-	extern const int32_t g_SpawnerIncrement;
-	extern const glm::vec3 g_LightDirection;
-	//Variables for block selection
-	extern std::atomic_uint32_t g_SelectedBlock;
-	extern std::atomic_uint32_t g_SelectedChunk;
-	extern bool g_BlockDestroyed;
-	//Used to track how many sections have been pushed
-	extern std::unordered_set<uint32_t> g_PushedSections;
-	extern std::string g_SerializedFileFormat;
+	//Game view state
+	enum class ViewMode {
+		WorldInteraction,
+		Inventory
+	};
 
-	//Perlin variables
-	extern float water_limit;
-	static float landmap_density = 1000.0f;
-	static float watermap_density = 900.0f;
-
-    enum class BlockType : uint8_t
-    {
-        Dirt = 0, Grass, Sand, Wood, Leaves
-    };
+	enum class BlockType : uint8_t
+	{
+		Dirt = 0, Grass, Sand, Wood, Leaves
+	};
 
 	enum class HitDirection : uint8_t
 	{
@@ -53,6 +33,7 @@ namespace Gd
 		TextureWood,
 		TextureLeaves,
 		TextureWater,
+		TextureInventory,
 		TextureDepth
 	};
 
@@ -99,8 +80,39 @@ namespace Gd
 		}
 	};
 
-	enum class ChunkLocation {None = 0, PlusX, MinusX, PlusZ, MinusZ};
-	enum class Biome {Plains = 0, Desert};
+	enum class ChunkLocation { None = 0, PlusX, MinusX, PlusZ, MinusZ };
+	enum class Biome { Plains = 0, Desert };
+
+	//-----------------Variables
+	extern std::atomic<ViewMode> g_GameMode;
+
+	//Game global variables
+	extern const float g_ChunkSpawningDistance;
+	extern const float g_ChunkRenderingDistance;
+	extern const float g_CameraCompensation;
+	extern const float g_RenderDistance;
+	extern const float g_FramedPlayerSpeed;
+	extern const float g_SectionDimension;
+	//Personal index for each chunk
+	extern uint32_t g_ChunkProgIndex;
+	extern const int32_t g_SpawnerBegin;
+	extern const int32_t g_SpawnerEnd;
+	extern const int32_t g_SpawnerIncrement;
+	extern const glm::vec3 g_LightDirection;
+	//Variables for block selection
+	extern std::atomic_uint32_t g_SelectedBlock;
+	extern std::atomic_uint32_t g_SelectedChunk;
+	extern bool g_BlockDestroyed;
+	//Used to track how many sections have been pushed
+	extern std::unordered_set<uint32_t> g_PushedSections;
+	extern std::string g_SerializedFileFormat;
+
+	//Perlin variables
+	extern float water_limit;
+	static float landmap_density = 1000.0f;
+	static float watermap_density = 900.0f;
+
+	
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
     void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);

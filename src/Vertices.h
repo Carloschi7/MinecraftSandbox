@@ -83,6 +83,16 @@ namespace GlCore
         -0.5f, -0.5f,
     };
 
+    static const std::vector<float> inventory{
+        -0.5f, -0.5f,   0.0f, 0.0f,
+         0.5f, -0.5f,   1.0f, 0.0f,
+         0.5f,  0.5f,   1.0f, 1.0f,
+
+         0.5f,  0.5f,   1.0f, 1.0f,
+        -0.5f,  0.5f,   0.0f, 1.0f,
+        -0.5f, -0.5f,   0.0f, 0.0f,
+    };
+
     inline VertexData Cube()
     {
         Layout lyt;
@@ -113,6 +123,14 @@ namespace GlCore
         Layout lyt;
         lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0 });
         return { vertices_crossaim, lyt };
+    }
+
+    inline VertexData Inventory()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 2 * sizeof(float)});
+        return { inventory, lyt };
     }
 
     inline Layout MatrixAttributeLayout()

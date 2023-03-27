@@ -2,6 +2,8 @@
 
 namespace Gd
 {
+    std::atomic<ViewMode> g_GameMode = ViewMode::WorldInteraction;
+
 	const float g_ChunkSpawningDistance = 500.0f;
 	const float g_ChunkRenderingDistance = 300.0f;
 	const float g_CameraCompensation = 10.0f;

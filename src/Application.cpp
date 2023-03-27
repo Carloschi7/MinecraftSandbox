@@ -50,18 +50,26 @@ void Application::OnUserRun()
 
     World WorldGameInstance;
 
+    auto switch_game_state = [&]() 
+    {
+        if (Gd::g_GameMode == Gd::ViewMode::WorldInteraction)
+            Gd::g_GameMode = Gd::ViewMode::Inventory;
+        else
+            Gd::g_GameMode = Gd::ViewMode::WorldInteraction;
+    };
+
     //Logic thread function
     auto logic_thread_impl = [&]()
     {
         Utils::Timer timer;
         while (GlCore::g_LogicThreadShouldRun)
         {
-#ifdef DEBUG_MODE
-            timer.StartTimer();
-#endif
+            //The gamemode check is here because the key state update is reqwuired by the logic thread
+            if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
+                switch_game_state();
+
             WorldGameInstance.UpdateScene();
             state.GameWindow().UpdateKeys();
-            //LOG_DEBUG("%s%f%s\n", "Logic Thread:", timer.GetElapsedMilliseconds(), "ms");
         }
     };
 
@@ -79,11 +87,14 @@ void Application::OnUserRun()
     glBlendEquation(GL_MIN);
     glDisable(GL_BLEND);
 
-    //For 3D rendering
     glEnable(GL_DEPTH_TEST);
     Utils::Timer timer;
     while (!m_Window.ShouldClose())
-    {   
+    {
+        if constexpr (!GlCore::g_MultithreadedRendering)
+            if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
+                switch_game_state();
+
         timer.StartTimer();
         if constexpr (GlCore::g_MultithreadedRendering)
         {
@@ -97,9 +108,12 @@ void Application::OnUserRun()
             WorldGameInstance.UpdateScene();
             WorldGameInstance.Render();
         }
-        //LOG_DEBUG("%s%f%s\n", "Render Thread:", timer.GetElapsedMilliseconds(), "ms");
 
-        m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Gd::g_FramedPlayerSpeed, 0.8);
+        if (Gd::g_GameMode == Gd::ViewMode::Inventory)
+            GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryVM(), nullptr, {});
+        else
+            m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Gd::g_FramedPlayerSpeed, 0.8);
+
         m_Window.Update();
     }
 

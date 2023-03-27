@@ -53,8 +53,6 @@ private:
 
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;
-    //Responsible for camera, skybox & other stuff
-    GlCore::WorldStructure m_WorldStructure;
     //For terrain generation
     Gd::WorldSeed m_WorldSeed;
     //Handles section data

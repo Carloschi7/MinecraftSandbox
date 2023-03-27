@@ -36,7 +36,6 @@ private:
     //the array is one
     std::array<bool, 6> m_ExposedNormals;
     //Drawable sides of a cube(max 3 in 3d space obv)
-    GlCore::BlockStructure m_BlockStructure;
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
     Gd::BlockType m_BlockType;

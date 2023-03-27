@@ -2,8 +2,7 @@
 #include "Vertices.h"
 
 Block::Block(const glm::vec3& position, const Gd::BlockType& bt)
-    :m_Position(position), m_BlockType(bt), m_BlockStructure(position, bt),
-    m_ExposedNormals{}
+    :m_Position(position), m_BlockType(bt), m_ExposedNormals{}
 {
 }
 

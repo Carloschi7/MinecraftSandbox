@@ -8,6 +8,9 @@ World::World()
 {
 	using namespace Gd;
 
+	//Init opengl resources
+	GlCore::LoadResources();
+
 	//Init world seed
 	m_WorldSeed.seed_value = 1;
 	PerlNoise::InitSeedMap(m_WorldSeed);
@@ -45,10 +48,10 @@ World::World()
 	}
 
 	//Set proj matrix, won't vary for now in the app
-	m_WorldStructure.UniformProjMatrix();
+	GlCore::UniformProjMatrix();
 
 	//Load water texture
-	auto& textures = GlCore::LoadGameTextures();
+	auto& textures = GlCore::GameTextures();
 
 	uint32_t water_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureWater);
 	textures[water_binding].Bind(water_binding);
@@ -75,8 +78,8 @@ void World::Render()
 
 	uint32_t count = 0;
 
-	bool depth_buffer_needs_update = Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f;
-	if (depth_buffer_needs_update)
+	//If at least one of this conditions are verified, we need to update the shadow texture
+	if (Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
 	{
 		//Reset state
 		Gd::g_BlockDestroyed = false;
@@ -87,7 +90,7 @@ void World::Render()
 		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
 		//Update depth framebuffer
-		m_WorldStructure.UpdateShadowFramebuffer();
+		GlCore::UpdateShadowFramebuffer();
 
 		for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
 		{
@@ -110,8 +113,8 @@ void World::Render()
 
 	//Render skybox
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_WorldStructure.RenderSkybox();
-	m_WorldStructure.UniformViewMatrix();
+	GlCore::RenderSkybox();
+	GlCore::UniformViewMatrix();
 	uint32_t ch = Gd::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();	
@@ -145,7 +148,7 @@ void World::Render()
 	GlCore::Renderer::RenderInstanced(count);
 
 	glDisable(GL_BLEND);
-	m_WorldStructure.RenderCrossaim();
+	GlCore::RenderCrossaim();
 	
 	m_DrawableWaterLayers.clear();
 	GlCore::g_Drawcalls = 0;
