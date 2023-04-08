@@ -87,10 +87,19 @@ namespace GlCore
         -0.5f, -0.5f,   0.0f, 0.0f,
          0.5f, -0.5f,   1.0f, 0.0f,
          0.5f,  0.5f,   1.0f, 1.0f,
-
+                  
          0.5f,  0.5f,   1.0f, 1.0f,
         -0.5f,  0.5f,   0.0f, 1.0f,
         -0.5f, -0.5f,   0.0f, 0.0f,
+    };
+
+    static const std::vector<float> inventory_entry{
+        -0.5f, -0.5f,   0.25f, 2.0f * one_third,
+         0.5f, -0.5f,   0.50f, 2.0f * one_third,
+         0.5f,  0.5f,   0.50f, one_third,
+         0.5f,  0.5f,   0.50f, one_third,
+        -0.5f,  0.5f,   0.25f, one_third,
+        -0.5f, -0.5f,   0.25f, 2.0f * one_third,
     };
 
     inline VertexData Cube()
@@ -131,6 +140,22 @@ namespace GlCore
         lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });
         lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 2 * sizeof(float)});
         return { inventory, lyt };
+    }
+
+    inline VertexData InventoryEntry()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 2 * sizeof(float) });
+        return { inventory_entry, lyt };
+    }
+
+    //Returns the mapped matrix for a specific inventory slot in the inventory view
+    inline glm::mat4 SlotAbsoluteTransform(uint32_t slot_index)
+    {
+        glm::mat4 ret(1.0f);
+        ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * slot_index, -0.066f, 0.0f));
+        return glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
     }
 
     inline Layout MatrixAttributeLayout()

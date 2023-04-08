@@ -389,14 +389,14 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	}
 
 	//Logic which removes a block
-	if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
+	if (left_click && Gd::g_GameMode != Gd::ViewMode::Inventory && m_SelectedBlock != static_cast<uint32_t>(-1))
 	{
 		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
 		m_SelectedBlock = static_cast<uint32_t>(-1);
 
 		//Signal block has been destroyed
-		Gd::g_BlockDestroyed = true;
+		Gd::g_EnvironmentChange = true;
 	}
 
 	//Push a new block
@@ -404,7 +404,7 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	{
 		//if the selected block isn't -1 that means selection is not NONE
 
-		auto bt = Gd::BlockType::Dirt;
+		auto bt = Gd::g_InventorySelectedBlock;
 		auto& block = m_LocalBlocks[m_SelectedBlock];
 
 		switch (selection)
@@ -434,6 +434,7 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 		}
 
 		AddFreshNormals(m_LocalBlocks.back());
+		Gd::g_EnvironmentChange = true;
 	}
 
 	return closest_selected_block_dist;

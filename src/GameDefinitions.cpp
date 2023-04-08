@@ -1,4 +1,5 @@
 #include "GameDefinitions.h"
+#include "State.h"
 
 namespace Gd
 {
@@ -17,7 +18,8 @@ namespace Gd
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
-    extern bool g_BlockDestroyed = false;
+    Gd::BlockType g_InventorySelectedBlock = Gd::BlockType::Dirt;
+    extern bool g_EnvironmentChange = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<uint32_t> g_PushedSections;
@@ -269,6 +271,41 @@ namespace Gd
         //This is done so that if there are smaller ponds which overlap with a bigger lake region, those ones have a bigger priority
         std::sort(pushed_areas.begin(), pushed_areas.end(), [](const WaterArea& a1, const WaterArea& a2) {return a1.Length() < a2.Length(); });
         return wa.water_height;
+    }
+
+    void HandleInventorySelection()
+    {
+        //This values fit the inventory only for the current image scaling, very important to note
+        static glm::vec2 inventory_start{ 523, 542 };
+        static glm::vec2 interval_dimension{ 97, 74 };
+
+        Window& wnd = GlCore::State::GetState().GameWindow();
+        double dx, dy;
+        wnd.GetCursorCoord(dx, dy);
+
+        bool mouse_left_state = wnd.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+
+        //Scan inventory
+        if (mouse_left_state)
+        {
+            for (uint32_t i = 0; i < 3; i++)
+            {
+                for (uint32_t j = 0; j < 9; j++)
+                {
+                    uint32_t x_start = inventory_start.x + interval_dimension.x * j;
+                    uint32_t y_start = inventory_start.y + interval_dimension.y * i;
+                    if (dx >= x_start && dy >= y_start && dx < x_start + interval_dimension.x && dy < y_start + interval_dimension.y)
+                    {
+                        uint32_t index = i * 9 + j;
+                        //Further slots currently unused
+                        if (index < 5) {
+                            g_InventorySelectedBlock = static_cast<Gd::BlockType>(index);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     namespace PerlNoise

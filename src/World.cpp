@@ -79,10 +79,10 @@ void World::Render()
 	uint32_t count = 0;
 
 	//If at least one of this conditions are verified, we need to update the shadow texture
-	if (Gd::g_BlockDestroyed || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
+	if (Gd::g_EnvironmentChange || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
 	{
 		//Reset state
-		Gd::g_BlockDestroyed = false;
+		Gd::g_EnvironmentChange = false;
 		m_LastPos = camera.GetPosition();
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);

@@ -68,10 +68,9 @@ namespace GlCore
         auto inventory_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
         auto inventory_shd = std::make_shared<Shader>("assets/shaders/inventory.shader");
 
-        //Binding inventory texture(staticly bound)
-        uint32_t inventory_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureInventory);
-        GameTextures()[inventory_binding].Bind(inventory_binding);
-        inventory_shd->Uniform1i(inventory_binding, "texture_inventory");
+        //and also the inventory entry VM
+        rd = InventoryEntry();
+        auto inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
 
         //Load block resources
         VertexData cd = Cube();
@@ -119,6 +118,7 @@ namespace GlCore
         state.SetWaterVM(water_vm);
         state.SetInventoryShader(inventory_shd);
         state.SetInventoryVM(inventory_vm);
+        state.SetInventoryEntryVM(inventory_entry_vm);
         state.SetBlockShader(block_shd);
         state.SetBlockVM(block_vm);
     }
@@ -143,6 +143,36 @@ namespace GlCore
     {
         State& state = State::GetState();
         Renderer::Render(state.CrossaimShader(), *state.CrossaimVM(), nullptr, {});
+    }
+
+    void RenderInventory()
+    {
+        State& state = State::GetState();
+
+        auto entry_rendering = [&state](Gd::TextureBinding binding, uint32_t binding_index) {
+            //Draw elements
+            uint32_t grass_binding = static_cast<uint32_t>(binding);
+            state.InventoryShader()->Uniform1i(grass_binding, "texture_inventory");
+            glm::mat4 pos_mat = SlotAbsoluteTransform(binding_index);
+            GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
+        };
+
+        entry_rendering(Gd::TextureBinding::TextureDirt, 0);
+        entry_rendering(Gd::TextureBinding::TextureGrass, 1);
+        entry_rendering(Gd::TextureBinding::TextureSand, 2);
+        entry_rendering(Gd::TextureBinding::TextureWood, 3);
+        entry_rendering(Gd::TextureBinding::TextureLeaves, 4);
+
+        //Draw currently selected
+        state.InventoryShader()->Uniform1i(static_cast<uint32_t>(Gd::g_InventorySelectedBlock), "texture_inventory");
+        glm::mat4 pos_mat = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-0.21f, 0.3f, 0.0f)), glm::vec3(0.2f, 0.2f, 0.0f));
+        GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
+
+        //Actual inventory rendering
+        uint32_t inventory_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureInventory);
+        GameTextures()[inventory_binding].Bind(inventory_binding);
+        state.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
+        GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryVM(), nullptr, glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.25f, 0.0f)));
     }
 
     void UpdateShadowFramebuffer()

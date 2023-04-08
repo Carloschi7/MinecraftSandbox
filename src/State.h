@@ -33,6 +33,7 @@ namespace GlCore
 		void SetDepthVM(std::shared_ptr<VertexManager> vertex_manager_);
 		void SetWaterVM(std::shared_ptr<VertexManager> vertex_manager_);
 		void SetInventoryVM(std::shared_ptr<VertexManager> vertex_manager_);
+		void SetInventoryEntryVM(std::shared_ptr<VertexManager> vertex_manager_);
 		void SetCrossaimVM(std::shared_ptr<VertexManager> vertex_manager_);
 
 		void SetShadowFramebuffer(std::shared_ptr<FrameBuffer> shadow_framebuffer_);
@@ -51,6 +52,7 @@ namespace GlCore
 		std::shared_ptr<VertexManager> DepthVM();
 		std::shared_ptr<VertexManager> WaterVM();
 		std::shared_ptr<VertexManager> InventoryVM();
+		std::shared_ptr<VertexManager> InventoryEntryVM();
 		std::shared_ptr<VertexManager> CrossaimVM();
 
 		std::shared_ptr<FrameBuffer> DepthFramebuffer();
@@ -72,6 +74,7 @@ namespace GlCore
 		std::shared_ptr<VertexManager> depth_vm;
 		std::shared_ptr<VertexManager> water_vm;
 		std::shared_ptr<VertexManager> inventory_vm;
+		std::shared_ptr<VertexManager> inventory_entry_vm;
 		std::shared_ptr<VertexManager> crossaim_vm;
 
 		std::shared_ptr<FrameBuffer> shadow_framebuffer;

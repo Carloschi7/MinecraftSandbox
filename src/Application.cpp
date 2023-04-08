@@ -49,6 +49,7 @@ void Application::OnUserRun()
     state.SetGameCamera(&m_Camera);
 
     World WorldGameInstance;
+    static bool state_switch = false;
 
     auto switch_game_state = [&]() 
     {
@@ -56,6 +57,8 @@ void Application::OnUserRun()
             Gd::g_GameMode = Gd::ViewMode::Inventory;
         else
             Gd::g_GameMode = Gd::ViewMode::WorldInteraction;
+
+        state_switch = true;
     };
 
     //Logic thread function
@@ -110,9 +113,26 @@ void Application::OnUserRun()
         }
 
         if (Gd::g_GameMode == Gd::ViewMode::Inventory)
-            GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryVM(), nullptr, {});
+        {
+            if (state_switch)
+            {
+                state.GameWindow().EnableCursor();
+                state_switch = false;
+            }
+
+            GlCore::RenderInventory();
+            Gd::HandleInventorySelection();
+        }
         else
+        {
+            if (state_switch)
+            {
+                state.GameWindow().DisableCursor();
+                state_switch = false;
+            }
+
             m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Gd::g_FramedPlayerSpeed, 0.8);
+        }
 
         m_Window.Update();
     }

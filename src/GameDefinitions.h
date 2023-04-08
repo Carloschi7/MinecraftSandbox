@@ -102,7 +102,8 @@ namespace Gd
 	//Variables for block selection
 	extern std::atomic_uint32_t g_SelectedBlock;
 	extern std::atomic_uint32_t g_SelectedChunk;
-	extern bool g_BlockDestroyed;
+	extern bool g_EnvironmentChange;
+	extern Gd::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<uint32_t> g_PushedSections;
 	extern std::string g_SerializedFileFormat;
@@ -127,6 +128,8 @@ namespace Gd
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
 	float WaterRegionLevel(float sx, float sy, const WorldSeed& seed);
+	//Handle selection
+	void HandleInventorySelection();
 
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise

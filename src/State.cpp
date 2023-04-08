@@ -64,6 +64,10 @@ namespace GlCore
 	{
 		inventory_vm = vertex_manager_;
 	}
+	void State::SetInventoryEntryVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		inventory_entry_vm = vertex_manager_;
+	}
 	void State::SetCrossaimVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
 		crossaim_vm = vertex_manager_;
@@ -135,6 +139,11 @@ namespace GlCore
 	std::shared_ptr<VertexManager> State::InventoryVM()
 	{
 		return inventory_vm;
+	}
+
+	std::shared_ptr<VertexManager> State::InventoryEntryVM()
+	{
+		return inventory_entry_vm;
 	}
 
 	std::shared_ptr<VertexManager> State::CrossaimVM()
