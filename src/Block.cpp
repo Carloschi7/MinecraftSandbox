@@ -1,7 +1,7 @@
 #include "Block.h"
 #include "Vertices.h"
 
-Block::Block(const glm::vec3& position, const Gd::BlockType& bt)
+Block::Block(const glm::vec3& position, const Defs::BlockType& bt)
     :m_Position(position), m_BlockType(bt), m_ExposedNormals{}
 {
 }
@@ -30,7 +30,7 @@ const glm::vec3& Block::Position() const
     return m_Position;
 }
 
-const Gd::BlockType& Block::Type() const
+const Defs::BlockType& Block::Type() const
 {
     return m_BlockType;
 }

@@ -9,11 +9,11 @@ class Chunk;
 class Block
 {
 public:
-    Block(const glm::vec3& position, const Gd::BlockType& bt);
+    Block(const glm::vec3& position, const Defs::BlockType& bt);
     void UpdateRenderableSides(const glm::vec3& camera_pos);
 
     const glm::vec3& Position() const;
-    const Gd::BlockType& Type() const;
+    const Defs::BlockType& Type() const;
 
     const GlCore::DrawableData& DrawableSides() const;
     void AddNormal(const glm::vec3& norm);
@@ -38,5 +38,5 @@ private:
     //Drawable sides of a cube(max 3 in 3d space obv)
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
-    Gd::BlockType m_BlockType;
+    Defs::BlockType m_BlockType;
 };

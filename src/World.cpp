@@ -6,7 +6,7 @@
 World::World()
 	: m_State(GlCore::State::GetState()), m_LastPos(0.0f)
 {
-	using namespace Gd;
+	using namespace Defs;
 
 	//Init opengl resources
 	GlCore::LoadResources();
@@ -53,7 +53,7 @@ World::World()
 	//Load water texture
 	auto& textures = GlCore::GameTextures();
 
-	uint32_t water_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureWater);
+	uint32_t water_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureWater);
 	textures[water_binding].Bind(water_binding);
 	m_State.WaterShader()->Uniform1i(water_binding, "texture_water");
 }
@@ -79,10 +79,10 @@ void World::Render()
 	uint32_t count = 0;
 
 	//If at least one of this conditions are verified, we need to update the shadow texture
-	if (Gd::g_EnvironmentChange || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
+	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
 	{
 		//Reset state
-		Gd::g_EnvironmentChange = false;
+		Defs::g_EnvironmentChange = false;
 		m_LastPos = camera.GetPosition();
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
@@ -103,7 +103,7 @@ void World::Render()
 		//Render any leftover data
 		GlCore::DispatchDepthRendering(depth_positions, count);
 
-		uint32_t depth_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureDepth);
+		uint32_t depth_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureDepth);
 		m_State.DepthFramebuffer()->BindFrameTexture(depth_binding);
 		m_State.BlockShader()->Uniform1i(depth_binding, "texture_depth");
 
@@ -115,9 +115,9 @@ void World::Render()
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	GlCore::RenderSkybox();
 	GlCore::UniformViewMatrix();
-	uint32_t ch = Gd::g_SelectedChunk.load();
+	uint32_t ch = Defs::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
-	Chunk::s_InternalSelectedBlock = Gd::g_SelectedBlock.load();	
+	Chunk::s_InternalSelectedBlock = Defs::g_SelectedBlock.load();	
 	//Uniform light space matrix
 	m_State.BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
 
@@ -168,7 +168,7 @@ void World::UpdateScene()
 			const glm::vec3& vec = m_SpawnableChunks[i];
 			glm::vec2 vec_2d(vec.x, vec.z);
 			//Check if a new chunk can be generated
-			if (glm::length(vec_2d - camera_2d) < Gd::g_ChunkSpawningDistance)
+			if (glm::length(vec_2d - camera_2d) < Defs::g_ChunkSpawningDistance)
 			{
 				glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
@@ -192,35 +192,35 @@ void World::UpdateScene()
 
 				//Removing previously visible normals from old chunks && update local chunks
 				//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PlusX); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusX); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MinusX, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::MinusX, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MinusX); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusX); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PlusX, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::PlusX, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::PlusZ); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusZ); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::MinusZ, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::MinusZ, this_chunk->Index());
 				}
-				if (auto opt = this_chunk->GetLoadedChunk(Gd::ChunkLocation::MinusZ); opt.has_value())
+				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusZ); opt.has_value())
 				{
 					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Gd::ChunkLocation::PlusZ, this_chunk->Index());
+					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::PlusZ, this_chunk->Index());
 				}
 
 				//Pushing new spawnable vectors
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::PlusX, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
+				if (IsPushable(*this_chunk, Defs::ChunkLocation::PlusX, vec + glm::vec3(16.0f, 0.0f, 0.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(16.0f, 0.0f, 0.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::MinusX, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
+				if (IsPushable(*this_chunk, Defs::ChunkLocation::MinusX, vec + glm::vec3(-16.0f, 0.0f, 0.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(-16.0f, 0.0f, 0.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::PlusZ, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
+				if (IsPushable(*this_chunk, Defs::ChunkLocation::PlusZ, vec + glm::vec3(0.0f, 0.0f, 16.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, 16.0f));
-				if (IsPushable(*this_chunk, Gd::ChunkLocation::MinusZ, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
+				if (IsPushable(*this_chunk, Defs::ChunkLocation::MinusZ, vec + glm::vec3(0.0f, 0.0f, -16.0f)))
 					m_SpawnableChunks.push_back(vec + glm::vec3(0.0f, 0.0f, -16.0f));
 
 				//Remove the just spawned chunk from the spawnable list
@@ -265,7 +265,7 @@ void World::UpdateScene()
 	static int sercount = 0;
 
 	//Serialization (Working but still causing random crashes sometimes)
-	for (Gd::SectionData& data : m_SectionsData)
+	for (Defs::SectionData& data : m_SectionsData)
 	{
 		//Serialization zone
 		if (data.loaded && glm::length(camera_2d - data.central_position) > 750.0f)
@@ -349,28 +349,28 @@ void World::HandleSelection()
 	}
 
 	//Setting from which chunk the selectedd block comes from
-	Gd::g_SelectedChunk = involved_chunk;
+	Defs::g_SelectedChunk = involved_chunk;
 	if (involved_chunk != static_cast<uint32_t>(-1))
 	{
-		Gd::g_SelectedBlock = m_Chunks[involved_chunk]->LastSelectedBlock();
+		Defs::g_SelectedBlock = m_Chunks[involved_chunk]->LastSelectedBlock();
 	}
 }
 
 void World::HandleSectionData()
 {
 	//Load pushed sections
-	for (auto& obj : Gd::g_PushedSections)
+	for (auto& obj : Defs::g_PushedSections)
 	{
 		//Checking that it was now pushed yet
 		if (std::find_if(m_SectionsData.begin(), m_SectionsData.end(),
 			[&](const auto& elem) {return elem.index == obj; }) == m_SectionsData.end())
 		{
-			Gd::SectionData sd{ obj, SectionCentralPosFrom(obj), true };
+			Defs::SectionData sd{ obj, SectionCentralPosFrom(obj), true };
 			m_SectionsData.push_back(sd);
 		}
 	}
 
-	Gd::g_PushedSections.clear();
+	Defs::g_PushedSections.clear();
 }
 
 void World::PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec)
@@ -378,7 +378,7 @@ void World::PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec)
 	m_DrawableWaterLayers.push_back(vec);
 }
 
-std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl)
+std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl)
 {
 	const glm::vec2& origin = chunk.GetChunkOrigin();
 	static auto find_alg = [&](const glm::vec2& pos) ->std::optional<uint32_t>
@@ -394,13 +394,13 @@ std::optional<uint32_t> World::IsChunk(const Chunk& chunk, const Gd::ChunkLocati
 
 	switch (cl)
 	{
-	case Gd::ChunkLocation::PlusX:
+	case Defs::ChunkLocation::PlusX:
 		return find_alg(origin + glm::vec2(16.0f, 0.0f));
-	case Gd::ChunkLocation::MinusX:
+	case Defs::ChunkLocation::MinusX:
 		return find_alg(origin - glm::vec2(16.0f, 0.0f));
-	case Gd::ChunkLocation::PlusZ:
+	case Defs::ChunkLocation::PlusZ:
 		return find_alg(origin + glm::vec2(0.0f, 16.0f));
-	case Gd::ChunkLocation::MinusZ:
+	case Defs::ChunkLocation::MinusZ:
 		return find_alg(origin - glm::vec2(0.0f, 16.0f));
 	}
 
@@ -418,12 +418,12 @@ Chunk& World::GetChunk(uint32_t index)
 	return **iter;
 }
 
-Gd::WorldSeed& World::Seed()
+Defs::WorldSeed& World::Seed()
 {
 	return m_WorldSeed;
 }
 
-const Gd::WorldSeed& World::Seed() const
+const Defs::WorldSeed& World::Seed() const
 {
 	return m_WorldSeed;
 }
@@ -431,7 +431,7 @@ const Gd::WorldSeed& World::Seed() const
 void World::SerializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "wb");
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Defs::g_SerializedFileFormat, "wb");
 	uint32_t serialized_chunks = 0;
 
 	//(When multithreading) Advertise the render thread m_Chunks 
@@ -474,7 +474,7 @@ void World::SerializeSector(uint32_t index)
 void World::DeserializeSector(uint32_t index)
 {
 	//Load sector's serializer
-	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Gd::g_SerializedFileFormat, "rb");
+	Utils::Serializer sz("runtime_files/sector_" + std::to_string(index) + Defs::g_SerializedFileFormat, "rb");
 
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
@@ -499,7 +499,7 @@ void World::DeserializeSector(uint32_t index)
 	}
 }
 
-bool World::IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec)
+bool World::IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec)
 {
 	auto internal_pred = [&](const glm::vec3& internal_vec) {return internal_vec == vec; };
 
@@ -513,9 +513,9 @@ glm::vec2 World::SectionCentralPosFrom(uint32_t index)
 	int16_t coords[2];
 	std::memcpy(coords, &index, sizeof(uint32_t));
 
-	glm::vec2 pos = glm::vec2(coords[0], coords[1]) * Gd::g_SectionDimension;
-	pos.x += Gd::g_SectionDimension * 0.5f;
-	pos.y += Gd::g_SectionDimension * 0.5f;
+	glm::vec2 pos = glm::vec2(coords[0], coords[1]) * Defs::g_SectionDimension;
+	pos.x += Defs::g_SectionDimension * 0.5f;
+	pos.y += Defs::g_SectionDimension * 0.5f;
 
 	return pos;
 }

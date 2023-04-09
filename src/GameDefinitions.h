@@ -7,7 +7,7 @@
 #include <optional>
 
 //Game defintions
-namespace Gd
+namespace Defs
 {
 	//Game view state
 	enum class ViewMode {
@@ -103,7 +103,7 @@ namespace Gd
 	extern std::atomic_uint32_t g_SelectedBlock;
 	extern std::atomic_uint32_t g_SelectedChunk;
 	extern bool g_EnvironmentChange;
-	extern Gd::BlockType g_InventorySelectedBlock;
+	extern Defs::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<uint32_t> g_PushedSections;
 	extern std::string g_SerializedFileFormat;

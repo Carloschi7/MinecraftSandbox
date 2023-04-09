@@ -13,7 +13,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 	m_ChunkCenter(0.0f), m_SectorIndex(0)
 {
 	//Assigning chunk index
-	m_ChunkIndex = Gd::g_ChunkProgIndex++;
+	m_ChunkIndex = Defs::g_ChunkProgIndex++;
 
 	glm::vec3 chunk_origin_3d(m_ChunkOrigin.x, 0.0f, m_ChunkOrigin.y);
 	m_ChunkCenter = chunk_origin_3d + GetHalfWayVector();
@@ -34,26 +34,26 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 		for (int32_t k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
 			float fx = static_cast<float>(i), fy = static_cast<float>(k);
-			auto perlin_data = Gd::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
+			auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
 			uint32_t final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
 			for (int32_t j = 0; j < final_height; j++)
 			{
 				switch (perlin_data.biome)
 				{
-				case Gd::Biome::Plains:
+				case Defs::Biome::Plains:
 					m_LocalBlocks.emplace_back(glm::vec3(i, j, k), (j == final_height - 1) ?
-						Gd::BlockType::Grass : Gd::BlockType::Dirt);
+						Defs::BlockType::Grass : Defs::BlockType::Dirt);
 					break;
-				case Gd::Biome::Desert:
-					m_LocalBlocks.emplace_back(glm::vec3(i, j, k), Gd::BlockType::Sand);
+				case Defs::Biome::Desert:
+					m_LocalBlocks.emplace_back(glm::vec3(i, j, k), Defs::BlockType::Sand);
 					break;
 				}
 			}
 
 			if (perlin_data.in_water)
 			{
-				float water_level = Gd::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
+				float water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
 				uint32_t water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)
@@ -63,25 +63,25 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 			}
 
 			//Spawn a tree in the center
-			if (perlin_data.biome == Gd::Biome::Plains &&
+			if (perlin_data.biome == Defs::Biome::Plains &&
 				i == origin.x + s_ChunkWidthAndHeight / 2 &&
 				k == origin.y + s_ChunkWidthAndHeight / 2)
 			{
 				for(uint32_t p = 0; p < 4; p++)
-					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Gd::BlockType::Wood);
+					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::BlockType::Wood);
 
 				//With its leaves
 				for (int32_t x = -1; x <= 1; x++)
 					for (int32_t z = -1; z <= 1; z++)
 						for (int32_t y = 1; y <= 3; y++)
-							m_LocalBlocks.emplace_back(glm::vec3(i + x, final_height + 3 + y, k + z), Gd::BlockType::Leaves);
+							m_LocalBlocks.emplace_back(glm::vec3(i + x, final_height + 3 + y, k + z), Defs::BlockType::Leaves);
 			}
 		}
 	}
 
 	//Set chunk sector
-	m_SectorIndex = Gd::ChunkSectorIndex(m_ChunkOrigin);
-	Gd::g_PushedSections.insert(m_SectorIndex);
+	m_SectorIndex = Defs::ChunkSectorIndex(m_ChunkOrigin);
+	Defs::g_PushedSections.insert(m_SectorIndex);
 }
 
 Chunk::Chunk(World& father, const Utils::Serializer& sz, uint32_t index) :
@@ -124,10 +124,10 @@ Chunk& Chunk::operator=(Chunk&& rhs) noexcept
 void Chunk::InitGlobalNorms()
 {
 	//Determining if side chunk exist
-	m_PlusX = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::PlusX);
-	m_MinusX = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::MinusX);
-	m_PlusZ = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::PlusZ);
-	m_MinusZ = m_RelativeWorld.IsChunk(*this, Gd::ChunkLocation::MinusZ);
+	m_PlusX = m_RelativeWorld.IsChunk(*this, Defs::ChunkLocation::PlusX);
+	m_MinusX = m_RelativeWorld.IsChunk(*this, Defs::ChunkLocation::MinusX);
+	m_PlusZ = m_RelativeWorld.IsChunk(*this, Defs::ChunkLocation::PlusZ);
+	m_MinusZ = m_RelativeWorld.IsChunk(*this, Defs::ChunkLocation::MinusZ);
 
 	//Getting the relative ptr(can be nullptr obv)
 	Chunk* chunk_plus_x = m_PlusX.has_value() ? &m_RelativeWorld.GetChunk(m_PlusX.value()) : nullptr;
@@ -328,7 +328,7 @@ void Chunk::AddFreshNormals(Block& b)
 	conf_rlfb[2] = block_pos.z == m_ChunkOrigin.y;
 	conf_rlfb[3] = block_pos.z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1;
 
-	auto local_lambda = [&](bool side_check, Gd::ChunkLocation cl, const glm::vec3& dir)
+	auto local_lambda = [&](bool side_check, Defs::ChunkLocation cl, const glm::vec3& dir)
 	{
 		bool add_norm = true;
 		if (side_check)
@@ -349,12 +349,12 @@ void Chunk::AddFreshNormals(Block& b)
 			b.AddNormal(dir);
 	};
 
-	local_lambda(conf_rlfb[0], Gd::ChunkLocation::PlusX, GlCore::g_PosX);
-	local_lambda(conf_rlfb[1], Gd::ChunkLocation::MinusX, GlCore::g_NegX);
-	local_lambda(false, Gd::ChunkLocation::None, GlCore::g_PosY);
-	local_lambda(false, Gd::ChunkLocation::None, GlCore::g_NegY);
-	local_lambda(conf_rlfb[2], Gd::ChunkLocation::PlusZ, GlCore::g_PosZ);
-	local_lambda(conf_rlfb[3], Gd::ChunkLocation::MinusZ, GlCore::g_NegZ);
+	local_lambda(conf_rlfb[0], Defs::ChunkLocation::PlusX, GlCore::g_PosX);
+	local_lambda(conf_rlfb[1], Defs::ChunkLocation::MinusX, GlCore::g_NegX);
+	local_lambda(false, Defs::ChunkLocation::None, GlCore::g_PosY);
+	local_lambda(false, Defs::ChunkLocation::None, GlCore::g_NegY);
+	local_lambda(conf_rlfb[2], Defs::ChunkLocation::PlusZ, GlCore::g_PosZ);
+	local_lambda(conf_rlfb[3], Defs::ChunkLocation::MinusZ, GlCore::g_NegZ);
 }
 
 float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
@@ -367,7 +367,7 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	auto& camera_position = m_State.GameCamera().GetPosition();
 	auto& camera_direction = m_State.GameCamera().GetFront();
 
-	Gd::HitDirection selection = Gd::HitDirection::None;
+	Defs::HitDirection selection = Defs::HitDirection::None;
 
 	//Checking selection
 	for (std::size_t i = 0; i < vec_size; ++i)
@@ -378,9 +378,9 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 			continue;
 
 		float dist = 0.0f;
-		Gd::HitDirection local_selection = Gd::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
+		Defs::HitDirection local_selection = Defs::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
 		
-		if (local_selection != Gd::HitDirection::None && dist < closest_selected_block_dist)
+		if (local_selection != Defs::HitDirection::None && dist < closest_selected_block_dist)
 		{
 			closest_selected_block_dist = dist;
 			selection = local_selection;
@@ -389,14 +389,14 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	}
 
 	//Logic which removes a block
-	if (left_click && Gd::g_GameMode != Gd::ViewMode::Inventory && m_SelectedBlock != static_cast<uint32_t>(-1))
+	if (left_click && Defs::g_GameMode != Defs::ViewMode::Inventory && m_SelectedBlock != static_cast<uint32_t>(-1))
 	{
 		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
 		m_SelectedBlock = static_cast<uint32_t>(-1);
 
 		//Signal block has been destroyed
-		Gd::g_EnvironmentChange = true;
+		Defs::g_EnvironmentChange = true;
 	}
 
 	//Push a new block
@@ -404,37 +404,37 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	{
 		//if the selected block isn't -1 that means selection is not NONE
 
-		auto bt = Gd::g_InventorySelectedBlock;
+		Defs::BlockType bt = Defs::g_InventorySelectedBlock;
 		auto& block = m_LocalBlocks[m_SelectedBlock];
 
 		switch (selection)
 		{
-		case Gd::HitDirection::PosX:
+		case Defs::HitDirection::PosX:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
 			break;
-		case Gd::HitDirection::NegX:
+		case Defs::HitDirection::NegX:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
 			break;
-		case Gd::HitDirection::PosY:
+		case Defs::HitDirection::PosY:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
 			break;
-		case Gd::HitDirection::NegY:
+		case Defs::HitDirection::NegY:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
 			break;
-		case Gd::HitDirection::PosZ:
+		case Defs::HitDirection::PosZ:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
 			break;
-		case Gd::HitDirection::NegZ:
+		case Defs::HitDirection::NegZ:
 			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
 			break;
 
-		case Gd::HitDirection::None:
+		case Defs::HitDirection::None:
 			//UNREACHABLE
 			break;
 		}
 
 		AddFreshNormals(m_LocalBlocks.back());
-		Gd::g_EnvironmentChange = true;
+		Defs::g_EnvironmentChange = true;
 	}
 
 	return closest_selected_block_dist;
@@ -456,7 +456,7 @@ bool Chunk::IsChunkRenderable() const
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(camera_position.x, camera_position.z);
 	glm::vec2 chunk_center_pos(m_ChunkCenter.x, m_ChunkCenter.z);
-	return (glm::length(cam_pos - chunk_center_pos) < Gd::g_ChunkRenderingDistance);
+	return (glm::length(cam_pos - chunk_center_pos) < Defs::g_ChunkRenderingDistance);
 }
 
 bool Chunk::IsChunkVisible() const
@@ -466,7 +466,7 @@ bool Chunk::IsChunkVisible() const
 
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
 	return (glm::dot(camera_to_midway, camera_direction) > 0.4f ||
-		glm::length(camera_position - m_ChunkCenter) < s_DiagonalLenght + Gd::g_CameraCompensation);
+		glm::length(camera_position - m_ChunkCenter) < s_DiagonalLenght + Defs::g_CameraCompensation);
 }
 
 bool Chunk::IsChunkVisibleByShadow() const
@@ -483,7 +483,7 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	//Function that determines if a block normal towards the chunk can be removed,
 	//depending on if there is a block next to him in the desired direction.
 	//If there is no block, the normal isn't going to be removed
-	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const Gd::ChunkLocation& loc)
+	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const Defs::ChunkLocation& loc)
 	{
 		uint32_t index = GetLoadedChunk(loc).value_or(0);
 		glm::vec3 block_pos = block.Position() + vec;
@@ -498,25 +498,25 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1)
-				erase_flanked_normal(block, norm, Gd::ChunkLocation::PlusX);
+				erase_flanked_normal(block, norm, Defs::ChunkLocation::PlusX);
 	}
 	else if (norm == glm::vec3(-1.0f, 0.0f, 0.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().x == m_ChunkOrigin.x)
-				erase_flanked_normal(block, norm, Gd::ChunkLocation::MinusX);
+				erase_flanked_normal(block, norm, Defs::ChunkLocation::MinusX);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, 1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().z == m_ChunkOrigin.y + s_ChunkWidthAndHeight - 1)
-				erase_flanked_normal(block, norm, Gd::ChunkLocation::PlusZ);
+				erase_flanked_normal(block, norm, Defs::ChunkLocation::PlusZ);
 	}
 	else if (norm == glm::vec3(0.0f, 0.0f, -1.0f))
 	{
 		for (auto& block : m_LocalBlocks)
 			if (block.Position().z == m_ChunkOrigin.y)
-				erase_flanked_normal(block, norm, Gd::ChunkLocation::MinusZ);
+				erase_flanked_normal(block, norm, Defs::ChunkLocation::MinusZ);
 	}
 
 }
@@ -526,37 +526,37 @@ const glm::vec2& Chunk::GetChunkOrigin() const
 	return m_ChunkOrigin;
 }
 
-const std::optional<uint32_t>& Chunk::GetLoadedChunk(const Gd::ChunkLocation& cl) const
+const std::optional<uint32_t>& Chunk::GetLoadedChunk(const Defs::ChunkLocation& cl) const
 {
 	switch (cl)
 	{
-	case Gd::ChunkLocation::PlusX:
+	case Defs::ChunkLocation::PlusX:
 		return m_PlusX;
-	case Gd::ChunkLocation::MinusX:
+	case Defs::ChunkLocation::MinusX:
 		return m_MinusX;
-	case Gd::ChunkLocation::PlusZ:
+	case Defs::ChunkLocation::PlusZ:
 		return m_PlusZ;
-	case Gd::ChunkLocation::MinusZ:
+	case Defs::ChunkLocation::MinusZ:
 		return m_MinusZ;
 	}
 
 	return std::nullopt;
 }
 
-void Chunk::SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value)
+void Chunk::SetLoadedChunk(const Defs::ChunkLocation& cl, uint32_t value)
 {
 	switch (cl)
 	{
-	case Gd::ChunkLocation::PlusX:
+	case Defs::ChunkLocation::PlusX:
 		m_PlusX = value;
 		break;
-	case Gd::ChunkLocation::MinusX:
+	case Defs::ChunkLocation::MinusX:
 		m_MinusX = value;
 		break;
-	case Gd::ChunkLocation::PlusZ:
+	case Defs::ChunkLocation::PlusZ:
 		m_PlusZ = value;
 		break;
-	case Gd::ChunkLocation::MinusZ:
+	case Defs::ChunkLocation::MinusZ:
 		m_MinusZ = value;
 		break;
 	}
@@ -729,7 +729,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 			sz% block_type;
 
 			glm::vec3 original_vec = base_vec + static_cast<glm::vec3>(v);
-			m_LocalBlocks.emplace_back(original_vec, static_cast<Gd::BlockType>(block_type));
+			m_LocalBlocks.emplace_back(original_vec, static_cast<Defs::BlockType>(block_type));
 			auto& bb = m_LocalBlocks.back();
 			
 			Utils::Bitfield<6> bf( {norm_payload} );

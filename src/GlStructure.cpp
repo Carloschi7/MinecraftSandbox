@@ -15,10 +15,10 @@ namespace GlCore
         cam.SetPerspectiveValues(glm::radians(45.0f),
             float(state.GameWindow().Width()) / float(state.GameWindow().Height()),
             0.1f,
-            Gd::g_RenderDistance);
+            Defs::g_RenderDistance);
 
-        cam.SetKeyboardFunction(Gd::KeyboardFunction);
-        cam.SetMouseFunction(Gd::MouseFunction);
+        cam.SetKeyboardFunction(Defs::KeyboardFunction);
+        cam.SetMouseFunction(Defs::MouseFunction);
         
         //Loading cubemap data
         std::vector<std::string> skybox_files =
@@ -30,7 +30,7 @@ namespace GlCore
             "assets/textures/ShadedBackground.png",
             "assets/textures/ShadedBackground.png",
         };
-        auto cubemap = std::make_shared<CubeMap>(skybox_files, Gd::g_RenderDistance / 2.0f);
+        auto cubemap = std::make_shared<CubeMap>(skybox_files, Defs::g_RenderDistance / 2.0f);
         auto cubemap_shd = std::make_shared<Shader>("assets/shaders/cubemap.shader");
         cubemap_shd->UniformMat4f(cam.GetProjMatrix(), "proj");
 
@@ -78,14 +78,14 @@ namespace GlCore
         auto block_shd = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
 
         //Load textures
-        using TextureLoaderType = std::pair<std::string, Gd::TextureBinding>;
+        using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
         std::vector<TextureLoaderType> textures
         {
-            {"texture_dirt",     Gd::TextureBinding::TextureDirt},
-            {"texture_grass",    Gd::TextureBinding::TextureGrass},
-            {"texture_sand",     Gd::TextureBinding::TextureSand},
-            {"texture_trunk",    Gd::TextureBinding::TextureWood},
-            {"texture_leaves",   Gd::TextureBinding::TextureLeaves}
+            {"texture_dirt",     Defs::TextureBinding::TextureDirt},
+            {"texture_grass",    Defs::TextureBinding::TextureGrass},
+            {"texture_sand",     Defs::TextureBinding::TextureSand},
+            {"texture_trunk",    Defs::TextureBinding::TextureWood},
+            {"texture_leaves",   Defs::TextureBinding::TextureLeaves}
         };
 
         //The binding matches the vector position
@@ -149,7 +149,7 @@ namespace GlCore
     {
         State& state = State::GetState();
 
-        auto entry_rendering = [&state](Gd::TextureBinding binding, uint32_t binding_index) {
+        auto entry_rendering = [&state](Defs::TextureBinding binding, uint32_t binding_index) {
             //Draw elements
             uint32_t grass_binding = static_cast<uint32_t>(binding);
             state.InventoryShader()->Uniform1i(grass_binding, "texture_inventory");
@@ -157,19 +157,19 @@ namespace GlCore
             GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
         };
 
-        entry_rendering(Gd::TextureBinding::TextureDirt, 0);
-        entry_rendering(Gd::TextureBinding::TextureGrass, 1);
-        entry_rendering(Gd::TextureBinding::TextureSand, 2);
-        entry_rendering(Gd::TextureBinding::TextureWood, 3);
-        entry_rendering(Gd::TextureBinding::TextureLeaves, 4);
+        entry_rendering(Defs::TextureBinding::TextureDirt, 0);
+        entry_rendering(Defs::TextureBinding::TextureGrass, 1);
+        entry_rendering(Defs::TextureBinding::TextureSand, 2);
+        entry_rendering(Defs::TextureBinding::TextureWood, 3);
+        entry_rendering(Defs::TextureBinding::TextureLeaves, 4);
 
         //Draw currently selected
-        state.InventoryShader()->Uniform1i(static_cast<uint32_t>(Gd::g_InventorySelectedBlock), "texture_inventory");
+        state.InventoryShader()->Uniform1i(static_cast<uint32_t>(Defs::g_InventorySelectedBlock), "texture_inventory");
         glm::mat4 pos_mat = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-0.21f, 0.3f, 0.0f)), glm::vec3(0.2f, 0.2f, 0.0f));
         GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
 
         //Actual inventory rendering
-        uint32_t inventory_binding = static_cast<uint32_t>(Gd::TextureBinding::TextureInventory);
+        uint32_t inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureInventory);
         GameTextures()[inventory_binding].Bind(inventory_binding);
         state.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
         GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryVM(), nullptr, glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.25f, 0.0f)));

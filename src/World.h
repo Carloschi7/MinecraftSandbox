@@ -18,11 +18,11 @@ public:
     void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);
 
     //Returns the corresponding chunk index if exists
-    std::optional<uint32_t> IsChunk(const Chunk& chunk, const Gd::ChunkLocation& cl);
+    std::optional<uint32_t> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
     Chunk& GetChunk(uint32_t index);
 
-    Gd::WorldSeed& Seed();
-    const Gd::WorldSeed& Seed() const;
+    Defs::WorldSeed& Seed();
+    const Defs::WorldSeed& Seed() const;
 
     //Serialization utilities
     void SerializeSector(uint32_t index);
@@ -30,7 +30,7 @@ public:
 
 private:
     //Function which handles spawnable chunk pushing conditions
-    bool IsPushable(const Chunk& chunk, const Gd::ChunkLocation& cl, const glm::vec3& vec);
+    bool IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec);
     glm::vec2 SectionCentralPosFrom(uint32_t index);
     
 private:
@@ -54,9 +54,9 @@ private:
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;
     //For terrain generation
-    Gd::WorldSeed m_WorldSeed;
+    Defs::WorldSeed m_WorldSeed;
     //Handles section data
-    std::vector<Gd::SectionData> m_SectionsData;
+    std::vector<Defs::SectionData> m_SectionsData;
     //Safe iteration size(useful when the chunks at the end of the vector are being serialized)
     std::atomic_uint32_t m_SafeChunkSize = 0;
     //Timer used to sort the spawnable chunks vector every now and then

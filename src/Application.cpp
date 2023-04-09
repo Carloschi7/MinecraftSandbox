@@ -53,10 +53,10 @@ void Application::OnUserRun()
 
     auto switch_game_state = [&]() 
     {
-        if (Gd::g_GameMode == Gd::ViewMode::WorldInteraction)
-            Gd::g_GameMode = Gd::ViewMode::Inventory;
+        if (Defs::g_GameMode == Defs::ViewMode::WorldInteraction)
+            Defs::g_GameMode = Defs::ViewMode::Inventory;
         else
-            Gd::g_GameMode = Gd::ViewMode::WorldInteraction;
+            Defs::g_GameMode = Defs::ViewMode::WorldInteraction;
 
         state_switch = true;
     };
@@ -112,7 +112,7 @@ void Application::OnUserRun()
             WorldGameInstance.Render();
         }
 
-        if (Gd::g_GameMode == Gd::ViewMode::Inventory)
+        if (Defs::g_GameMode == Defs::ViewMode::Inventory)
         {
             if (state_switch)
             {
@@ -121,7 +121,7 @@ void Application::OnUserRun()
             }
 
             GlCore::RenderInventory();
-            Gd::HandleInventorySelection();
+            Defs::HandleInventorySelection();
         }
         else
         {
@@ -131,7 +131,7 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
-            m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Gd::g_FramedPlayerSpeed, 0.8);
+            m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Defs::g_FramedPlayerSpeed, 0.8);
         }
 
         m_Window.Update();

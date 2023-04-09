@@ -1,7 +1,7 @@
 #include "GameDefinitions.h"
 #include "State.h"
 
-namespace Gd
+namespace Defs
 {
     std::atomic<ViewMode> g_GameMode = ViewMode::WorldInteraction;
 
@@ -18,7 +18,7 @@ namespace Gd
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
-    Gd::BlockType g_InventorySelectedBlock = Gd::BlockType::Dirt;
+    Defs::BlockType g_InventorySelectedBlock = Defs::BlockType::Dirt;
     extern bool g_EnvironmentChange = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
@@ -299,7 +299,7 @@ namespace Gd
                         uint32_t index = i * 9 + j;
                         //Further slots currently unused
                         if (index < 5) {
-                            g_InventorySelectedBlock = static_cast<Gd::BlockType>(index);
+                            g_InventorySelectedBlock = static_cast<Defs::BlockType>(index);
                             return;
                         }
                     }

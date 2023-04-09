@@ -48,8 +48,8 @@ public:
 
 	const glm::vec2& GetChunkOrigin() const;
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
-	const std::optional<uint32_t>& GetLoadedChunk(const Gd::ChunkLocation& cl) const;
-	void SetLoadedChunk(const Gd::ChunkLocation& cl, uint32_t value);
+	const std::optional<uint32_t>& GetLoadedChunk(const Defs::ChunkLocation& cl) const;
+	void SetLoadedChunk(const Defs::ChunkLocation& cl, uint32_t value);
 	uint32_t LastSelectedBlock() const;
 
 	uint32_t SectorIndex() const;
