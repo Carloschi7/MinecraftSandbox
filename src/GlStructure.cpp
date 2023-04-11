@@ -145,35 +145,7 @@ namespace GlCore
         Renderer::Render(state.CrossaimShader(), *state.CrossaimVM(), nullptr, {});
     }
 
-    void RenderInventory()
-    {
-        State& state = State::GetState();
-
-        auto entry_rendering = [&state](Defs::TextureBinding binding, uint32_t binding_index) {
-            //Draw elements
-            uint32_t grass_binding = static_cast<uint32_t>(binding);
-            state.InventoryShader()->Uniform1i(grass_binding, "texture_inventory");
-            glm::mat4 pos_mat = SlotAbsoluteTransform(binding_index);
-            GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
-        };
-
-        entry_rendering(Defs::TextureBinding::TextureDirt, 0);
-        entry_rendering(Defs::TextureBinding::TextureGrass, 1);
-        entry_rendering(Defs::TextureBinding::TextureSand, 2);
-        entry_rendering(Defs::TextureBinding::TextureWood, 3);
-        entry_rendering(Defs::TextureBinding::TextureLeaves, 4);
-
-        //Draw currently selected
-        state.InventoryShader()->Uniform1i(static_cast<uint32_t>(Defs::g_InventorySelectedBlock), "texture_inventory");
-        glm::mat4 pos_mat = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-0.21f, 0.3f, 0.0f)), glm::vec3(0.2f, 0.2f, 0.0f));
-        GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryEntryVM(), nullptr, pos_mat);
-
-        //Actual inventory rendering
-        uint32_t inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureInventory);
-        GameTextures()[inventory_binding].Bind(inventory_binding);
-        state.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
-        GlCore::Renderer::Render(state.InventoryShader(), *state.InventoryVM(), nullptr, glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.25f, 0.0f)));
-    }
+    
 
     void UpdateShadowFramebuffer()
     {
@@ -218,6 +190,7 @@ namespace GlCore
             textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/Inventory.png", true, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
         }
 
         return textures;

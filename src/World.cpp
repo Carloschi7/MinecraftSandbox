@@ -329,8 +329,8 @@ void World::HandleSelection()
 
 	auto& window = m_State.GameWindow();
 
-	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 	//One block at a time
+	bool left_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
 	bool right_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
 	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)

@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/Block.cpp src/Block.h
 		src/GlStructure.cpp src/GlStructure.h
 		src/Renderer.h src/Renderer.cpp
+		src/InventorySystem.h src/InventorySystem.cpp
 		src/GameDefinitions.h src/GameDefinitions.cpp
 		src/State.h src/State.cpp
 		src/Macros.h

@@ -3,7 +3,7 @@
 
 namespace Defs
 {
-    std::atomic<ViewMode> g_GameMode = ViewMode::WorldInteraction;
+    std::atomic<ViewMode> g_ViewMode = ViewMode::WorldInteraction;
 
 	const float g_ChunkSpawningDistance = 500.0f;
 	const float g_ChunkRenderingDistance = 300.0f;
@@ -273,40 +273,7 @@ namespace Defs
         return wa.water_height;
     }
 
-    void HandleInventorySelection()
-    {
-        //This values fit the inventory only for the current image scaling, very important to note
-        static glm::vec2 inventory_start{ 523, 542 };
-        static glm::vec2 interval_dimension{ 97, 74 };
-
-        Window& wnd = GlCore::State::GetState().GameWindow();
-        double dx, dy;
-        wnd.GetCursorCoord(dx, dy);
-
-        bool mouse_left_state = wnd.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
-
-        //Scan inventory
-        if (mouse_left_state)
-        {
-            for (uint32_t i = 0; i < 3; i++)
-            {
-                for (uint32_t j = 0; j < 9; j++)
-                {
-                    uint32_t x_start = inventory_start.x + interval_dimension.x * j;
-                    uint32_t y_start = inventory_start.y + interval_dimension.y * i;
-                    if (dx >= x_start && dy >= y_start && dx < x_start + interval_dimension.x && dy < y_start + interval_dimension.y)
-                    {
-                        uint32_t index = i * 9 + j;
-                        //Further slots currently unused
-                        if (index < 5) {
-                            g_InventorySelectedBlock = static_cast<Defs::BlockType>(index);
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    
 
     namespace PerlNoise
     {

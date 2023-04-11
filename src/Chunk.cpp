@@ -388,53 +388,56 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 		}
 	}
 
-	//Logic which removes a block
-	if (left_click && Defs::g_GameMode != Defs::ViewMode::Inventory && m_SelectedBlock != static_cast<uint32_t>(-1))
-	{
-		AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
-		m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
-		m_SelectedBlock = static_cast<uint32_t>(-1);
-
-		//Signal block has been destroyed
-		Defs::g_EnvironmentChange = true;
-	}
-
-	//Push a new block
-	if (right_click && m_SelectedBlock != static_cast<uint32_t>(-1))
-	{
-		//if the selected block isn't -1 that means selection is not NONE
-
-		Defs::BlockType bt = Defs::g_InventorySelectedBlock;
-		auto& block = m_LocalBlocks[m_SelectedBlock];
-
-		switch (selection)
+	
+	if (Defs::g_ViewMode != Defs::ViewMode::Inventory) {
+		//Logic which removes a block
+		if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 		{
-		case Defs::HitDirection::PosX:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
-			break;
-		case Defs::HitDirection::NegX:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
-			break;
-		case Defs::HitDirection::PosY:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
-			break;
-		case Defs::HitDirection::NegY:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
-			break;
-		case Defs::HitDirection::PosZ:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
-			break;
-		case Defs::HitDirection::NegZ:
-			m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
-			break;
+			AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
+			m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
+			m_SelectedBlock = static_cast<uint32_t>(-1);
 
-		case Defs::HitDirection::None:
-			//UNREACHABLE
-			break;
+			//Signal block has been destroyed
+			Defs::g_EnvironmentChange = true;
 		}
 
-		AddFreshNormals(m_LocalBlocks.back());
-		Defs::g_EnvironmentChange = true;
+		//Push a new block
+		if (right_click && m_SelectedBlock != static_cast<uint32_t>(-1))
+		{
+			//if the selected block isn't -1 that means selection is not NONE
+
+			Defs::BlockType bt = Defs::g_InventorySelectedBlock;
+			auto& block = m_LocalBlocks[m_SelectedBlock];
+
+			switch (selection)
+			{
+			case Defs::HitDirection::PosX:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
+				break;
+			case Defs::HitDirection::NegX:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
+				break;
+			case Defs::HitDirection::PosY:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
+				break;
+			case Defs::HitDirection::NegY:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
+				break;
+			case Defs::HitDirection::PosZ:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
+				break;
+			case Defs::HitDirection::NegZ:
+				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
+				break;
+
+			case Defs::HitDirection::None:
+				//UNREACHABLE
+				break;
+			}
+
+			AddFreshNormals(m_LocalBlocks.back());
+			Defs::g_EnvironmentChange = true;
+		}
 	}
 
 	return closest_selected_block_dist;

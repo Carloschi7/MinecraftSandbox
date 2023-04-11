@@ -34,6 +34,7 @@ namespace Defs
 		TextureLeaves,
 		TextureWater,
 		TextureInventory,
+		TextureScreenInventory,
 		TextureDepth
 	};
 
@@ -84,7 +85,7 @@ namespace Defs
 	enum class Biome { Plains = 0, Desert };
 
 	//-----------------Variables
-	extern std::atomic<ViewMode> g_GameMode;
+	extern std::atomic<ViewMode> g_ViewMode;
 
 	//Game global variables
 	extern const float g_ChunkSpawningDistance;
@@ -103,6 +104,9 @@ namespace Defs
 	extern std::atomic_uint32_t g_SelectedBlock;
 	extern std::atomic_uint32_t g_SelectedChunk;
 	extern bool g_EnvironmentChange;
+	//Inventory
+	static constexpr uint32_t g_InventoryInternalSlotsCount = 27;
+	static constexpr uint32_t g_InventoryScreenSlotsCount = 9;
 	extern Defs::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<uint32_t> g_PushedSections;
@@ -128,8 +132,6 @@ namespace Defs
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
 	float WaterRegionLevel(float sx, float sy, const WorldSeed& seed);
-	//Handle selection
-	void HandleInventorySelection();
 
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise

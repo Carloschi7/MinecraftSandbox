@@ -17,7 +17,6 @@ namespace GlCore
     void UpdateCamera();
     void RenderSkybox();
     void RenderCrossaim();
-    void RenderInventory();
     void UpdateShadowFramebuffer();
 
     void UniformProjMatrix();

@@ -3,6 +3,7 @@
 #include "World.h"
 #include "Renderer.h"
 #include "State.h"
+#include "InventorySystem.h"
 #ifdef __linux__
 #   include <experimental/filesystem>
 #else
@@ -47,16 +48,18 @@ void Application::OnUserRun()
     GlCore::State& state = GlCore::State::GetState();
     state.SetGameWindow(&m_Window);
     state.SetGameCamera(&m_Camera);
-
-    World WorldGameInstance;
     static bool state_switch = false;
+
+    //Game data
+    World world_instance;
+    Inventory game_inventory;
 
     auto switch_game_state = [&]() 
     {
-        if (Defs::g_GameMode == Defs::ViewMode::WorldInteraction)
-            Defs::g_GameMode = Defs::ViewMode::Inventory;
+        if (Defs::g_ViewMode == Defs::ViewMode::WorldInteraction)
+            Defs::g_ViewMode = Defs::ViewMode::Inventory;
         else
-            Defs::g_GameMode = Defs::ViewMode::WorldInteraction;
+            Defs::g_ViewMode = Defs::ViewMode::WorldInteraction;
 
         state_switch = true;
     };
@@ -71,7 +74,7 @@ void Application::OnUserRun()
             if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
                 switch_game_state();
 
-            WorldGameInstance.UpdateScene();
+            world_instance.UpdateScene();
             state.GameWindow().UpdateKeys();
         }
     };
@@ -104,15 +107,16 @@ void Application::OnUserRun()
             //No need to render every frame, while the logic thread computes,
             //sleeping every few milliseconds can save lots of performances without
             //resulting too slow
-            WorldGameInstance.Render();
+            world_instance.Render();
         }
         else
         {
-            WorldGameInstance.UpdateScene();
-            WorldGameInstance.Render();
+            world_instance.UpdateScene();
+            world_instance.Render();
         }
+        game_inventory.ScreenSideRender();
 
-        if (Defs::g_GameMode == Defs::ViewMode::Inventory)
+        if (Defs::g_ViewMode == Defs::ViewMode::Inventory)
         {
             if (state_switch)
             {
@@ -120,8 +124,8 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
-            GlCore::RenderInventory();
-            Defs::HandleInventorySelection();
+            game_inventory.HandleInventorySelection();
+            game_inventory.InternalSideRender();
         }
         else
         {

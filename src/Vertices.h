@@ -150,14 +150,6 @@ namespace GlCore
         return { inventory_entry, lyt };
     }
 
-    //Returns the mapped matrix for a specific inventory slot in the inventory view
-    inline glm::mat4 SlotAbsoluteTransform(uint32_t slot_index)
-    {
-        glm::mat4 ret(1.0f);
-        ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * slot_index, -0.066f, 0.0f));
-        return glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
-    }
-
     inline Layout MatrixAttributeLayout()
     {
         Layout lyt;
