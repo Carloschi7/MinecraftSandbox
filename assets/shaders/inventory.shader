@@ -23,4 +23,8 @@ out vec4 OutColor;
 void main()
 {
 	OutColor = texture(texture_inventory, TexCoords);
+
+	if (OutColor.a < 0.1f) {
+		discard;
+	}
 }
