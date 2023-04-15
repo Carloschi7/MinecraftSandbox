@@ -75,6 +75,7 @@ void Application::OnUserRun()
                 switch_game_state();
 
             world_instance.UpdateScene();
+            game_inventory.HandleInventorySelection();
             state.GameWindow().UpdateKeys();
         }
     };
@@ -112,6 +113,8 @@ void Application::OnUserRun()
         else
         {
             world_instance.UpdateScene();
+            game_inventory.HandleInventorySelection();
+            state.GameWindow().UpdateKeys();
             world_instance.Render();
         }
         game_inventory.ScreenSideRender();
@@ -123,8 +126,7 @@ void Application::OnUserRun()
                 state.GameWindow().EnableCursor();
                 state_switch = false;
             }
-
-            game_inventory.HandleInventorySelection();
+            
             game_inventory.InternalSideRender();
         }
         else
@@ -138,6 +140,8 @@ void Application::OnUserRun()
             m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Defs::g_FramedPlayerSpeed, 0.8);
         }
 
+        //CAMERA DEBUG
+        //std::cout << m_Camera.GetPosition().x << ", " << m_Camera.GetPosition().z << std::endl;
         m_Window.Update();
     }
 

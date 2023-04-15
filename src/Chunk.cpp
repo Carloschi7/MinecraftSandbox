@@ -26,6 +26,8 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 
 	//Init water layer position vector
 	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
+	//Chunk tree leaves if present
+	std::vector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage();
 
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
@@ -62,19 +64,14 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 				continue;
 			}
 
-			//Spawn a tree in the center
-			if (perlin_data.biome == Defs::Biome::Plains &&
-				i == origin.x + s_ChunkWidthAndHeight / 2 &&
-				k == origin.y + s_ChunkWidthAndHeight / 2)
-			{
-				for(uint32_t p = 0; p < 4; p++)
+			glm::vec3 tree_center(origin.x + s_ChunkWidthAndHeight / 2, final_height + 4, origin.y + s_ChunkWidthAndHeight / 2);
+			if (perlin_data.biome == Defs::Biome::Plains && i == tree_center.x && k == tree_center.z) {
+				for (uint32_t p = 0; p < 4; p++)
 					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::BlockType::Wood);
 
 				//With its leaves
-				for (int32_t x = -1; x <= 1; x++)
-					for (int32_t z = -1; z <= 1; z++)
-						for (int32_t y = 1; y <= 3; y++)
-							m_LocalBlocks.emplace_back(glm::vec3(i + x, final_height + 3 + y, k + z), Defs::BlockType::Leaves);
+				for (auto& vec : leaves_positions)
+					m_LocalBlocks.emplace_back(tree_center + vec, Defs::BlockType::Leaves);
 			}
 		}
 	}
@@ -147,24 +144,28 @@ void Chunk::InitGlobalNorms()
 	//from the top block of that column an index descends assigning to each side a normal
 	//until a side block is found
 	float local_x =  m_LocalBlocks[0].Position().x, local_z = m_LocalBlocks[0].Position().z;
+	float last_y = 0.0f;
 	int32_t starting_index = 0;
 	//+1 because we need to parse the last column
-	for (int32_t i = 0; i < m_LocalBlocks.size() + 1; i++)
+	for (int32_t i = 0; i < m_LocalBlocks.size(); i++)
 	{
-		if (i != m_LocalBlocks.size() &&
-			m_LocalBlocks[i].Position().x == local_x &&
-			m_LocalBlocks[i].Position().z == local_z)
+		auto& loc_pos = m_LocalBlocks[i].Position();
+
+		//Always include the last block
+		if (i != m_LocalBlocks.size() - 1 &&
+			loc_pos.x == local_x &&
+			loc_pos.y - last_y < 1.5f &&
+			loc_pos.z == local_z)
 		{
+			last_y = m_LocalBlocks[i].Position().y;
 			continue;
 		}
 
-		if (i != m_LocalBlocks.size())
-		{
-			local_x = m_LocalBlocks[i].Position().x;
-			local_z = m_LocalBlocks[i].Position().z;
-		}
+		local_x = m_LocalBlocks[i].Position().x;
+		last_y = m_LocalBlocks[i].Position().y;
+		local_z = m_LocalBlocks[i].Position().z;		
 
-		uint32_t top_column_index = i - 1;
+		uint32_t top_column_index = (i == m_LocalBlocks.size() - 1) ? i : i - 1;
 		//The block at the top of the pile and the one at the bottom
 		auto& top_block = m_LocalBlocks[top_column_index];
 		auto& bot_block = m_LocalBlocks[starting_index];
@@ -184,50 +185,57 @@ void Chunk::InitGlobalNorms()
 		int32_t p = top_column_index;
 		if (conf_rlfb[0] || conf_rlfb[1] || conf_rlfb[2] || conf_rlfb[3])
 		{
+			uint32_t blk_index;
+			bool local_found = false, adjacent_found = false;
 			//Checking also for neighbor chunks
 			//Right
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true) &&
-				(!chunk_plus_x || !chunk_plus_x->IsBlock(m_LocalBlocks[p].Position() + pos_x)))
+			while (p >= starting_index)
 			{
 				//If the block confines with a chunk that does not exist yet, we wont
 				//push any normals, they will be deleted anyway when a new chunk spawns
 				if (conf_rlfb[0] && !chunk_plus_x)
 					break;
+				
+				//If we find the ground in a side check, break from the loop
+				if (BorderCheck(chunk_plus_x, GlCore::g_PosX, p, starting_index, true))
+					break;
 
-				m_LocalBlocks[p].AddNormal(pos_x);
 				p--;
 			}
 			p = top_column_index;
 			//Left
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_x, starting_index, false) &&
-				(!chunk_minus_x || !chunk_minus_x->IsBlock(m_LocalBlocks[p].Position() + neg_x)))
+			while (p >= starting_index)
 			{
 				if (conf_rlfb[1] && !chunk_minus_x)
 					break;
 
-				m_LocalBlocks[p].AddNormal(neg_x);
+				if (BorderCheck(chunk_minus_x, GlCore::g_NegX, p, starting_index, false))
+					break;
+
 				p--;
 			}
 			p = top_column_index;
 			//Back
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_z, starting_index, true) &&
-				(!chunk_plus_z || !chunk_plus_z->IsBlock(m_LocalBlocks[p].Position() + pos_z)))
+			while (p >= starting_index)
 			{
 				if (conf_rlfb[3] && !chunk_plus_z)
 					break;
 
-				m_LocalBlocks[p].AddNormal(pos_z);
+				if (BorderCheck(chunk_plus_z, GlCore::g_PosZ, p, starting_index, true))
+					break;
+
 				p--;
 			}
 			p = top_column_index;
 			//Front
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_z, starting_index, false) &&
-				(!chunk_minus_z || !chunk_minus_z->IsBlock(m_LocalBlocks[p].Position() + neg_z)))
+			while (p >= starting_index)
 			{
 				if (conf_rlfb[2] && !chunk_minus_z)
 					break;
 
-				m_LocalBlocks[p].AddNormal(neg_z);
+				if (BorderCheck(chunk_minus_z, GlCore::g_NegZ, p, starting_index, false))
+					break;
+
 				p--;
 			}
 		}
@@ -235,30 +243,60 @@ void Chunk::InitGlobalNorms()
 		{
 			//A more slim implementation for the majority of the iterations
 			//Right
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true))
+			uint32_t blk_index;
+			while (p >= starting_index)
 			{
-				m_LocalBlocks[p].AddNormal(pos_x);
+				if (!IsBlock(m_LocalBlocks[p].Position() + pos_x, starting_index, true, &blk_index)) {
+					m_LocalBlocks[p].AddNormal(pos_x);
+				}
+				else {
+					//If the current block is a leaf block, we wont discard lower placed blocks automatically
+					//because we could find trunk or some other stuff
+					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+						break;
+				}
+
 				p--;
 			}
 			p = top_column_index;
 			//Left
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_x, starting_index, false))
+			while (p >= starting_index)
 			{
-				m_LocalBlocks[p].AddNormal(neg_x);
+				if (!IsBlock(m_LocalBlocks[p].Position() + neg_x, starting_index, false, &blk_index)) {
+					m_LocalBlocks[p].AddNormal(neg_x);
+				}
+				else {
+					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+						break;
+				}
 				p--;
 			}
 			p = top_column_index;
 			//Back
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + pos_z, starting_index, true))
+			while (p >= starting_index)
 			{
-				m_LocalBlocks[p].AddNormal(pos_z);
+				if (!IsBlock(m_LocalBlocks[p].Position() + pos_z, starting_index, true, &blk_index)) {
+					m_LocalBlocks[p].AddNormal(pos_z);
+				}
+				else {
+					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+						break;
+				}
+				
 				p--;
 			}
 			p = top_column_index;
 			//Front
-			while (p >= starting_index && !IsBlock(m_LocalBlocks[p].Position() + neg_z, starting_index, false))
+			while (p >= starting_index)
 			{
-				m_LocalBlocks[p].AddNormal(neg_z);
+				if (!IsBlock(m_LocalBlocks[p].Position() + neg_z, starting_index, false, &blk_index)) {
+					m_LocalBlocks[p].AddNormal(neg_z);
+				}
+				else {
+					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+						break;
+				}
+
 				p--;
 			}
 		}
@@ -811,6 +849,29 @@ Block& Chunk::GetBlock(uint32_t index)
 const Block& Chunk::GetBlock(uint32_t index) const
 {
 	return m_LocalBlocks[index];
+}
+
+bool Chunk::BorderCheck(Chunk* chunk, const glm::vec3& pos, uint32_t top_index, uint32_t bot_index, bool search_dir)
+{
+	bool local_found = false, adjacent_found = false;
+	uint32_t blk_index;
+	local_found = IsBlock(m_LocalBlocks[top_index].Position() + pos, bot_index, search_dir, &blk_index);
+	if (!local_found)
+			adjacent_found = chunk && chunk->IsBlock(m_LocalBlocks[top_index].Position() + pos, 0, true, &blk_index);
+
+	if (local_found) {
+		if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+			return true;
+	}
+	else if (adjacent_found) {
+		if (chunk->GetBlock(blk_index).Type() != Defs::BlockType::Leaves)
+			return true;
+	}
+	else {
+		m_LocalBlocks[top_index].AddNormal(pos);
+	}
+
+	return false;
 }
 
 

@@ -1,5 +1,6 @@
 #include "GameDefinitions.h"
 #include "State.h"
+#include <random>
 
 namespace Defs
 {
@@ -271,6 +272,77 @@ namespace Defs
         //This is done so that if there are smaller ponds which overlap with a bigger lake region, those ones have a bigger priority
         std::sort(pushed_areas.begin(), pushed_areas.end(), [](const WaterArea& a1, const WaterArea& a2) {return a1.Length() < a2.Length(); });
         return wa.water_height;
+    }
+
+    std::vector<glm::vec3> GenerateRandomFoliage()
+    {
+        static std::vector<glm::vec3> possible_positions;
+        static std::mt19937 rand_engine;
+
+        if (possible_positions.empty()) {
+            for (int32_t x = -2.0f; x <= 2.0f; x++) {
+                for (int32_t y = -1.0f; y <= 3.0f; y++) {
+                    for (int32_t z = -2.0f; z <= 2.0f; z++) {
+                        possible_positions.emplace_back((float)x, (float)y, (float)z);
+                    }
+                }
+            }
+
+            //Pop the ones in the trunk's way
+            for (int32_t y = -1.0f; y <= 0.0f; y++) {
+                possible_positions.erase(std::find(possible_positions.begin(), possible_positions.end(), glm::vec3(0.0f, (float)y, 0.0f)));
+            }
+        }
+
+        
+
+        std::vector<uint32_t> selected_indices;
+        std::vector<glm::vec3> ret;
+        for (uint32_t i = 0; i < 9; i++) {
+            uint32_t index;
+            do {
+                index = rand_engine() % possible_positions.size();
+            } while (std::find(selected_indices.begin(), selected_indices.end(), index) != selected_indices.end());
+
+            glm::vec3 selected = possible_positions[index];
+            ret.push_back(selected);
+
+            auto push_next_leafblock = [&](uint32_t index) {
+                if (selected[index] == 0.0f)
+                    return;
+
+                glm::vec3 new_vec;
+                
+                switch (index) {
+                case 0:
+                    new_vec = selected + glm::vec3(selected[index] > 0.0f ? -1.0f : 1.0f, 0.0f, 0.0f);
+                    break;
+                case 1:
+                    new_vec = selected + glm::vec3(0.0f, selected[index] > 0.0f ? -1.0f : 1.0f, 0.0f);
+                    break;
+                case 2:
+                    new_vec = selected + glm::vec3(0.0f, 0.0f, selected[index] > 0.0f ? -1.0f : 1.0f);
+                    break;
+                }
+                
+                
+                if (std::find(ret.begin(), ret.end(), new_vec) == ret.end()) 
+                    ret.push_back(new_vec);
+
+                selected = new_vec;
+            };
+
+            //Algorithm which connects the current block to the tree base
+            while (selected != glm::vec3(0.0f)) {
+                //Select a random direction to follow
+                
+                push_next_leafblock(rand_engine() % 3);
+            }
+
+            selected_indices.push_back(index);
+        }
+
+        return ret;
     }
 
     

@@ -73,6 +73,9 @@ private:
 	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true, uint32_t* block_index = nullptr) const;
 	Block& GetBlock(uint32_t index);
 	const Block& GetBlock(uint32_t index) const;
+
+	//Wrapper function that assigns normals to border blocks if there are no other blocks even in the confining chunk
+	bool BorderCheck(Chunk* chunk, const glm::vec3& pos, uint32_t top_index, uint32_t bot_index, bool search_dir);
 private:
 	//Global OpenGL environment state
 	GlCore::State& m_State;

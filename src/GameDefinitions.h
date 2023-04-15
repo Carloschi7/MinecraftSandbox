@@ -35,6 +35,7 @@ namespace Defs
 		TextureWater,
 		TextureInventory,
 		TextureScreenInventory,
+		TextureScreenInventorySelector,
 		TextureDepth
 	};
 
@@ -132,7 +133,8 @@ namespace Defs
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
 	float WaterRegionLevel(float sx, float sy, const WorldSeed& seed);
-
+	std::vector<glm::vec3> GenerateRandomFoliage();
+	
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise
 	{

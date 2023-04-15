@@ -191,6 +191,7 @@ namespace GlCore
             textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/Inventory.png", true, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/ScreenInventorySelector.png", true, TextureFilter::Nearest);
         }
 
         return textures;
