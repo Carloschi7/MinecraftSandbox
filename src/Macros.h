@@ -18,12 +18,6 @@
 //Determine if the app is multithreadable
 #define MC_MULTITHREADING
 
-#ifdef MC_MULTITHREADING
-#	define MC_CHUNK_SIZE m_SafeChunkSize
-#else
-#	define MC_CHUNK_SIZE m_Chunks.size()
-#endif
-
 //Generic linux platforms
 #if defined __linux__ && !defined ENV64
 #	define ENV64

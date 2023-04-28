@@ -17,11 +17,10 @@ World::World()
 
 	for (int32_t i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (int32_t j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
-			m_Chunks.emplace_back(std::make_shared<Chunk>(*this, glm::vec2(float(i), float(j))));
+			m_Chunks.emplace_back(*this, glm::vec2(float(i), float(j)));
 
 	HandleSectionData();
-	//Set safe iterable size for the rendering thread(set in all cases by default)
-	m_SafeChunkSize = m_Chunks.size();
+	//Set safe iterable size for the rendering thread(set in all cases by default	
 
 	auto add_spawnable_chunk = [&](const glm::vec3& pos)
 	{
@@ -92,10 +91,15 @@ void World::Render()
 		//Update depth framebuffer
 		GlCore::UpdateShadowFramebuffer();
 
-		for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+		for (uint32_t i = 0; i < m_Chunks.size(); i++)
 		{
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
 			std::shared_ptr<Chunk> chunk = m_Chunks[i];
+			//When we do this, that means that the resource and the ones after this are no longer available
+			//and there is thus no need to iterate over them
+			if (chunk == nullptr)
+				break;
+
 			if (chunk->IsChunkRenderable() && chunk->IsChunkVisibleByShadow())
 				chunk->ForwardRenderableData(depth_positions, block_texindices, count, true);
 		}
@@ -122,10 +126,13 @@ void World::Render()
 	m_State.BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
 
 	//Draw to scene
-	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		//Wait if the vector is being modified
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (chunk == nullptr)
+			break;
+		
 		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible())
 			chunk->ForwardRenderableData(block_positions, block_texindices, count, false, ch == i);
 	}
@@ -173,19 +180,9 @@ void World::UpdateScene()
 				glm::vec3 origin_chunk_pos = vec - Chunk::GetHalfWayVector();
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
-				if constexpr (GlCore::g_MultithreadedRendering)
-				{
-					if (m_Chunks.size() == m_Chunks.capacity())
-					{
-						MC_LOCK(m_Chunks);
-						m_Chunks.reserve(m_Chunks.capacity() + m_Chunks.capacity() / 2);
-						MC_UNLOCK(m_Chunks);
-					}
-				}
-
+				//Generate new chunk
 				std::shared_ptr<Chunk> this_chunk = std::make_shared<Chunk>(*this, chunk_pos);
-				m_Chunks.emplace_back(this_chunk);
-				m_SafeChunkSize++;
+				m_Chunks.push_back(this_chunk);
 				HandleSectionData();
 
 				this_chunk->InitGlobalNorms();
@@ -248,9 +245,12 @@ void World::UpdateScene()
 	HandleSelection();
 
 	//normal updating
-	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (m_Chunks[i] == nullptr)
+			break;
+
 		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
@@ -333,9 +333,12 @@ void World::HandleSelection()
 	bool left_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
 	bool right_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
-	for (uint32_t i = 0; i < MC_CHUNK_SIZE; i++)
+	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
+		if (chunk == nullptr)
+			break;
+
 		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
@@ -437,6 +440,7 @@ void World::SerializeSector(uint32_t index)
 	//(When multithreading) Advertise the render thread m_Chunks 
 	//is undergoing some heavy changes
 	std::vector<std::shared_ptr<Chunk>>::iterator iter{};
+	uint32_t safe_size = 0;
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
 		MC_LOCK(m_Chunks);
@@ -444,19 +448,19 @@ void World::SerializeSector(uint32_t index)
 		iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
 			[&](const std::shared_ptr<Chunk>& ch) {return ch->SectorIndex() != index; });
 		//Determine safe iteration range for the renderer thread
-		m_SafeChunkSize = static_cast<uint32_t>(iter - m_Chunks.begin());
+		safe_size = static_cast<uint32_t>(iter - m_Chunks.begin());
 		MC_UNLOCK(m_Chunks);
 	}
 
 	//Nothing to serialize
-	if (m_Chunks.size() == m_SafeChunkSize)
+	if (m_Chunks.size() == safe_size)
 		return;
 
 	//Number of chunks at the beginning (leave blank for now)
 	sz.Serialize<uint32_t>(0);
-	for(uint32_t i = 0; i < m_Chunks.size() - m_SafeChunkSize; i++)
+	for(uint32_t i = 0; i < m_Chunks.size() - safe_size; i++)
 	{
-		Chunk& chunk = *m_Chunks[m_SafeChunkSize + i];
+		Chunk& chunk = *m_Chunks[safe_size + i];
 		chunk.Serialize(sz);
 		serialized_chunks++;
 	}
@@ -468,7 +472,6 @@ void World::SerializeSector(uint32_t index)
 	//Write the amount of chunks serialized
 	sz.Seek(0);
 	sz& serialized_chunks;
-	m_SafeChunkSize = m_Chunks.size();
 }
 
 void World::DeserializeSector(uint32_t index)
@@ -491,12 +494,8 @@ void World::DeserializeSector(uint32_t index)
 		sz% deser_size;
 	}
 
-	while (!sz.Eof())
-	{
-		auto new_chunk = std::make_shared<Chunk>(*this, sz, index);
-		m_Chunks.push_back(new_chunk);
-		m_SafeChunkSize++;
-	}
+	while (!sz.Eof())	
+		m_Chunks.emplace_back(*this, sz, index);	
 }
 
 bool World::IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec)

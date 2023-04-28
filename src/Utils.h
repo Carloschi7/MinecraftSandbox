@@ -2,6 +2,7 @@
 #include <vector>
 #include <list>
 #include <mutex>
+#include <condition_variable>
 #include <chrono>
 #include <fstream>
 #include <utility>
@@ -11,7 +12,6 @@
 #define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
-#define WAIT_UNLOCKED() while (m_OwningThreadID != std::this_thread::get_id() && m_OwningThreadID != std::thread::id{}) {}
 
 //Lock utilities useful for context switching
 #ifdef MC_MULTITHREADING
@@ -31,11 +31,13 @@ namespace Utils
 	//So the locking process is explicit and can be performed via the functions lock and unlock
 	//This is done because in the scenario we find ourselves needing to lock the vector only if
 	//we are adding/removing elements
+	//Data gets stored in a shared ptr so the content of the vector can get borrowed for a thread
+	//and keeps on living if the original ptr stored by this ts vector gets erased
 	template<class T>
 	class TSVector
 	{
-		using iterator = typename std::vector<T>::iterator;
-		using const_iterator = typename std::vector<T>::const_iterator;
+		using iterator = typename std::vector<std::shared_ptr<T>>::iterator;
+		using const_iterator = typename std::vector<std::shared_ptr<T>>::const_iterator;
 	public:
 		TSVector() = default;
 		~TSVector() {}
@@ -54,113 +56,142 @@ namespace Utils
 		//Specific features
 		void lock()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_OwningThreadID = std::this_thread::get_id();
 		}
 		void unlock()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_OwningThreadID = std::thread::id{};
+			//wake up a waiting thread if there is one
+			std::unique_lock<std::mutex> MyLock{m_Mutex};
+			m_ConditionVariable.notify_all();
 		}
 
-		void push_back(const T& ref)
+		void push_back(std::shared_ptr<T> ref)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.push_back(ref);
 		}
 		template<class... Args>
 		decltype(auto) emplace_back(Args&&... args)
 		{
-			WAIT_UNLOCKED();
-			return m_Container.emplace_back(std::forward<Args>(args)...);
+			WaitUnlocked();
+			return m_Container.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
 		}
-		T& operator[](std::size_t index)
+		std::shared_ptr<T> operator[](std::size_t index)
 		{
-			WAIT_UNLOCKED();
-			return m_Container[index];
+			WaitUnlocked();
+			//If this thread waits on a resource that has index 1000
+			//but its waiting for a thread to finish a shrinking task that
+			//would reduce the size of the vector to 900, we need to make sure to
+			//tell that the desired data is no longer existing in memory
+			return index < m_Container.size() ? m_Container[index] : nullptr;
 		}
-		const T& operator[](std::size_t index) const
+		std::shared_ptr<T> operator[](std::size_t index) const
 		{
-			WAIT_UNLOCKED();
-			return m_Container[index];
+			WaitUnlocked();
+			return index < m_Container.size() ? m_Container[index] : nullptr;
 		}
 		iterator erase(const_iterator iter)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.erase(iter);
 		}
 		iterator erase(const_iterator first, const_iterator last)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.erase(first, last);
 		}
 		void clear()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.clear();
 		}
 
 		iterator begin()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.begin();
 		}
 		iterator end()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.end();
 		}
 		const_iterator begin() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.begin();
 		}
 		const_iterator end() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.end();
 		}
-		const_iterator cbegin() const { WAIT_UNLOCKED(); return begin(); }
-		const_iterator cend() const { WAIT_UNLOCKED(); return end(); }
+		const_iterator cbegin() const { WaitUnlocked(); return begin(); }
+		const_iterator cend() const { WaitUnlocked(); return end(); }
 
-		T& front() { WAIT_UNLOCKED(); return m_Container[0]; }
-		T& back() { WAIT_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
-		const T& front() const { WAIT_UNLOCKED(); return m_Container[0]; }
-		const T& back() const { WAIT_UNLOCKED(); return m_Container[m_Container.size() - 1]; }
+		std::shared_ptr<T> front() {
+			WaitUnlocked();	
+			return !m_Container.empty() : m_Container[0] : nullptr;
+		}
+		std::shared_ptr<T> back() { 
+			WaitUnlocked();
+			return !m_Container.empty() : m_Container[m_Container.size() - 1] : nullptr;
+		}
+		std::shared_ptr<T> front() const {
+			WaitUnlocked();
+			return !m_Container.empty() : m_Container[0] : nullptr;
+		}
+		std::shared_ptr<T> back() const {
+			WaitUnlocked();
+			return !m_Container.empty() : m_Container[m_Container.size() - 1] : nullptr;
+		}
 
 		std::size_t size() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.size();
 		}
 		std::size_t capacity() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.capacity();
 		}
 		bool empty() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.empty();
 		}
 
 		void resize(std::size_t size)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.resize(size);
 		}
 		void reserve(std::size_t size)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.reserve(size);
 		}
 
 	private:
-		std::vector<T> m_Container;
+		inline void WaitUnlocked() const {
+			if (m_OwningThreadID != std::thread::id{} && m_OwningThreadID != std::this_thread::get_id()) {
+				std::unique_lock<std::mutex> MyLock{ m_Mutex };
+				m_ConditionVariable.wait(MyLock, [this]() {return m_OwningThreadID == std::thread::id{}; });
+			}
+		}
+		
+	private:
+		std::vector<std::shared_ptr<T>> m_Container;
 		mutable std::atomic<std::thread::id> m_OwningThreadID;
+		mutable std::mutex m_Mutex;
+		mutable std::condition_variable m_ConditionVariable;
 	};
 
-	//Thread safe list
+	//Thread safe list (currently unused)
 	template<class T>
 	class TSList
 	{
@@ -182,81 +213,81 @@ namespace Utils
 
 		void lock()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_OwningThreadID = std::this_thread::get_id();
 		}
 		void unlock()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_OwningThreadID = std::thread::id{};
 		}
 
 		void push_front(const T& p)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.push_front(p);
 		}
 		void push_back(const T& p)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.push_back(p);
 		}
 		template<class... Args>
 		decltype(auto) emplace_back(Args&&... args)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.emplace_back(std::forward<Args>(args)...);
 		}
 		template<class... Args>
 		decltype(auto) emplace_front(Args&&... args)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.emplace_front(std::forward<Args>(args)...);
 		}
 
 		const T& front()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.front();
 		}
 		const T& back()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.back();
 		}
 		T pop_front()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			T ret = m_Container.front();
 			m_Container.pop_front();
 			return ret;
 		}
 		T pop_back()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			T ret = m_Container.back();
 			m_Container.pop_back();
 			return ret;
 		}
 		void clear()
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.clear();
 		}
 		std::size_t size() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.size();
 		}
 		bool empty() const
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			return m_Container.empty();
 		}
 
 		void resize(std::size_t size)
 		{
-			WAIT_UNLOCKED();
+			WaitUnlocked();
 			m_Container.resize(size);
 		}
 

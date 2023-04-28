@@ -41,7 +41,7 @@ private:
     //the vector and the render thread is doing stuff with a chunk,
     //the chunk object is not invalidated
 #ifdef MC_MULTITHREADING
-    Utils::TSVector<std::shared_ptr<Chunk>> m_Chunks;
+    Utils::TSVector<Chunk> m_Chunks;
 #else
     std::vector<std::shared_ptr<Chunk>> m_Chunks;
 #endif
@@ -56,9 +56,7 @@ private:
     //For terrain generation
     Defs::WorldSeed m_WorldSeed;
     //Handles section data
-    std::vector<Defs::SectionData> m_SectionsData;
-    //Safe iteration size(useful when the chunks at the end of the vector are being serialized)
-    std::atomic_uint32_t m_SafeChunkSize = 0;
+    std::vector<Defs::SectionData> m_SectionsData;  
     //Timer used to sort the spawnable chunks vector every now and then
     //(sorting every frame would be pointless)
     Utils::Timer m_SortingTimer;

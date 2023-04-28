@@ -298,7 +298,7 @@ namespace Defs
 
         std::vector<uint32_t> selected_indices;
         std::vector<glm::vec3> ret;
-        for (uint32_t i = 0; i < 9; i++) {
+        for (uint32_t i = 0; i < 14; i++) {
             uint32_t index;
             do {
                 index = rand_engine() % possible_positions.size();
