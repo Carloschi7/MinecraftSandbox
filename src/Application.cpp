@@ -68,15 +68,19 @@ void Application::OnUserRun()
     auto logic_thread_impl = [&]()
     {
         Utils::Timer timer;
+        float recorded_time = 0.1f;
         while (GlCore::g_LogicThreadShouldRun)
         {
+            timer.StartTimer();
             //The gamemode check is here because the key state update is reqwuired by the logic thread
             if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
                 switch_game_state();
 
-            world_instance.UpdateScene();
+            world_instance.UpdateScene(game_inventory, recorded_time);
             game_inventory.HandleInventorySelection();
             state.GameWindow().UpdateKeys();
+            //Update local timer
+            recorded_time = timer.GetElapsedSeconds();
         }
     };
 
@@ -96,6 +100,8 @@ void Application::OnUserRun()
 
     glEnable(GL_DEPTH_TEST);
     Utils::Timer timer;
+    //Standard value for the first frame
+    float recorded_time = 0.1f;
     while (!m_Window.ShouldClose())
     {
         if constexpr (!GlCore::g_MultithreadedRendering)
@@ -112,7 +118,7 @@ void Application::OnUserRun()
         }
         else
         {
-            world_instance.UpdateScene();
+            world_instance.UpdateScene(game_inventory, recorded_time);
             game_inventory.HandleInventorySelection();
             state.GameWindow().UpdateKeys();
             world_instance.Render();
@@ -137,7 +143,8 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
-            m_Camera.ProcessInput(m_Window, std::max(0.01f, timer.GetElapsedSeconds()) * Defs::g_FramedPlayerSpeed, 0.8);
+            recorded_time = timer.GetElapsedSeconds();
+            m_Camera.ProcessInput(m_Window, recorded_time * Defs::g_FramedPlayerSpeed, 0.8);
         }
 
         //CAMERA DEBUG

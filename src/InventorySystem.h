@@ -9,6 +9,7 @@ class Inventory
 {
 public:
 	Inventory();
+	void AddToNewSlot(Defs::BlockType block);
 	void HandleInventorySelection();
 	void InternalSideRender();
 	void ScreenSideRender();

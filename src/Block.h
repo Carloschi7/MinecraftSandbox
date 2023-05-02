@@ -40,3 +40,31 @@ private:
     GlCore::DrawableData m_DrawableSides;
     Defs::BlockType m_BlockType;
 };
+
+//Version of a block that can be picked up from a player, like in the original Minecraft game
+class Drop 
+{
+public:
+    Drop(const glm::vec3& position, Defs::BlockType type);
+    Drop(const Drop&) = delete;
+    Drop(Drop&& right) noexcept;
+
+    Drop& operator=(Drop&& right) noexcept;
+
+    inline const glm::vec3& Position() const { return m_Position; }
+    inline Defs::BlockType Type() const { return m_Type; }
+
+    void Render();
+    void Update(Chunk* chunk, float elapsed_time);
+    void UpdateModel(float elapsed_time);
+private:
+    GlCore::State& m_State;
+
+    glm::vec3 m_Position;
+    glm::vec3 m_Velocity;
+    glm::vec3 m_Acceleration;
+
+    Defs::BlockType m_Type;
+    float m_RotationAngle;
+    glm::mat4 m_Model;
+};

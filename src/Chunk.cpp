@@ -1,5 +1,6 @@
 #include "Chunk.h"
 #include "World.h"
+#include "InventorySystem.h"
 #include <algorithm>
 #include <chrono>
 
@@ -69,16 +70,21 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 				for (uint32_t p = 0; p < 4; p++)
 					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::BlockType::Wood);
 
-				//With its leaves
 				for (auto& vec : leaves_positions)
 					m_LocalBlocks.emplace_back(tree_center + vec, Defs::BlockType::Leaves);
 			}
 		}
 	}
-
 	//Set chunk sector
 	m_SectorIndex = Defs::ChunkSectorIndex(m_ChunkOrigin);
 	Defs::g_PushedSections.insert(m_SectorIndex);
+
+	/*static bool b = false;
+	if (!b) {
+		m_LocalDrops.emplace_back(glm::vec3(-80.0f, 100.0f, -80.0f), Defs::BlockType::Dirt);
+		m_LocalDrops.clear();
+		b = true;
+	}*/
 }
 
 Chunk::Chunk(World& father, const Utils::Serializer& sz, uint32_t index) :
@@ -425,16 +431,21 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 			m_SelectedBlock = i;
 		}
 	}
-
 	
 	if (Defs::g_ViewMode != Defs::ViewMode::Inventory) {
 		//Logic which removes a block
 		if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 		{
+			//Spawn a drop from the block that is being destroyed TODO
+			const glm::vec3 position = m_LocalBlocks[m_SelectedBlock].Position();
+			const Defs::BlockType type = m_LocalBlocks[m_SelectedBlock].Type();
+
 			AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
 			m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
 			m_SelectedBlock = static_cast<uint32_t>(-1);
 
+			//Push drop
+			m_LocalDrops.emplace_back(position, type);
 			//Signal block has been destroyed
 			Defs::g_EnvironmentChange = true;
 		}
@@ -481,13 +492,31 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 	return closest_selected_block_dist;
 }
 
-void Chunk::UpdateBlocks()
+void Chunk::UpdateBlocks(Inventory& inventory, float elapsed_time)
 {
 	auto& camera_position = m_State.GameCamera().GetPosition();
 
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
 		block.UpdateRenderableSides(camera_position);
+
+	//Update local drops
+	for (auto iter = m_LocalDrops.begin(); iter != m_LocalDrops.end(); ++iter) {
+		auto& drop = *iter;
+		drop.Update(this, elapsed_time);
+		drop.UpdateModel(elapsed_time);
+
+		//TODO if player is near enough pick up the drop and insert it in the inv
+		if (glm::length(drop.Position() - m_State.GameCamera().GetPosition()) < 1.0f) {
+			inventory.AddToNewSlot(drop.Type());
+			bool last_flag = iter == std::prev(m_LocalDrops.end());
+			iter = m_LocalDrops.erase(iter);
+
+			//need this otherwise the program will crash for incrementing a dangling iterator
+			if (last_flag)
+				break;
+		}
+	}
 }
 
 bool Chunk::IsChunkRenderable() const
@@ -645,6 +674,12 @@ void Chunk::ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_
 	//Send water layer if present
 	if (!depth_buf_draw && !m_WaterLayerPositions->empty())
 		m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
+}
+
+void Chunk::RenderDrops()
+{
+	for (auto& drop : m_LocalDrops)
+		drop.Render();
 }
 
 void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check)

@@ -20,6 +20,16 @@ Inventory::Inventory() :
     m_ScreenAbsTransf = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.91f, 0.0f)), glm::vec3(1.0f, 0.15f, 0.0f));
 }
 
+void Inventory::AddToNewSlot(Defs::BlockType type)
+{
+    for (std::optional<Defs::BlockType>& slot : m_Slots) {
+        if (!slot.has_value()) {
+            slot = std::make_optional<Defs::BlockType>(type);
+            break;
+        }
+    }
+}
+
 void Inventory::HandleInventorySelection()
 {
     Window& wnd = GlCore::State::GetState().GameWindow();

@@ -6,6 +6,7 @@
 #include "State.h"
 
 class World;
+class Inventory;
 
 class Chunk
 {
@@ -27,6 +28,7 @@ public:
 
 	//Stores render data and presents it if the buffers are full
 	void ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected = false) const;
+	void RenderDrops();
 
 	//Normals loaded as the chunk spawns
 	void InitGlobalNorms();
@@ -36,7 +38,7 @@ public:
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 
 	[[nodiscard]] float BlockCollisionLogic(bool left_click, bool right_click);
-	void UpdateBlocks();
+	void UpdateBlocks(Inventory& inventory, float elapsed_time);
 	//Checks if this chunk is near enough to the player to be rendered
 	bool IsChunkRenderable() const;
 	//Checks if this chunk (within the renderable space) is visible by the player
@@ -54,6 +56,8 @@ public:
 
 	uint32_t SectorIndex() const;
 	uint32_t Index() const;
+
+	inline const std::vector<Block>& Blocks() const { return m_LocalBlocks; }
 
 	//Sum this with the chunk origin to get chunk's center
 	static glm::vec3 GetHalfWayVector();
@@ -85,6 +89,9 @@ private:
 	//Chunk progressive index
 	uint32_t m_ChunkIndex;
 	std::vector<Block> m_LocalBlocks;
+	//Drops of brokeen blocks, the chunk which originated them is the
+	//responsible for updating and drawing them
+	std::vector<Drop> m_LocalDrops;
 
 	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
 	std::shared_ptr<std::vector<glm::vec3>> m_WaterLayerPositions;

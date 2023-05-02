@@ -48,9 +48,17 @@ namespace GlCore
 	{
 		crossaim_shader = crossaim_shader_;
 	}
+	void State::SetDropShader(std::shared_ptr<Shader> drop_shader_)
+	{
+		drop_shader = drop_shader_;
+	}
 	void State::SetBlockVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
 		block_vm = vertex_manager_;
+	}
+	void State::SetDropVM(std::shared_ptr<VertexManager> vertex_manager_)
+	{
+		drop_vm = vertex_manager_;
 	}
 	void State::SetDepthVM(std::shared_ptr<VertexManager> vertex_manager_)
 	{
@@ -121,9 +129,19 @@ namespace GlCore
 		return crossaim_shader;
 	}
 
+	std::shared_ptr<Shader> State::DropShader()
+	{
+		return drop_shader;
+	}
+
 	std::shared_ptr<VertexManager> State::BlockVM()
 	{
 		return block_vm;
+	}
+
+	std::shared_ptr<VertexManager> State::DropVM()
+	{
+		return drop_vm;
 	}
 
 	std::shared_ptr<VertexManager> State::DepthVM()

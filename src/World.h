@@ -5,13 +5,15 @@
 #include <future>
 #include "Chunk.h"
 
+class Inventory;
+
 class World {
 public:
     World();
     ~World();
     //Renders visible world
     void Render();
-    void UpdateScene();
+    void UpdateScene(Inventory& inventory, float elapsed_time);
     void HandleSelection();
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();

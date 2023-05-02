@@ -289,7 +289,7 @@ namespace Defs
             }
 
             //Pop the ones in the trunk's way
-            for (int32_t y = -1.0f; y <= 0.0f; y++) {
+            for (float y = -1.0f; y <= 1.0f; y++) {
                 possible_positions.erase(std::find(possible_positions.begin(), possible_positions.end(), glm::vec3(0.0f, (float)y, 0.0f)));
             }
         }
@@ -325,8 +325,8 @@ namespace Defs
                     break;
                 }
                 
-                
-                if (std::find(ret.begin(), ret.end(), new_vec) == ret.end()) 
+                //Discard also the -1 y vector at the end
+                if (std::find(ret.begin(), ret.end(), new_vec) == ret.end() && new_vec != glm::vec3(0.0f, -1.0f, 0.0f)) 
                     ret.push_back(new_vec);
 
                 selected = new_vec;

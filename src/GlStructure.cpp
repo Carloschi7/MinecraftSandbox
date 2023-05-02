@@ -72,10 +72,12 @@ namespace GlCore
         rd = InventoryEntry();
         auto inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
 
-        //Load block resources
+        //Load block and drop resources
         VertexData cd = Cube();
         auto block_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
         auto block_shd = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
+        auto drop_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
+        auto drop_shd = std::make_shared<Shader>("assets/shaders/basic_collectable.shader");
 
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
@@ -95,6 +97,7 @@ namespace GlCore
             uint32_t tex_index = static_cast<uint32_t>(elem.second);
             game_textures[tex_index].Bind(tex_index);
             block_shd->Uniform1i(tex_index, elem.first);
+            drop_shd->Uniform1i(tex_index, elem.first);
         }
 
         //Create instance buffer for model matrices
@@ -121,6 +124,8 @@ namespace GlCore
         state.SetInventoryEntryVM(inventory_entry_vm);
         state.SetBlockShader(block_shd);
         state.SetBlockVM(block_vm);
+        state.SetDropShader(drop_shd);
+        state.SetDropVM(drop_vm);
     }
 
 
@@ -165,15 +170,15 @@ namespace GlCore
     void UniformProjMatrix()
     {
         State& state = State::GetState();
-        auto block_shader = state.BlockShader();
-        block_shader->UniformMat4f(state.GameCamera().GetProjMatrix(), "proj");
+        state.BlockShader()->UniformMat4f(state.GameCamera().GetProjMatrix(), "proj");
+        state.DropShader()->UniformMat4f(state.GameCamera().GetProjMatrix(), "proj");
     }
 
     void UniformViewMatrix()
     {
         State& state = State::GetState();
-        auto block_shader = state.BlockShader();
-        block_shader->UniformMat4f(state.GameCamera().GetViewMatrix(), "view");
+        state.BlockShader()->UniformMat4f(state.GameCamera().GetViewMatrix(), "view");
+        state.DropShader()->UniformMat4f(state.GameCamera().GetViewMatrix(), "view");
         state.WaterShader()->UniformMat4f(state.GameCamera().GetViewMatrix(), "view");
     }
 

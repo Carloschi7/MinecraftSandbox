@@ -1,5 +1,6 @@
 #include "World.h"
 #include "Renderer.h"
+#include "InventorySystem.h"
 #include <atomic>
 
 //Initializing a single block for now
@@ -20,7 +21,6 @@ World::World()
 			m_Chunks.emplace_back(*this, glm::vec2(float(i), float(j)));
 
 	HandleSectionData();
-	//Set safe iterable size for the rendering thread(set in all cases by default	
 
 	auto add_spawnable_chunk = [&](const glm::vec3& pos)
 	{
@@ -118,6 +118,7 @@ void World::Render()
 	//Render skybox
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	GlCore::RenderSkybox();
+	//Init matrices
 	GlCore::UniformViewMatrix();
 	uint32_t ch = Defs::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
@@ -133,8 +134,10 @@ void World::Render()
 		if (chunk == nullptr)
 			break;
 		
-		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible())
+		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible()) {
 			chunk->ForwardRenderableData(block_positions, block_texindices, count, false, ch == i);
+			chunk->RenderDrops();
+		}
 	}
 
 	//Render any leftover data
@@ -156,12 +159,12 @@ void World::Render()
 
 	glDisable(GL_BLEND);
 	GlCore::RenderCrossaim();
-	
+
 	m_DrawableWaterLayers.clear();
 	GlCore::g_Drawcalls = 0;
 }
 
-void World::UpdateScene()
+void World::UpdateScene(Inventory& inventory, float elapsed_time)
 {
 	//Chunk dynamic spawning
 	auto& camera_position = m_State.GameCamera().GetPosition();
@@ -255,7 +258,7 @@ void World::UpdateScene()
 			continue;
 
 		//We update blocks drawing conditions only if we move or if we break blocks
-		chunk->UpdateBlocks();
+		chunk->UpdateBlocks(inventory, elapsed_time);
 	}
 
 	if constexpr (GlCore::g_MultithreadedRendering)
@@ -330,7 +333,7 @@ void World::HandleSelection()
 	auto& window = m_State.GameWindow();
 
 	//One block at a time
-	bool left_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
+	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
 	bool right_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)

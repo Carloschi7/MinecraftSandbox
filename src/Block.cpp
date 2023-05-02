@@ -1,5 +1,6 @@
 #include "Block.h"
 #include "Vertices.h"
+#include "Chunk.h"
 
 Block::Block(const glm::vec3& position, const Defs::BlockType& bt)
     :m_Position(position), m_BlockType(bt), m_ExposedNormals{}
@@ -128,3 +129,67 @@ glm::vec3 Block::NormalForIndex(uint32_t index)
     return glm::vec3(0.0f);
 }
 
+Drop::Drop(const glm::vec3& position, Defs::BlockType type) :
+    m_State(GlCore::State::GetState()),
+    m_Type(type), m_Position(position), m_RotationAngle(0.0f), m_Model(1.0f)
+{
+    GlCore::VertexData vd = GlCore::Cube();
+    
+    m_Acceleration = { 0.0f, -1.0f, 0.0f };
+    m_Velocity = { 0.0f, 0.0f, 0.0f };
+}
+
+Drop::Drop(Drop&& right) noexcept :
+    m_State(right.m_State)
+{
+    operator=(std::move(right));
+}
+
+Drop& Drop::operator=(Drop&& right) noexcept
+{
+    m_State = right.m_State;
+    m_Position = right.m_Position;
+    m_Velocity = right.m_Velocity;
+    m_Acceleration = right.m_Acceleration;
+    m_Type = right.m_Type;
+    m_RotationAngle = right.m_RotationAngle;
+    m_Model = right.m_Model;
+    return *this;
+}
+
+void Drop::Render()
+{
+    auto shader = m_State.DropShader();
+    shader->Use();
+    m_State.DropVM()->BindVertexArray();
+
+    
+    shader->UniformMat4f(m_Model, "model");
+    //shader->Uniform1i(static_cast<uint32_t>(m_Type), "texture_diffuse");
+    shader->Uniform1i(static_cast<uint32_t>(m_Type), "drop_texture_index");
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void Drop::Update(Chunk* chunk, float elapsed_time)
+{
+    m_Velocity += m_Acceleration * elapsed_time * 0.5f;
+    m_Position += m_Velocity;
+
+    glm::vec3 to_find = glm::vec3(std::roundf(m_Position.x), static_cast<int32_t>(m_Position.y), std::roundf(m_Position.z));
+
+    const auto& vec = chunk->Blocks();
+    auto iter = std::find_if(vec.begin(), vec.end(), [to_find](const Block& b) {return b.Position() == to_find; });
+    if (iter != vec.end()) {
+        m_Position = { m_Position.x, iter->Position().y + 0.8f, m_Position.z};
+        m_Velocity = glm::vec3(0.0f);
+    }
+}
+
+void Drop::UpdateModel(float elapsed_time)
+{
+    m_Model = glm::translate(glm::mat4(1.0f), m_Position);
+    m_Model = glm::rotate(m_Model, m_RotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));
+    m_Model = glm::scale(m_Model, glm::vec3(0.4f));
+
+    m_RotationAngle += elapsed_time * 2.0f;
+}
