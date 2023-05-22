@@ -36,7 +36,8 @@ namespace Defs
 		TextureInventory,
 		TextureScreenInventory,
 		TextureScreenInventorySelector,
-		TextureDepth
+		TextureDepth,
+		TextureText
 	};
 
 	struct MouseInput

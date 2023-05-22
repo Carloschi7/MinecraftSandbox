@@ -14,7 +14,7 @@ public:
     //Renders visible world
     void Render();
     void UpdateScene(Inventory& inventory, float elapsed_time);
-    void HandleSelection();
+    void HandleSelection(Inventory& inventory);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
     void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);

@@ -37,7 +37,7 @@ public:
 	//Add new normals after a block deletion
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
 
-	[[nodiscard]] float BlockCollisionLogic(bool left_click, bool right_click);
+	[[nodiscard]] float BlockCollisionLogic(Inventory& inventory, bool left_click, bool right_click);
 	void UpdateBlocks(Inventory& inventory, float elapsed_time);
 	//Checks if this chunk is near enough to the player to be rendered
 	bool IsChunkRenderable() const;

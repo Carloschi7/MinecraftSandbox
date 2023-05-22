@@ -142,7 +142,7 @@ namespace GlCore
         return { inventory, lyt };
     }
 
-    inline VertexData InventoryEntry()
+    inline VertexData InventoryEntryData()
     {
         Layout lyt;
         lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });

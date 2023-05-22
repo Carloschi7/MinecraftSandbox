@@ -69,7 +69,7 @@ namespace GlCore
         auto inventory_shd = std::make_shared<Shader>("assets/shaders/inventory.shader");
 
         //and also the inventory entry VM
-        rd = InventoryEntry();
+        rd = InventoryEntryData();
         auto inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
 
         //Load block and drop resources

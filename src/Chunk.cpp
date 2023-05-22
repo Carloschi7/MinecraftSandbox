@@ -401,7 +401,7 @@ void Chunk::AddFreshNormals(Block& b)
 	local_lambda(conf_rlfb[3], Defs::ChunkLocation::MinusZ, GlCore::g_NegZ);
 }
 
-float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
+float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
@@ -454,9 +454,15 @@ float Chunk::BlockCollisionLogic(bool left_click, bool right_click)
 		if (right_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 		{
 			//if the selected block isn't -1 that means selection is not NONE
-
 			Defs::BlockType bt = Defs::g_InventorySelectedBlock;
 			auto& block = m_LocalBlocks[m_SelectedBlock];
+
+			//Remove one unit from the selection
+			std::optional<InventoryEntry>& entry = inventory.HoveredFromSelector();
+			if (entry.has_value()) {
+				entry.value().block_count--;
+				inventory.ClearUsedSlots();
+			}
 
 			switch (selection)
 			{

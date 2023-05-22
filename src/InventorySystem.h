@@ -4,6 +4,13 @@
 #include "GameDefinitions.h"
 #include <optional>
 #include <array>
+#include "TextRenderer.h"
+
+struct InventoryEntry
+{
+	Defs::BlockType block_type;
+	uint8_t block_count; //Max 64 like in the original, so small type used
+};
 
 class Inventory
 {
@@ -13,16 +20,20 @@ public:
 	void HandleInventorySelection();
 	void InternalSideRender();
 	void ScreenSideRender();
+	std::optional<InventoryEntry>& HoveredFromSelector();
+	void ClearUsedSlots();
 private:
-	void RenderEntry(Defs::TextureBinding binding, uint32_t binding_index);
-	void RenderScreenEntry(Defs::TextureBinding binding, uint32_t binding_index);
+	void RenderEntry(InventoryEntry entry, uint32_t binding_index);
+	void RenderScreenEntry(InventoryEntry binding, uint32_t binding_index);
 	void RenderPendingEntry(Defs::TextureBinding binding);
-	glm::mat4 SlotTransform(uint32_t slot_index);
-	glm::mat4 SlotScreenTransform(uint32_t slot_index);
+	std::pair<glm::mat4, glm::mat4> SlotTransform(uint32_t slot_index);
+	std::pair<glm::mat4, glm::mat4> SlotScreenTransform(uint32_t slot_index);
 private:
 	GlCore::State& m_State;
+	TextRenderer m_TextRenderer;
 
-	std::array<std::optional<Defs::BlockType>, Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount> m_Slots;
+	static constexpr uint32_t INVENTORY_SIZE = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
+	std::array<std::optional<InventoryEntry>, INVENTORY_SIZE> m_Slots;
 	std::optional<uint32_t> m_PendingEntry;
 
 	//This values fit the inventory only for the current image scaling, very important to note

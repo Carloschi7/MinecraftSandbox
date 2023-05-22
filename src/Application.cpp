@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "State.h"
 #include "InventorySystem.h"
+
 #ifdef __linux__
 #   include <experimental/filesystem>
 #else

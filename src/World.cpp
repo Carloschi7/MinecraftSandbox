@@ -3,6 +3,7 @@
 #include "InventorySystem.h"
 #include <atomic>
 
+
 //Initializing a single block for now
 World::World()
 	: m_State(GlCore::State::GetState()), m_LastPos(0.0f)
@@ -66,8 +67,8 @@ void World::Render()
 	//Draw to depth framebuffer
 	auto& window = m_State.GameWindow();
 	auto& camera = m_State.GameCamera();
-	auto& block_vm = m_State.BlockVM();
-	auto& depth_vm = m_State.DepthVM();
+	auto block_vm = m_State.BlockVM();
+	auto depth_vm = m_State.DepthVM();
 
 	//Map the shader buffers so we can use them to write data
 	glm::vec3* block_positions = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
@@ -245,7 +246,7 @@ void World::UpdateScene(Inventory& inventory, float elapsed_time)
 	}
 
 	//Determine selection
-	HandleSelection();
+	HandleSelection(inventory);
 
 	//normal updating
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
@@ -325,7 +326,7 @@ void World::UpdateScene(Inventory& inventory, float elapsed_time)
 	}
 }
 
-void World::HandleSelection()
+void World::HandleSelection(Inventory& inventory)
 {
 	float nearest_selection = INFINITY;
 	int32_t involved_chunk = static_cast<uint32_t>(-1);
@@ -345,7 +346,7 @@ void World::HandleSelection()
 		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
-		float current_selection = chunk->BlockCollisionLogic(left_click, right_click);
+		float current_selection = chunk->BlockCollisionLogic(inventory, left_click, right_click);
 
 		if (current_selection < nearest_selection)
 		{

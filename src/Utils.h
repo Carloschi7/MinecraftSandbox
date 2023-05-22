@@ -134,19 +134,19 @@ namespace Utils
 
 		std::shared_ptr<T> front() {
 			WaitUnlocked();	
-			return !m_Container.empty() : m_Container[0] : nullptr;
+			return !m_Container.empty() ? m_Container[0] : nullptr;
 		}
 		std::shared_ptr<T> back() { 
 			WaitUnlocked();
-			return !m_Container.empty() : m_Container[m_Container.size() - 1] : nullptr;
+			return !m_Container.empty() ? m_Container[m_Container.size() - 1] : nullptr;
 		}
 		std::shared_ptr<T> front() const {
 			WaitUnlocked();
-			return !m_Container.empty() : m_Container[0] : nullptr;
+			return !m_Container.empty() ? m_Container[0] : nullptr;
 		}
 		std::shared_ptr<T> back() const {
 			WaitUnlocked();
-			return !m_Container.empty() : m_Container[m_Container.size() - 1] : nullptr;
+			return !m_Container.empty() ? m_Container[m_Container.size() - 1] : nullptr;
 		}
 
 		std::size_t size() const

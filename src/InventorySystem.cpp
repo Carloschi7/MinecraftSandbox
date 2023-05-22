@@ -2,13 +2,14 @@
 #include "GlStructure.h"
 
 Inventory::Inventory() :
-    m_State(GlCore::State::GetState()), m_CursorIndex(0)
+    m_State(GlCore::State::GetState()), m_CursorIndex(0), 
+    m_TextRenderer(static_cast<uint32_t>(Defs::TextureBinding::TextureText))
 {
     for (uint32_t i = 0; i < 5; i++)
     {
-        m_Slots[i] = static_cast<Defs::BlockType>(i);
+        m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
     }
-    m_Slots[35] = Defs::BlockType::Grass;
+    m_Slots[35] = { Defs::BlockType::Grass, 1 };
 
     //Raw values from inventory dimension, a very simple way that is used only beacause the
     //inventory is not gonna change dimensions for the time being
@@ -22,9 +23,24 @@ Inventory::Inventory() :
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
 {
-    for (std::optional<Defs::BlockType>& slot : m_Slots) {
+    //check for a stacking slot first
+    for (std::optional<InventoryEntry>& slot : m_Slots) {
+        if (slot.has_value() && slot->block_type == type && slot->block_count < 9) {
+            slot->block_count++;
+            return;
+        }
+    }
+
+    //Try to push it to the hovered selection first
+    if (auto& opt = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex]; !opt.has_value()) {
+        opt = { type, 1 };
+        return;
+    }
+
+    //Else use one free slot starting from the inventory beginning
+    for (std::optional<InventoryEntry>& slot : m_Slots) {
         if (!slot.has_value()) {
-            slot = std::make_optional<Defs::BlockType>(type);
+            slot = {type, 1};
             break;
         }
     }
@@ -83,31 +99,39 @@ void Inventory::HandleInventorySelection()
 
 void Inventory::InternalSideRender()
 {
-    //Draw selection
-    if (m_PendingEntry.has_value())
-        RenderPendingEntry(static_cast<Defs::TextureBinding>(m_Slots[m_PendingEntry.value()].value()));
-
-    //Draw entries
-    for (uint32_t i = 0; i < m_Slots.size(); i++) {
-        std::optional<Defs::BlockType> entry = m_Slots[i];
-        if (!entry.has_value())
-            continue;
-
-        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
-            continue;
-
-        RenderEntry(static_cast<Defs::TextureBinding>(entry.value()), i);
-    }
+    glDisable(GL_DEPTH_TEST);
 
     //Actual inventory rendering
     uint32_t inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureInventory);
     GlCore::GameTextures()[inventory_binding].Bind(inventory_binding);
     m_State.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_InternAbsTransf);
+
+    //Draw entries
+    for (uint32_t i = 0; i < m_Slots.size(); i++) {
+        std::optional<InventoryEntry> entry = m_Slots[i];
+        if (!entry.has_value())
+            continue;
+
+        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
+            continue;
+
+        RenderEntry(entry.value(), i);
+    }
+
+    //Draw selection
+    if (m_PendingEntry.has_value()) {
+        InventoryEntry entry = m_Slots[m_PendingEntry.value()].value();
+        RenderPendingEntry(static_cast<Defs::TextureBinding>(entry.block_type));
+    }
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Inventory::ScreenSideRender()
 {
+    glDisable(GL_DEPTH_TEST);
+
     //Move cursor if necessary
     Window& wnd = GlCore::State::GetState().GameWindow();
     if (wnd.IsMouseWheelUp() && m_CursorIndex < Defs::g_InventoryScreenSlotsCount - 1)
@@ -116,45 +140,61 @@ void Inventory::ScreenSideRender()
         m_CursorIndex = (m_CursorIndex - 1) % 9;
 
     //Assign the selection to the right variable
-    std::optional<Defs::BlockType> block_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
-    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type.value() : Defs::BlockType::Dirt;
+    std::optional<InventoryEntry> block_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
+    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type.value().block_type : Defs::BlockType::Dirt;
+    
 
-    //Render selector
-    uint32_t selector_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventorySelector);
-    GlCore::GameTextures()[selector_binding].Bind(selector_binding);
-    m_State.InventoryShader()->Uniform1i(selector_binding, "texture_inventory");
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, SlotScreenTransform(m_CursorIndex));
+    uint32_t scr_inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventory);
+    GlCore::GameTextures()[scr_inventory_binding].Bind(scr_inventory_binding);
+    m_State.InventoryShader()->Uniform1i(scr_inventory_binding, "texture_inventory");
+    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_ScreenAbsTransf);
 
     //Draw entities
     for (uint32_t i = Defs::g_InventoryInternalSlotsCount; i < m_Slots.size(); i++) {
-        std::optional<Defs::BlockType> entry = m_Slots[i];
+        std::optional<InventoryEntry> entry = m_Slots[i];
         if (!entry.has_value())
             continue;
 
         if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
             continue;
 
-        RenderScreenEntry(static_cast<Defs::TextureBinding>(entry.value()), i);
+        RenderScreenEntry(entry.value(), i);
     }
 
-    uint32_t scr_inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventory);
-    GlCore::GameTextures()[scr_inventory_binding].Bind(scr_inventory_binding);
-    m_State.InventoryShader()->Uniform1i(scr_inventory_binding, "texture_inventory");
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_ScreenAbsTransf);
+    //Render selector
+    uint32_t selector_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventorySelector);
+    GlCore::GameTextures()[selector_binding].Bind(selector_binding);
+    m_State.InventoryShader()->Uniform1i(selector_binding, "texture_inventory");
+    auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex);
+    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, screen_slot_transform);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
-void Inventory::RenderEntry(Defs::TextureBinding binding, uint32_t binding_index)
+void Inventory::RenderEntry(InventoryEntry entry, uint32_t binding_index)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(binding), "texture_inventory");
-    glm::mat4 pos_mat = SlotTransform(binding_index);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
+    //Drawing actual block
+    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
+    auto[icon_transform, num_transform] = SlotTransform(binding_index);
+    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, icon_transform);
+
+    //Drawing block count
+    //Number testing, needs to be removed soon
+    glEnable(GL_BLEND);
+    m_TextRenderer.PrintString(std::to_string(entry.block_count), num_transform);
+    glDisable(GL_BLEND);
+
 }
 
-void Inventory::RenderScreenEntry(Defs::TextureBinding binding, uint32_t binding_index)
+void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(binding), "texture_inventory");
-    glm::mat4 pos_mat = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
+    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
+    auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount);
+    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, screen_slot_transform);
+
+    glEnable(GL_BLEND);
+    m_TextRenderer.PrintString(std::to_string(entry.block_count), num_transform);
+    glDisable(GL_BLEND);
 }
 
 void Inventory::RenderPendingEntry(Defs::TextureBinding binding)
@@ -174,30 +214,54 @@ void Inventory::RenderPendingEntry(Defs::TextureBinding binding)
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
 }
 
-//Returns the mapped matrix for a specific inventory slot in the inventory view
-glm::mat4 Inventory::SlotTransform(uint32_t slot_index)
+std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
+{
+    //Should always be defined when the method is called
+    return m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
+}
+
+void Inventory::ClearUsedSlots()
+{
+    for (auto& entry : m_Slots) {
+        if (entry.has_value() && entry.value().block_count == 0)
+            entry = std::nullopt;
+    }
+}
+
+//pardon for the hardcoded section, haven't come up with a more appropriate way of doing this
+std::pair<glm::mat4, glm::mat4> Inventory::SlotTransform(uint32_t slot_index)
 {
     if (slot_index >= Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount)
-        return glm::mat4(1.0f);
+        return std::make_pair(glm::mat4(), glm::mat4());
 
     glm::mat4 ret(1.0f);
+    glm::mat4 num_ret(1.0f);
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
         uint32_t div = slot_index / 9;
         ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.066f - 0.1352f * div, 0.0f));
+        num_ret = glm::translate(num_ret, glm::vec3(-0.385f + 0.1019f * (slot_index % 9), -0.105f - 0.1352f * div, 0.0f));
     }
     else {
         ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.505f, 0.0f));
+        num_ret = glm::translate(num_ret, glm::vec3(-0.385f + 0.1019f * (slot_index % 9), -0.545f, 0.0f));
     }
     
-    return glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
+    glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
+    glm::mat4 num_transform = glm::scale(num_ret, glm::vec3(0.04f));
+    return std::make_pair(icon_transform, num_transform);
 }
 
-glm::mat4 Inventory::SlotScreenTransform(uint32_t slot_index)
+std::pair<glm::mat4, glm::mat4> Inventory::SlotScreenTransform(uint32_t slot_index)
 {
     if (slot_index >= Defs::g_InventoryScreenSlotsCount)
-        return glm::mat4(1.0f);
+        return std::make_pair(glm::mat4(), glm::mat4());
 
     glm::mat4 ret(1.0f);
+    glm::mat4 num_ret(1.0f);
     ret = glm::translate(ret, glm::vec3(-0.444f + 0.111f * slot_index, -0.91f, 0.0f));
-    return glm::scale(ret, glm::vec3(0.095f, 0.13f, 0.0f));
+    num_ret = glm::translate(num_ret, glm::vec3(-0.42f + 0.111f * slot_index, -0.945f, 0.0f));
+    
+    glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
+    glm::mat4 num_transform = glm::scale(num_ret, glm::vec3(0.04f));
+    return std::make_pair(icon_transform, num_transform);
 }
