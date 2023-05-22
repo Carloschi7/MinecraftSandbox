@@ -28,6 +28,7 @@ void main()
 }
 
 #shader fragment
+#version 330 core
 
 uniform sampler2D texture_water;
 

@@ -34,7 +34,7 @@ else() #default linux ubuntu for now (STILL WORK IN PROGRESS)
 	set(C7ENGINE_LIB_PATH  ${ENGINE_BUILD_PATH}/libC7Engine.so Threads::Threads)
 
 	#add -fpermissive to linux
-	set(${CMAKE_CXX_FLAGS} "${CMAKE_CXX_FLAGS} -fpermissive")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
 
 	#Filesystem support
 	link_libraries(stdc++fs)
