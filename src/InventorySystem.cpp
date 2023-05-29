@@ -3,14 +3,12 @@
 
 Inventory::Inventory() :
     m_State(GlCore::State::GetState()), m_CursorIndex(0), 
-    m_TextRenderer(static_cast<uint32_t>(Defs::TextureBinding::TextureText))
+    m_TextRenderer({m_State.GameWindow().Width(), m_State.GameWindow().Height()},
+        static_cast<uint32_t>(Defs::TextureBinding::TextureText))
 {
     for (uint32_t i = 0; i < 5; i++)
-    {
         m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
-    }
-    m_Slots[35] = { Defs::BlockType::Grass, 1 };
-
+    
     //Raw values from inventory dimension, a very simple way that is used only beacause the
     //inventory is not gonna change dimensions for the time being
     m_InternalStart = { 523, 542 };
@@ -19,6 +17,21 @@ Inventory::Inventory() :
 
     m_InternAbsTransf = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.25f, 0.0f));
     m_ScreenAbsTransf = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.91f, 0.0f)), glm::vec3(1.0f, 0.15f, 0.0f));
+
+    //Values that match the currently loaded inventory texture
+    m_Measures.irn = glm::vec3(-0.41f, -0.066f, 0.0f);
+    m_Measures.irn_offset = glm::vec3(0.1019f, -0.1352f, 0.0f);
+    m_Measures.irn_num_internal = glm::vec2(575, 575);
+    m_Measures.irn_num_offset = glm::vec2(98, 73);
+    m_Measures.irn_spart = glm::vec3(-0.41f, -0.505f, 0.0f);
+    m_Measures.irn_num_spart = glm::vec2(575, 811);
+
+    m_Measures.scr = glm::vec3(-0.444f, -0.91f, 0.0f);
+    m_Measures.scr_offset = 0.111f;
+    m_Measures.scr_num = glm::vec2(544, 1030);
+    m_Measures.scr_num_offset = 106;
+
+    m_Measures.tile_transform = glm::vec3(0.09f, 0.122f, 0.0f);
 }
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
@@ -193,9 +206,6 @@ void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, screen_slot_transform);
 
     glEnable(GL_BLEND);
-    double x, y;
-    m_State.GameWindow().GetCursorCoord(x, y);
-    std::cout << "x:" << x << "," << "y:" << y << std::endl;
     m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
     glDisable(GL_BLEND);
 }
@@ -239,22 +249,23 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bo
 
     glm::mat4 ret(1.0f);
     glm::vec2 num_ret(1.0f);
+    InventoryMeasures& ms = m_Measures;
     
     //Eventual offset for two digit numbers
     uint32_t two_digit_offset = two_digit_number ? 36 : 0;
 
     //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
-        uint32_t div = slot_index / 9;
-        ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.066f - 0.1352f * div, 0.0f));
-        num_ret = { 575 + (98 * (slot_index % 9)) - two_digit_offset, 575 + 73 * (slot_index / 9)};
+        glm::vec3 tile_offset = ms.irn + ms.irn_offset * glm::vec3(slot_index % 9, slot_index / 9, 0.0f);
+        ret = glm::translate(ret, tile_offset);
+        num_ret = ms.irn_num_internal + (ms.irn_num_offset * glm::vec2(slot_index % 9, slot_index / 9)) - glm::vec2(two_digit_offset, 0.0f);
     }
     else {
-        ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.505f, 0.0f));
-        num_ret = { 575 + (98 * (slot_index % 9)) - two_digit_offset, 811 };
+        ret = glm::translate(ret, ms.irn_spart + glm::vec3(ms.irn_offset.x * (slot_index % 9), 0.0f, 0.0f));
+        num_ret = ms.irn_num_spart + glm::vec2(ms.irn_num_offset.x * (slot_index % 9) - two_digit_offset, 0.0f);
     }
     
-    glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
+    glm::mat4 icon_transform = glm::scale(ret, ms.tile_transform);
     return std::make_pair(icon_transform, num_ret);
 }
 
@@ -265,12 +276,13 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_ind
 
     glm::mat4 ret(1.0f);
     glm::vec2 num_ret(1.0f);
+    InventoryMeasures& ms = m_Measures;
 
     uint32_t two_digit_offset = two_digit_number ? 36 : 0;
 
-    ret = glm::translate(ret, glm::vec3(-0.444f + 0.111f * slot_index, -0.91f, 0.0f));
-    num_ret = { 544 + 106 * slot_index - two_digit_offset, 1030 };
-    
-    glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
+    ret = glm::translate(ret, ms.scr + glm::vec3(ms.scr_offset * slot_index, 0.0f, 0.0f));
+    num_ret = ms.scr_num + glm::vec2(ms.scr_num_offset * slot_index - two_digit_offset, 0.0f);
+
+    glm::mat4 icon_transform = glm::scale(ret, ms.tile_transform);
     return std::make_pair(icon_transform, num_ret);
 }

@@ -436,7 +436,6 @@ float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool rig
 		//Logic which removes a block
 		if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
 		{
-			//Spawn a drop from the block that is being destroyed TODO
 			const glm::vec3 position = m_LocalBlocks[m_SelectedBlock].Position();
 			const Defs::BlockType type = m_LocalBlocks[m_SelectedBlock].Type();
 
@@ -512,7 +511,6 @@ void Chunk::UpdateBlocks(Inventory& inventory, float elapsed_time)
 		drop.Update(this, elapsed_time);
 		drop.UpdateModel(elapsed_time);
 
-		//TODO if player is near enough pick up the drop and insert it in the inv
 		if (glm::length(drop.Position() - m_State.GameCamera().GetPosition()) < 1.0f) {
 			inventory.AddToNewSlot(drop.Type());
 			bool last_flag = iter == std::prev(m_LocalDrops.end());

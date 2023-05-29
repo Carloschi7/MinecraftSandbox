@@ -14,7 +14,20 @@ struct InventoryEntry
 
 struct InventoryMeasures
 {
-	//TODO use this to substitute hadrcoded values
+	glm::vec3 irn;
+	glm::vec3 irn_offset;
+	glm::vec2 irn_num_internal;
+	glm::vec2 irn_num_offset;
+	//Spart means screen part, the screen inventory slot in the internal side
+	glm::vec3 irn_spart;
+	glm::vec2 irn_num_spart;
+
+	glm::vec3 scr;
+	float scr_offset;
+	glm::vec2 scr_num;
+	float scr_num_offset;
+
+	glm::vec3 tile_transform;
 };
 
 class Inventory
@@ -50,4 +63,7 @@ private:
 	glm::mat4 m_InternAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
 	int32_t m_CursorIndex;
+
+	//Measures that fit the textures
+	InventoryMeasures m_Measures;
 };
