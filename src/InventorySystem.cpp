@@ -25,7 +25,7 @@ void Inventory::AddToNewSlot(Defs::BlockType type)
 {
     //check for a stacking slot first
     for (std::optional<InventoryEntry>& slot : m_Slots) {
-        if (slot.has_value() && slot->block_type == type && slot->block_count < 9) {
+        if (slot.has_value() && slot->block_type == type && slot->block_count < s_MaxItemsPerSlot) {
             slot->block_count++;
             return;
         }
@@ -165,7 +165,7 @@ void Inventory::ScreenSideRender()
     uint32_t selector_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventorySelector);
     GlCore::GameTextures()[selector_binding].Bind(selector_binding);
     m_State.InventoryShader()->Uniform1i(selector_binding, "texture_inventory");
-    auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex);
+    auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex, true);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, screen_slot_transform);
 
     glEnable(GL_DEPTH_TEST);
@@ -175,13 +175,13 @@ void Inventory::RenderEntry(InventoryEntry entry, uint32_t binding_index)
 {
     //Drawing actual block
     m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
-    auto[icon_transform, num_transform] = SlotTransform(binding_index);
+    auto[icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, icon_transform);
 
     //Drawing block count
     //Number testing, needs to be removed soon
     glEnable(GL_BLEND);
-    m_TextRenderer.PrintString(std::to_string(entry.block_count), num_transform);
+    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
     glDisable(GL_BLEND);
 
 }
@@ -189,11 +189,14 @@ void Inventory::RenderEntry(InventoryEntry entry, uint32_t binding_index)
 void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
 {
     m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
-    auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount);
+    auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, screen_slot_transform);
 
     glEnable(GL_BLEND);
-    m_TextRenderer.PrintString(std::to_string(entry.block_count), num_transform);
+    double x, y;
+    m_State.GameWindow().GetCursorCoord(x, y);
+    std::cout << "x:" << x << "," << "y:" << y << std::endl;
+    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
     glDisable(GL_BLEND);
 }
 
@@ -229,39 +232,45 @@ void Inventory::ClearUsedSlots()
 }
 
 //pardon for the hardcoded section, haven't come up with a more appropriate way of doing this
-std::pair<glm::mat4, glm::mat4> Inventory::SlotTransform(uint32_t slot_index)
+std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bool two_digit_number)
 {
     if (slot_index >= Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount)
-        return std::make_pair(glm::mat4(), glm::mat4());
+        return std::make_pair(glm::mat4(), glm::vec2());
 
     glm::mat4 ret(1.0f);
-    glm::mat4 num_ret(1.0f);
+    glm::vec2 num_ret(1.0f);
+    
+    //Eventual offset for two digit numbers
+    uint32_t two_digit_offset = two_digit_number ? 36 : 0;
+
+    //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
         uint32_t div = slot_index / 9;
         ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.066f - 0.1352f * div, 0.0f));
-        num_ret = glm::translate(num_ret, glm::vec3(-0.385f + 0.1019f * (slot_index % 9), -0.105f - 0.1352f * div, 0.0f));
+        num_ret = { 575 + (98 * (slot_index % 9)) - two_digit_offset, 575 + 73 * (slot_index / 9)};
     }
     else {
         ret = glm::translate(ret, glm::vec3(-0.41f + 0.1019f * (slot_index % 9), -0.505f, 0.0f));
-        num_ret = glm::translate(num_ret, glm::vec3(-0.385f + 0.1019f * (slot_index % 9), -0.545f, 0.0f));
+        num_ret = { 575 + (98 * (slot_index % 9)) - two_digit_offset, 811 };
     }
     
     glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
-    glm::mat4 num_transform = glm::scale(num_ret, glm::vec3(0.04f));
-    return std::make_pair(icon_transform, num_transform);
+    return std::make_pair(icon_transform, num_ret);
 }
 
-std::pair<glm::mat4, glm::mat4> Inventory::SlotScreenTransform(uint32_t slot_index)
+std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_index, bool two_digit_number)
 {
     if (slot_index >= Defs::g_InventoryScreenSlotsCount)
-        return std::make_pair(glm::mat4(), glm::mat4());
+        return std::make_pair(glm::mat4(), glm::vec2());
 
     glm::mat4 ret(1.0f);
-    glm::mat4 num_ret(1.0f);
+    glm::vec2 num_ret(1.0f);
+
+    uint32_t two_digit_offset = two_digit_number ? 36 : 0;
+
     ret = glm::translate(ret, glm::vec3(-0.444f + 0.111f * slot_index, -0.91f, 0.0f));
-    num_ret = glm::translate(num_ret, glm::vec3(-0.42f + 0.111f * slot_index, -0.945f, 0.0f));
+    num_ret = { 544 + 106 * slot_index - two_digit_offset, 1030 };
     
     glm::mat4 icon_transform = glm::scale(ret, glm::vec3(0.09f, 0.122f, 0.0f));
-    glm::mat4 num_transform = glm::scale(num_ret, glm::vec3(0.04f));
-    return std::make_pair(icon_transform, num_transform);
+    return std::make_pair(icon_transform, num_ret);
 }
