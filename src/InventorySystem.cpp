@@ -32,6 +32,12 @@ Inventory::Inventory() :
     m_Measures.scr_num_offset = 106;
 
     m_Measures.tile_transform = glm::vec3(0.09f, 0.122f, 0.0f);
+
+    //Number padding
+    m_Measures.single_digit_offset = 0.0f;
+    m_Measures.double_digit_offset = 36.0f;
+    m_Measures.pending_single_digit_offset = 10.0f;
+    m_Measures.pending_double_digit_offset = -25.0f;
 }
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
@@ -135,7 +141,7 @@ void Inventory::InternalSideRender()
     //Draw selection
     if (m_PendingEntry.has_value()) {
         InventoryEntry entry = m_Slots[m_PendingEntry.value()].value();
-        RenderPendingEntry(static_cast<Defs::TextureBinding>(entry.block_type));
+        RenderPendingEntry(entry);
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -210,9 +216,9 @@ void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
     glDisable(GL_BLEND);
 }
 
-void Inventory::RenderPendingEntry(Defs::TextureBinding binding)
+void Inventory::RenderPendingEntry(InventoryEntry entry)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(binding), "texture_inventory");
+    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
 
     Window& wnd = GlCore::State::GetState().GameWindow();
     double dx, dy, cx, cy;
@@ -223,8 +229,15 @@ void Inventory::RenderPendingEntry(Defs::TextureBinding binding)
     cy = (dy / 1080.0) * 2.0 - 1.0;
 
     glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(cx, -cy, 0.0f));
-    pos_mat = glm::scale(pos_mat, glm::vec3(0.09f, 0.122f, 0.0f));
+    pos_mat = glm::scale(pos_mat, m_Measures.tile_transform);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
+    //TODO render also the associated number
+
+    glEnable(GL_BLEND);
+    InventoryMeasures& ms = m_Measures;
+    float factor = entry.block_count >= 10 ? ms.pending_double_digit_offset : ms.pending_single_digit_offset;
+    m_TextRenderer.DrawString(std::to_string(entry.block_count), {dx + factor, dy});
+    glDisable(GL_BLEND);
 }
 
 std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
@@ -252,7 +265,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bo
     InventoryMeasures& ms = m_Measures;
     
     //Eventual offset for two digit numbers
-    uint32_t two_digit_offset = two_digit_number ? 36 : 0;
+    uint32_t two_digit_offset = two_digit_number ? m_Measures.double_digit_offset : m_Measures.single_digit_offset;
 
     //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
@@ -278,7 +291,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_ind
     glm::vec2 num_ret(1.0f);
     InventoryMeasures& ms = m_Measures;
 
-    uint32_t two_digit_offset = two_digit_number ? 36 : 0;
+    uint32_t two_digit_offset = two_digit_number ? m_Measures.double_digit_offset : m_Measures.single_digit_offset;
 
     ret = glm::translate(ret, ms.scr + glm::vec3(ms.scr_offset * slot_index, 0.0f, 0.0f));
     num_ret = ms.scr_num + glm::vec2(ms.scr_num_offset * slot_index - two_digit_offset, 0.0f);

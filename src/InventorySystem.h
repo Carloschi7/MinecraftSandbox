@@ -27,6 +27,11 @@ struct InventoryMeasures
 	glm::vec2 scr_num;
 	float scr_num_offset;
 
+	float single_digit_offset;
+	float double_digit_offset;
+	float pending_single_digit_offset;
+	float pending_double_digit_offset;
+
 	glm::vec3 tile_transform;
 };
 
@@ -43,7 +48,7 @@ public:
 private:
 	void RenderEntry(InventoryEntry entry, uint32_t binding_index);
 	void RenderScreenEntry(InventoryEntry binding, uint32_t binding_index);
-	void RenderPendingEntry(Defs::TextureBinding binding);
+	void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(uint32_t slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(uint32_t slot_index, bool two_digit_number);
 private:
