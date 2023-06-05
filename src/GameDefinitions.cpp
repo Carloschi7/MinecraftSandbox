@@ -6,6 +6,8 @@ namespace Defs
 {
     std::atomic<ViewMode> g_ViewMode = ViewMode::WorldInteraction;
 
+    glm::vec3 g_PlayerAxisMapping = glm::vec3(1.0f);
+    float g_PlayerSpeed = 0.0f;
 	const float g_ChunkSpawningDistance = 500.0f;
 	const float g_ChunkRenderingDistance = 300.0f;
 	const float g_CameraCompensation = 10.0f;
@@ -20,29 +22,44 @@ namespace Defs
     std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
     std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
     Defs::BlockType g_InventorySelectedBlock = Defs::BlockType::Dirt;
-    extern bool g_EnvironmentChange = false;
+    bool g_EnvironmentChange = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<uint32_t> g_PushedSections;
-
     float water_limit = -0.25f;
-
+    
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
-        float fScalar = 0.6f;
+        float fScalar = 0.2f;
+        glm::vec3 old_position = camera->position;
 
+        //Give a starting point to every null coord if necessary
+        if (g_PlayerSpeed == 0.0f)
+            g_PlayerSpeed = 0.002f;
+
+        const glm::vec3& front = camera->GetFront();
         if (window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS }))
-            camera->MoveTowardsFront(fScalar * time);
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS }))
-            camera->MoveTowardsFront(-fScalar * time);
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS }))
-            camera->StrafeX(-fScalar * time);
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS }))
-            camera->StrafeX(fScalar * time);
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
-            camera->StrafeY(fScalar * time);
+            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
-            camera->StrafeY(-fScalar * time);
+            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
+
+        //If the player stops, then reduce the acceleration
+        if (old_position != camera->position) {
+           if (g_PlayerSpeed < fScalar)
+               g_PlayerSpeed *= 1.5f;
+        }
+        else {
+            //Player did not move
+            g_PlayerSpeed = 0.0f;
+        }
     }
 
     void MouseFunction(const Window &window, Camera *camera, double x, double y, double dpi, double time)

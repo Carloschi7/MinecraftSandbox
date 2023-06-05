@@ -248,7 +248,7 @@ void World::UpdateScene(Inventory& inventory, float elapsed_time)
 	//Determine selection
 	HandleSelection(inventory);
 
-	//normal updating
+	//normal updating & player collision
 	for (uint32_t i = 0; i < m_Chunks.size(); i++)
 	{
 		std::shared_ptr<Chunk> chunk = m_Chunks[i];
@@ -260,6 +260,9 @@ void World::UpdateScene(Inventory& inventory, float elapsed_time)
 
 		//We update blocks drawing conditions only if we move or if we break blocks
 		chunk->UpdateBlocks(inventory, elapsed_time);
+		//Check if the player collides with blocks himself
+		Camera& cam = m_State.GameCamera();
+		chunk->BlockCollisionLogic(cam.position);
 	}
 
 	if constexpr (GlCore::g_MultithreadedRendering)
@@ -346,7 +349,7 @@ void World::HandleSelection(Inventory& inventory)
 		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
-		float current_selection = chunk->BlockCollisionLogic(inventory, left_click, right_click);
+		float current_selection = chunk->RayCollisionLogic(inventory, left_click, right_click);
 
 		if (current_selection < nearest_selection)
 		{

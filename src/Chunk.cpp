@@ -401,7 +401,7 @@ void Chunk::AddFreshNormals(Block& b)
 	local_lambda(conf_rlfb[3], Defs::ChunkLocation::MinusZ, GlCore::g_NegZ);
 }
 
-float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
+float Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
 {
 	float closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
@@ -416,6 +416,7 @@ float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool rig
 	//Checking selection
 	for (std::size_t i = 0; i < vec_size; ++i)
 	{
+		//Player view ray block collision
 		auto& block = m_LocalBlocks[i];
 		//Discard automatically blocks which cant be selected or seen
 		if (!block.IsDrawable())
@@ -431,7 +432,7 @@ float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool rig
 			m_SelectedBlock = i;
 		}
 	}
-	
+
 	if (Defs::g_ViewMode != Defs::ViewMode::Inventory) {
 		//Logic which removes a block
 		if (left_click && m_SelectedBlock != static_cast<uint32_t>(-1))
@@ -495,6 +496,54 @@ float Chunk::BlockCollisionLogic(Inventory& inventory, bool left_click, bool rig
 	}
 
 	return closest_selected_block_dist;
+}
+
+void Chunk::BlockCollisionLogic(glm::vec3& position)
+{
+	//Player collision check with the environment
+	if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(m_ChunkCenter.x, m_ChunkCenter.z)) > 12.0f)
+		return;
+
+	//Defs::g_PlayerAxisMapping = glm::vec3(1.0f);
+	for (uint32_t i = 0; i < 3; i++) {
+		float& cd = Defs::g_PlayerAxisMapping[i];
+		//accelerated increase in this axis speed
+		if (cd > 1.0f) {
+			cd = 1.0f;
+		}
+		if (cd > 0.05f && cd < 1.0f) {
+			cd += 0.475f;
+		}
+		else {
+			cd += 0.01f;
+		}
+	}
+
+	for (uint32_t i = 0; i < m_LocalBlocks.size(); i++) {
+		if (!m_LocalBlocks[i].HasNormals())
+			continue;
+
+		const glm::vec3& block_pos = m_LocalBlocks[i].Position();
+		glm::vec3 diff = position - block_pos;
+		glm::vec3 abs_diff = glm::abs(diff);
+		if (abs_diff.x < 1.0f && abs_diff.y < 1.0f && abs_diff.z < 1.0f) {
+			//Simple collision solver
+			if (abs_diff.z > abs_diff.x && abs_diff.z > abs_diff.y) {
+				position.z = position.z < block_pos.z ? block_pos.z - 1.0f : block_pos.z + 1.0f;
+				Defs::g_PlayerAxisMapping.z = 0.0f;
+			}
+
+			if (abs_diff.x > abs_diff.y && abs_diff.x > abs_diff.z) {
+				position.x = position.x < block_pos.x ? block_pos.x - 1.0f : block_pos.x + 1.0f;
+				Defs::g_PlayerAxisMapping.x = 0.0f;
+			}
+
+			if(abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
+				position.y = position.y < block_pos.y ? block_pos.y - 1.0f : block_pos.y + 1.0f;
+				Defs::g_PlayerAxisMapping.y = 0.0f;
+			}
+		}
+	}
 }
 
 void Chunk::UpdateBlocks(Inventory& inventory, float elapsed_time)

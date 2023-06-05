@@ -90,6 +90,10 @@ namespace Defs
 	extern std::atomic<ViewMode> g_ViewMode;
 
 	//Game global variables
+
+	//Helps the update of the player position when he is colliding with world objects
+	extern glm::vec3 g_PlayerAxisMapping;
+	extern float g_PlayerSpeed;
 	extern const float g_ChunkSpawningDistance;
 	extern const float g_ChunkRenderingDistance;
 	extern const float g_CameraCompensation;
@@ -118,7 +122,6 @@ namespace Defs
 	extern float water_limit;
 	static float landmap_density = 1000.0f;
 	static float watermap_density = 900.0f;
-
 	
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
