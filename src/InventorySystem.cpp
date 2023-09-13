@@ -21,7 +21,7 @@ Inventory::Inventory() :
     //Values that match the currently loaded inventory texture
     m_Measures.irn = glm::vec3(-0.41f, -0.066f, 0.0f);
     m_Measures.irn_offset = glm::vec3(0.1019f, -0.1352f, 0.0f);
-    m_Measures.irn_num_internal = glm::vec2(575, 575);
+    m_Measures.irn_num = glm::vec2(575, 575);
     m_Measures.irn_num_offset = glm::vec2(98, 73);
     m_Measures.irn_spart = glm::vec3(-0.41f, -0.505f, 0.0f);
     m_Measures.irn_num_spart = glm::vec2(575, 811);
@@ -271,7 +271,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bo
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
         glm::vec3 tile_offset = ms.irn + ms.irn_offset * glm::vec3(slot_index % 9, slot_index / 9, 0.0f);
         ret = glm::translate(ret, tile_offset);
-        num_ret = ms.irn_num_internal + (ms.irn_num_offset * glm::vec2(slot_index % 9, slot_index / 9)) - glm::vec2(two_digit_offset, 0.0f);
+        num_ret = ms.irn_num + (ms.irn_num_offset * glm::vec2(slot_index % 9, slot_index / 9)) - glm::vec2(two_digit_offset, 0.0f);
     }
     else {
         ret = glm::translate(ret, ms.irn_spart + glm::vec3(ms.irn_offset.x * (slot_index % 9), 0.0f, 0.0f));

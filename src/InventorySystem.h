@@ -16,7 +16,7 @@ struct InventoryMeasures
 {
 	glm::vec3 irn;
 	glm::vec3 irn_offset;
-	glm::vec2 irn_num_internal;
+	glm::vec2 irn_num;
 	glm::vec2 irn_num_offset;
 	//Spart means screen part, the screen inventory slot in the internal side
 	glm::vec3 irn_spart;
