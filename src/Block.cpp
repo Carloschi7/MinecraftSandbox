@@ -46,7 +46,7 @@ void Block::AddNormal(const glm::vec3& norm)
     m_ExposedNormals[IndexForNormal(norm)] = true;
 }
 
-void Block::AddNormal(float x, float y, float z)
+void Block::AddNormal(f32 x, f32 y, f32 z)
 {
     AddNormal(glm::vec3(x, y, z));
 }
@@ -56,7 +56,7 @@ void Block::RemoveNormal(const glm::vec3& norm)
     m_ExposedNormals[IndexForNormal(norm)] = false;
 }
 
-void Block::RemoveNormal(float x, float y, float z)
+void Block::RemoveNormal(f32 x, f32 y, f32 z)
 {
     RemoveNormal(glm::vec3(x, y, z));
 }
@@ -170,7 +170,7 @@ void Drop::Render()
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void Drop::Update(Chunk* chunk, float elapsed_time)
+void Drop::Update(Chunk* chunk, f32 elapsed_time)
 {
     m_Velocity += m_Acceleration * elapsed_time * 0.5f;
     m_Position += m_Velocity;
@@ -185,7 +185,7 @@ void Drop::Update(Chunk* chunk, float elapsed_time)
     }
 }
 
-void Drop::UpdateModel(float elapsed_time)
+void Drop::UpdateModel(f32 elapsed_time)
 {
     m_Model = glm::translate(glm::mat4(1.0f), m_Position);
     m_Model = glm::rotate(m_Model, m_RotationAngle, glm::vec3(0.0f, 1.0f, 0.0f));

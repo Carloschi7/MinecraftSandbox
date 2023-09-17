@@ -5,7 +5,7 @@ namespace GlCore
 {
     struct VertexData
     {
-        std::vector<float> vertices;
+        std::vector<f32> vertices;
         Layout lyt;
     };
 
@@ -15,9 +15,9 @@ namespace GlCore
     //are being rendered
     using DrawableData = std::pair<std::array<u8, 3>, u8>;
 
-    static constexpr float one_third = 1.0f / 3.0f;
+    static constexpr f32 one_third = 1.0f / 3.0f;
 
-    static const std::vector<float> pos_and_tex_coord_sided
+    static const std::vector<f32> pos_and_tex_coord_sided
     {
         //Back
         -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
@@ -63,7 +63,7 @@ namespace GlCore
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
     };
 
-    static const std::vector<float> water_layer
+    static const std::vector<f32> water_layer
     {               
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
          0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    one_third,
@@ -73,7 +73,7 @@ namespace GlCore
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
     };
 
-    static const std::vector<float> vertices_crossaim = {
+    static const std::vector<f32> vertices_crossaim = {
         -0.5f, -0.5f,
          0.5f, -0.5f,
          0.5f,  0.5f,
@@ -83,7 +83,7 @@ namespace GlCore
         -0.5f, -0.5f,
     };
 
-    static const std::vector<float> inventory{
+    static const std::vector<f32> inventory{
         -0.5f, -0.5f,   0.0f, 0.0f,
          0.5f, -0.5f,   1.0f, 0.0f,
          0.5f,  0.5f,   1.0f, 1.0f,
@@ -93,7 +93,7 @@ namespace GlCore
         -0.5f, -0.5f,   0.0f, 0.0f,
     };
 
-    static const std::vector<float> inventory_entry{
+    static const std::vector<f32> inventory_entry{
         -0.5f, -0.5f,   0.25f, 2.0f * one_third,
          0.5f, -0.5f,   0.50f, 2.0f * one_third,
          0.5f,  0.5f,   0.50f, one_third,
@@ -105,48 +105,48 @@ namespace GlCore
     inline VertexData Cube()
     {
         Layout lyt;
-        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
-        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
-        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 3 * sizeof(f32) });
+        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 6 * sizeof(f32) });
         return { pos_and_tex_coord_sided, lyt };
     }
 
     inline VertexData WaterLayer()
     {
         Layout lyt;
-        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
-        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 3 * sizeof(float) });
-        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 6 * sizeof(float) });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 3 * sizeof(f32) });
+        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 6 * sizeof(f32) });
         return { water_layer, lyt };
     }
 
     inline VertexData CubeForDepth()
     {
         Layout lyt;
-        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 0 });
         return { pos_and_tex_coord_sided, lyt };
     }
 
     inline VertexData CrossAim()
     {
         Layout lyt;
-        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0 });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 2 * sizeof(f32), 0 });
         return { vertices_crossaim, lyt };
     }
 
     inline VertexData Inventory()
     {
         Layout lyt;
-        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });
-        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 2 * sizeof(float)});
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(f32), 0 });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(f32), 2 * sizeof(f32)});
         return { inventory, lyt };
     }
 
     inline VertexData InventoryEntryData()
     {
         Layout lyt;
-        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0 });
-        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(float), 2 * sizeof(float) });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(f32), 0 });
+        lyt.PushAttribute({ 2,GL_FLOAT, GL_FALSE, 4 * sizeof(f32), 2 * sizeof(f32) });
         return { inventory_entry, lyt };
     }
 

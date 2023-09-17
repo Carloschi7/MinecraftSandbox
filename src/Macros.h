@@ -1,4 +1,5 @@
 #pragma once
+#include "utils/types.h"
 
 //Assert if the environment is x32 or x64(always 64 on linux)
 #if defined _WIN64 || defined _WIN32

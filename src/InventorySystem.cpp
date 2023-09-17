@@ -213,7 +213,7 @@ void Inventory::RenderPendingEntry(InventoryEntry entry)
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
 
     glEnable(GL_BLEND);
-    float factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
+    f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
     glm::ivec2 number_padding(2, 2);
     m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
     glDisable(GL_BLEND);

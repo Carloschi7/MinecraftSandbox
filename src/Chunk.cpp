@@ -5,7 +5,7 @@
 #include <chrono>
 
 //Half a chunk's diagonal
-float Chunk::s_DiagonalLenght = 0.0f;
+f32 Chunk::s_DiagonalLenght = 0.0f;
 u32 Chunk::s_InternalSelectedBlock = static_cast<u32>(-1);
 
 Chunk::Chunk(World& father, glm::vec2 origin)
@@ -21,7 +21,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 
 	if (s_DiagonalLenght == 0.0f)
 	{
-		float lower_diag_squared = 2 * glm::pow(s_ChunkWidthAndHeight, 2);
+		f32 lower_diag_squared = 2 * glm::pow(s_ChunkWidthAndHeight, 2);
 		s_DiagonalLenght = glm::sqrt(lower_diag_squared + glm::pow(s_ChunkDepth, 2)) * 0.5f;
 	}
 
@@ -36,7 +36,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 	{
 		for (i32 k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
-			float fx = static_cast<float>(i), fy = static_cast<float>(k);
+			f32 fx = static_cast<f32>(i), fy = static_cast<f32>(k);
 			auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
 			u32 final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
@@ -56,7 +56,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 
 			if (perlin_data.in_water)
 			{
-				float water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
+				f32 water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
 				u32 water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)
@@ -149,8 +149,8 @@ void Chunk::InitGlobalNorms()
 	//The algorithm analyses each column of blocks in the 16x16 which can be found in the chunk and
 	//from the top block of that column an index descends assigning to each side a normal
 	//until a side block is found
-	float local_x =  m_LocalBlocks[0].Position().x, local_z = m_LocalBlocks[0].Position().z;
-	float last_y = 0.0f;
+	f32 local_x =  m_LocalBlocks[0].Position().x, local_z = m_LocalBlocks[0].Position().z;
+	f32 last_y = 0.0f;
 	i32 starting_index = 0;
 	//+1 because we need to parse the last column
 	for (i32 i = 0; i < m_LocalBlocks.size(); i++)
@@ -401,9 +401,9 @@ void Chunk::AddFreshNormals(Block& b)
 	local_lambda(conf_rlfb[3], Defs::ChunkLocation::MinusZ, GlCore::g_NegZ);
 }
 
-float Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
+f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
 {
-	float closest_selected_block_dist = INFINITY;
+	f32 closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
 	std::size_t vec_size = m_LocalBlocks.size();
 	m_SelectedBlock = static_cast<u32>(-1);
@@ -422,7 +422,7 @@ float Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right
 		if (!block.IsDrawable())
 			continue;
 
-		float dist = 0.0f;
+		f32 dist = 0.0f;
 		Defs::HitDirection local_selection = Defs::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
 		
 		if (local_selection != Defs::HitDirection::None && dist < closest_selected_block_dist)
@@ -506,7 +506,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 
 	//Defs::g_PlayerAxisMapping = glm::vec3(1.0f);
 	for (u32 i = 0; i < 3; i++) {
-		float& cd = Defs::g_PlayerAxisMapping[i];
+		f32& cd = Defs::g_PlayerAxisMapping[i];
 		//accelerated increase in this axis speed
 		if (cd > 1.0f) {
 			cd = 1.0f;
@@ -546,7 +546,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 	}
 }
 
-void Chunk::UpdateBlocks(Inventory& inventory, float elapsed_time)
+void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 {
 	auto& camera_position = m_State.GameCamera().GetPosition();
 
@@ -870,7 +870,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 	//Deserialize water layers
 	for (u32 i = 0; i < water_layer_size; i++)
 	{
-		float x, y, z;
+		f32 x, y, z;
 		sz% x; sz% y; sz% z;
 		m_WaterLayerPositions->emplace_back(x, y, z);
 	}

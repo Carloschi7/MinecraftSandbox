@@ -19,7 +19,7 @@ World::World()
 
 	for (i32 i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (i32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
-			m_Chunks.emplace_back(*this, glm::vec2(float(i), float(j)));
+			m_Chunks.emplace_back(*this, glm::vec2(f32(i), f32(j)));
 
 	HandleSectionData();
 
@@ -165,7 +165,7 @@ void World::Render()
 	GlCore::g_Drawcalls = 0;
 }
 
-void World::UpdateScene(Inventory& inventory, float elapsed_time)
+void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 {
 	//Chunk dynamic spawning
 	auto& camera_position = m_State.GameCamera().GetPosition();
@@ -331,7 +331,7 @@ void World::UpdateScene(Inventory& inventory, float elapsed_time)
 
 void World::HandleSelection(Inventory& inventory)
 {
-	float nearest_selection = INFINITY;
+	f32 nearest_selection = INFINITY;
 	i32 involved_chunk = static_cast<u32>(-1);
 
 	auto& window = m_State.GameWindow();
@@ -349,7 +349,7 @@ void World::HandleSelection(Inventory& inventory)
 		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
 			continue;
 
-		float current_selection = chunk->RayCollisionLogic(inventory, left_click, right_click);
+		f32 current_selection = chunk->RayCollisionLogic(inventory, left_click, right_click);
 
 		if (current_selection < nearest_selection)
 		{

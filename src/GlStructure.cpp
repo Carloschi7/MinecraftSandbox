@@ -13,7 +13,7 @@ namespace GlCore
         Camera& cam = state.GameCamera();
         cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
-        cam.SetPerspectiveValues(glm::radians(45.0f), float(wnd.Width()) / float(wnd.Height()), 0.1f, Defs::g_RenderDistance);
+        cam.SetPerspectiveValues(glm::radians(45.0f), f32(wnd.Width()) / f32(wnd.Height()), 0.1f, Defs::g_RenderDistance);
         cam.SetKeyboardFunction(Defs::KeyboardFunction);
         cam.SetMouseFunction(Defs::MouseFunction);
         
@@ -35,49 +35,49 @@ namespace GlCore
         //We set the crossaim model matrix here, for now this shader is used only 
         //for drawing this
         VertexData rd = CrossAim();
-        auto crossaim_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        auto crossaim_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         auto crossaim_shd = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
         crossaim_shd->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
 
         //Load water stuff
         rd = WaterLayer();
-        auto water_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        auto water_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         auto water_shd = std::make_shared<Shader>("assets/shaders/water.shader");
         water_shd->UniformMat4f(cam.GetProjMatrix(), "proj");
 
-        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         water_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxWaterLayersCount,
             water_shd->GetAttributeLocation("model_pos"), el);
 
         //Init framebuffer
         rd = CubeForDepth();
-        auto depth_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        auto depth_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         auto depth_fbf = std::make_shared<FrameBuffer>(g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
         auto depth_shd = std::make_shared<Shader>("assets/shaders/basic_shadow.shader");
 
         //Instanced attribute for block positions in the depth shader
-        el = { 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         depth_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
             depth_shd->GetAttributeLocation("model_depth_pos"), el);
 
         //Init inventory stuff
         rd = Inventory();
-        auto inventory_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        auto inventory_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         auto inventory_shd = std::make_shared<Shader>("assets/shaders/inventory.shader");
 
 
-        glm::mat4 inventory_proj = glm::ortho(0.0f, (float)wnd.Width(), (float)wnd.Height(), 0.0f);
+        glm::mat4 inventory_proj = glm::ortho(0.0f, (f32)wnd.Width(), (f32)wnd.Height(), 0.0f);
         inventory_shd->UniformMat4f(inventory_proj, "proj");
 
         //and also the inventory entry VM
         rd = InventoryEntryData();
-        auto inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
+        auto inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
 
         //Load block and drop resources
         VertexData cd = Cube();
-        auto block_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
+        auto block_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
         auto block_shd = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
-        auto drop_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(float), cd.lyt);
+        auto drop_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
         auto drop_shd = std::make_shared<Shader>("assets/shaders/basic_collectable.shader");
 
         //Load textures
@@ -102,7 +102,7 @@ namespace GlCore
         }
 
         //Create instance buffer for model matrices
-        el = { 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0 };
+        el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         block_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
             block_shd->GetAttributeLocation("model_pos"), el);
 
@@ -157,8 +157,8 @@ namespace GlCore
     {
         State& state = State::GetState();
         auto& pos = state.GameCamera().GetPosition();
-        float x = pos.x - std::fmod(pos.x, 32.0f);
-        float z = pos.z - std::fmod(pos.z, 32.0f);
+        f32 x = pos.x - std::fmod(pos.x, 32.0f);
+        f32 z = pos.z - std::fmod(pos.z, 32.0f);
         glm::vec3 light_eye = glm::vec3(x, 500.0f, z);
 
         static glm::mat4 proj = glm::ortho(-80.0f, 80.0f, -80.0f, 80.0f, 0.1f, 550.0f);

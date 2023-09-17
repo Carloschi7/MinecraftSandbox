@@ -354,14 +354,14 @@ namespace Utils
 	public:
 		Timer() = default;
 		void StartTimer() { m_TimePoint = std::chrono::steady_clock::now(); }
-		float GetElapsedMilliseconds() const
+		f32 GetElapsedMilliseconds() const
 		{
 			return GetElapsedSeconds() * 1000.0f;
 		}
-		float GetElapsedSeconds() const
+		f32 GetElapsedSeconds() const
 		{
 			auto now = std::chrono::steady_clock::now();
-			return std::chrono::duration<float>(now - m_TimePoint).count();
+			return std::chrono::duration<f32>(now - m_TimePoint).count();
 		}
 	private:
 		std::chrono::steady_clock::time_point m_TimePoint;

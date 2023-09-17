@@ -69,14 +69,14 @@ namespace Defs
 	{
 		glm::vec2 pos_xz;
 		glm::vec2 neg_xz;
-		float water_height;
+		f32 water_height;
 
-		float Length() const
+		f32 Length() const
 		{
 			return glm::length(pos_xz - neg_xz);
 		}
 
-		bool Contains(float x, float y) const
+		bool Contains(f32 x, f32 y) const
 		{
 			return x >= neg_xz.x && y >= neg_xz.y &&
 				x <= pos_xz.x && y <= pos_xz.y;
@@ -93,13 +93,13 @@ namespace Defs
 
 	//Helps the update of the player position when he is colliding with world objects
 	extern glm::vec3 g_PlayerAxisMapping;
-	extern float g_PlayerSpeed;
-	extern const float g_ChunkSpawningDistance;
-	extern const float g_ChunkRenderingDistance;
-	extern const float g_CameraCompensation;
-	extern const float g_RenderDistance;
-	extern const float g_FramedPlayerSpeed;
-	extern const float g_SectionDimension;
+	extern f32 g_PlayerSpeed;
+	extern const f32 g_ChunkSpawningDistance;
+	extern const f32 g_ChunkRenderingDistance;
+	extern const f32 g_CameraCompensation;
+	extern const f32 g_RenderDistance;
+	extern const f32 g_FramedPlayerSpeed;
+	extern const f32 g_SectionDimension;
 	//Personal index for each chunk
 	extern u32 g_ChunkProgIndex;
 	extern const i32 g_SpawnerBegin;
@@ -119,14 +119,14 @@ namespace Defs
 	extern std::string g_SerializedFileFormat;
 
 	//Perlin variables
-	extern float water_limit;
-	static float landmap_density = 1000.0f;
-	static float watermap_density = 900.0f;
+	extern f32 water_limit;
+	static f32 landmap_density = 1000.0f;
+	static f32 watermap_density = 900.0f;
 	
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
     void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);
-	HitDirection ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, float& dist);
+	HitDirection ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, f32& dist);
 	//Chunks will also be assigned a value in order to be grouped
 	//with other chunks. This is done in order to save RAM, so not
 	//every chunk of the world is loaded at once.
@@ -136,7 +136,7 @@ namespace Defs
 	//Given an underwater tile coordinate, determines and caches the water level for that
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
-	float WaterRegionLevel(float sx, float sy, const WorldSeed& seed);
+	f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed);
 	std::vector<glm::vec3> GenerateRandomFoliage();
 	
 	//Perlin noise related funcions namespace, very little overhead used
@@ -144,16 +144,16 @@ namespace Defs
 	{
 		struct Generation
 		{
-			float altitude;
+			f32 altitude;
 			Biome biome;
 			bool in_water;
 		};
 
 		void InitSeedMap(WorldSeed& seed);
-		float Interpolate(float a0, float a1, float w);
+		f32 Interpolate(f32 a0, f32 a1, f32 w);
 		glm::vec2 GenRandomVecFrom(i32 n1, i32 n2, const u64& seed);
-		float PerformDot(i32 a, i32 b, float x, float y, const u64& seed);
-		float GenerateSingleNoise(float x, float y, const u64& seed);
-		Generation GetBlockAltitude(float x, float y, const WorldSeed& seed);
+		f32 PerformDot(i32 a, i32 b, f32 x, f32 y, const u64& seed);
+		f32 GenerateSingleNoise(f32 x, f32 y, const u64& seed);
+		Generation GetBlockAltitude(f32 x, f32 y, const WorldSeed& seed);
 	}
 }

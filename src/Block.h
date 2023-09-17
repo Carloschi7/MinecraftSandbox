@@ -17,9 +17,9 @@ public:
 
     const GlCore::DrawableData& DrawableSides() const;
     void AddNormal(const glm::vec3& norm);
-    void AddNormal(float x, float y, float z);
+    void AddNormal(f32 x, f32 y, f32 z);
     void RemoveNormal(const glm::vec3& norm);
-    void RemoveNormal(float x, float y, float z);
+    void RemoveNormal(f32 x, f32 y, f32 z);
     bool HasNormals() const;
     bool IsDrawable() const;
 
@@ -55,8 +55,8 @@ public:
     inline Defs::BlockType Type() const { return m_Type; }
 
     void Render();
-    void Update(Chunk* chunk, float elapsed_time);
-    void UpdateModel(float elapsed_time);
+    void Update(Chunk* chunk, f32 elapsed_time);
+    void UpdateModel(f32 elapsed_time);
 private:
     GlCore::State& m_State;
 
@@ -65,6 +65,6 @@ private:
     glm::vec3 m_Acceleration;
 
     Defs::BlockType m_Type;
-    float m_RotationAngle;
+    f32 m_RotationAngle;
     glm::mat4 m_Model;
 };

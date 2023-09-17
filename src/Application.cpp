@@ -69,7 +69,7 @@ void Application::OnUserRun()
     auto logic_thread_impl = [&]()
     {
         Utils::Timer timer;
-        float recorded_time = 0.1f;
+        f32 recorded_time = 0.1f;
         while (GlCore::g_LogicThreadShouldRun)
         {
             timer.StartTimer();
@@ -102,7 +102,7 @@ void Application::OnUserRun()
     glEnable(GL_DEPTH_TEST);
     Utils::Timer timer;
     //Standard value for the first frame
-    float recorded_time = 0.1f;
+    f32 recorded_time = 0.1f;
     while (!m_Window.ShouldClose())
     {
         if constexpr (!GlCore::g_MultithreadedRendering)

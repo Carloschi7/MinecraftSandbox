@@ -39,11 +39,11 @@ public:
 	//Check if the player collides with the scene
 
 	//Collision functions
-	[[nodiscard]] float RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click);
+	[[nodiscard]] f32 RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click);
 	void BlockCollisionLogic(glm::vec3& position);
 
 
-	void UpdateBlocks(Inventory& inventory, float elapsed_time);
+	void UpdateBlocks(Inventory& inventory, f32 elapsed_time);
 	//Checks if this chunk is near enough to the player to be rendered
 	bool IsChunkRenderable() const;
 	//Checks if this chunk (within the renderable space) is visible by the player
@@ -111,7 +111,7 @@ private:
 	u32 m_SectorIndex;
 
 
-	static float s_DiagonalLenght;
+	static f32 s_DiagonalLenght;
 	static constexpr u32 s_ChunkWidthAndHeight = 16;
 	static constexpr u32 s_ChunkDepth = 50;
 };

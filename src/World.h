@@ -13,7 +13,7 @@ public:
     ~World();
     //Renders visible world
     void Render();
-    void UpdateScene(Inventory& inventory, float elapsed_time);
+    void UpdateScene(Inventory& inventory, f32 elapsed_time);
     void HandleSelection(Inventory& inventory);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();

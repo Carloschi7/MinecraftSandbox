@@ -7,13 +7,13 @@ namespace Defs
     std::atomic<ViewMode> g_ViewMode = ViewMode::WorldInteraction;
 
     glm::vec3 g_PlayerAxisMapping = glm::vec3(1.0f);
-    float g_PlayerSpeed = 0.0f;
-	const float g_ChunkSpawningDistance = 500.0f;
-	const float g_ChunkRenderingDistance = 300.0f;
-	const float g_CameraCompensation = 10.0f;
-	const float g_RenderDistance = 1500.0f;
-    const float g_FramedPlayerSpeed = 80.0f;
-    const float g_SectionDimension = 512.0f;
+    f32 g_PlayerSpeed = 0.0f;
+	const f32 g_ChunkSpawningDistance = 500.0f;
+	const f32 g_ChunkRenderingDistance = 300.0f;
+	const f32 g_CameraCompensation = 10.0f;
+	const f32 g_RenderDistance = 1500.0f;
+    const f32 g_FramedPlayerSpeed = 80.0f;
+    const f32 g_SectionDimension = 512.0f;
     u32 g_ChunkProgIndex = 0;
 	const i32 g_SpawnerBegin = -64;
 	const i32 g_SpawnerEnd = 64;
@@ -26,11 +26,11 @@ namespace Defs
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<u32> g_PushedSections;
-    float water_limit = -0.25f;
+    f32 water_limit = -0.25f;
     
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
-        float fScalar = 0.2f;
+        f32 fScalar = 0.2f;
         glm::vec3 old_position = camera->position;
 
         //Give a starting point to every null coord if necessary
@@ -39,17 +39,17 @@ namespace Defs
 
         const glm::vec3& front = camera->GetFront();
         if (window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS }))
-            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS }))
-            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS }))
-            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS }))
-            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
-            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (float)time;
+            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
-            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(float)time;
+            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
 
         //If the player stops, then reduce the acceleration
         if (old_position != camera->position) {
@@ -72,24 +72,24 @@ namespace Defs
     }
 
     HitDirection ViewBlockCollision(const glm::vec3 &camera_pos, const glm::vec3 &camera_dir, const glm::vec3 &block_pos,
-                            float &dist) 	{
+                            f32 &dist) 	{
         //Calculating distance
         dist = glm::length(camera_pos - block_pos);
         if (dist > 10.0f)
             return HitDirection::None;
 
-        static float half_cube_diag = 0.5f;
+        static f32 half_cube_diag = 0.5f;
         glm::vec3 cube_min = block_pos - glm::vec3(half_cube_diag);
         glm::vec3 cube_max = block_pos + glm::vec3(half_cube_diag);
 
-        float t0x = (cube_min.x - camera_pos.x) / camera_dir.x;
-        float t1x = (cube_max.x - camera_pos.x) / camera_dir.x;
+        f32 t0x = (cube_min.x - camera_pos.x) / camera_dir.x;
+        f32 t1x = (cube_max.x - camera_pos.x) / camera_dir.x;
 
         if (t0x > t1x)
             std::swap(t0x, t1x);
 
-        float t0y = (cube_min.y - camera_pos.y) / camera_dir.y;
-        float t1y = (cube_max.y - camera_pos.y) / camera_dir.y;
+        f32 t0y = (cube_min.y - camera_pos.y) / camera_dir.y;
+        f32 t1y = (cube_max.y - camera_pos.y) / camera_dir.y;
 
         if (t0y > t1y)
             std::swap(t0y, t1y);
@@ -97,14 +97,14 @@ namespace Defs
         if (t1x < t0y || t1y < t0x)
             return HitDirection::None;
 
-        float t0z = (cube_min.z - camera_pos.z) / camera_dir.z;
-        float t1z = (cube_max.z - camera_pos.z) / camera_dir.z;
+        f32 t0z = (cube_min.z - camera_pos.z) / camera_dir.z;
+        f32 t1z = (cube_max.z - camera_pos.z) / camera_dir.z;
 
         if (t0z > t1z)
             std::swap(t0z, t1z);
 
-        float tc0 = std::max(t0x, t0y);
-        float tc1 = std::min(t1x, t1y);
+        f32 tc0 = std::max(t0x, t0y);
+        f32 tc1 = std::min(t1x, t1y);
 
         if (t0z > tc1 || t1z < tc0)
             return HitDirection::None;
@@ -113,7 +113,7 @@ namespace Defs
         glm::vec3 dir = hitpoint - block_pos;
         glm::vec3 abs_dir = glm::abs(dir);
 
-        static auto max3 = [](float f1, float f2, float f3) {
+        static auto max3 = [](f32 f1, f32 f2, f32 f3) {
             if (f1 > f2 && f1 > f3)
                 return 1;
             else if (f2 > f1 && f2 > f3)
@@ -155,10 +155,10 @@ namespace Defs
         return ret;
     }
 
-    float WaterRegionLevel(float sx, float sy, const WorldSeed& seed)
+    f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed)
     {
         static std::vector<WaterArea> pushed_areas;
-        static float watermap_unit = 1.0f / watermap_density;
+        static f32 watermap_unit = 1.0f / watermap_density;
         
         for (auto& area : pushed_areas)
             if (area.Contains(sx, sy))
@@ -176,7 +176,7 @@ namespace Defs
             for (auto v : { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) })
             {
                 glm::vec2 pos = vec + v * watermap_unit;
-                float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
+                f32 map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
 
                 if (map_val > water_limit)
                     return true;
@@ -197,9 +197,9 @@ namespace Defs
         
         //Search closest shoreline
         glm::vec2 search_vec{ 1.0f };
-        float f0 = PerlNoise::GenerateSingleNoise(sx / landmap_density, sy / landmap_density, seed.seed_value);
-        float f1 = PerlNoise::GenerateSingleNoise((sx + 10.0f) / landmap_density, sy / landmap_density, seed.seed_value);
-        float f2 = PerlNoise::GenerateSingleNoise(sx / landmap_density, (sy + 10.0f) / landmap_density, seed.seed_value);
+        f32 f0 = PerlNoise::GenerateSingleNoise(sx / landmap_density, sy / landmap_density, seed.seed_value);
+        f32 f1 = PerlNoise::GenerateSingleNoise((sx + 10.0f) / landmap_density, sy / landmap_density, seed.seed_value);
+        f32 f2 = PerlNoise::GenerateSingleNoise(sx / landmap_density, (sy + 10.0f) / landmap_density, seed.seed_value);
 
         if (f0 > f1)
             search_vec.x = -1.0f;
@@ -208,7 +208,7 @@ namespace Defs
             search_vec.y = -1.0f;
 
         bool alt = true;
-        float lx = sx, ly = sy;
+        f32 lx = sx, ly = sy;
         while (PerlNoise::GenerateSingleNoise(lx / watermap_density, ly / watermap_density, seed.secundary_seeds[0]) < water_limit)
         {
             if(alt)
@@ -241,7 +241,7 @@ namespace Defs
                 //calling that function anly when we have hit a new valid block saves us some performances
 
                 //load water map value
-                float map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
+                f32 map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
 
                 if (map_val > water_limit)
                     good_border = true;
@@ -264,7 +264,7 @@ namespace Defs
 
                     //Need to load the final terrain height, already parsed with exponentials and 
                     //logarithms
-                    float cur_val = PerlNoise::GetBlockAltitude(pos.x, pos.y, seed).altitude;
+                    f32 cur_val = PerlNoise::GetBlockAltitude(pos.x, pos.y, seed).altitude;
                     if (cur_val < wa.water_height)
                         wa.water_height = cur_val;
 
@@ -300,14 +300,14 @@ namespace Defs
             for (i32 x = -2.0f; x <= 2.0f; x++) {
                 for (i32 y = -1.0f; y <= 3.0f; y++) {
                     for (i32 z = -2.0f; z <= 2.0f; z++) {
-                        possible_positions.emplace_back((float)x, (float)y, (float)z);
+                        possible_positions.emplace_back((f32)x, (f32)y, (f32)z);
                     }
                 }
             }
 
             //Pop the ones in the trunk's way
-            for (float y = -1.0f; y <= 1.0f; y++) {
-                possible_positions.erase(std::find(possible_positions.begin(), possible_positions.end(), glm::vec3(0.0f, (float)y, 0.0f)));
+            for (f32 y = -1.0f; y <= 1.0f; y++) {
+                possible_positions.erase(std::find(possible_positions.begin(), possible_positions.end(), glm::vec3(0.0f, (f32)y, 0.0f)));
             }
         }
 
@@ -378,7 +378,7 @@ namespace Defs
                 seed.secundary_seeds[1] = 3142523 * seed.seed_value;
             }
         }
-        float Interpolate(float a0, float a1, float w)
+        f32 Interpolate(f32 a0, f32 a1, f32 w)
         {
             return (a1 - a0) * w + a0;
         }
@@ -392,27 +392,27 @@ namespace Defs
             a *= 3284157443 * seed; b ^= a << s | a >> w - s;
             b *= 1911520717; a ^= b << s | b >> w - s;
             a *= 2048419325;
-            float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
+            f32 random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
             return { glm::cos(random), glm::sin(random) };
         }
-        float PerformDot(i32 a, i32 b, float x, float y, const u64& seed) {
+        f32 PerformDot(i32 a, i32 b, f32 x, f32 y, const u64& seed) {
             glm::vec2 rand_vec = GenRandomVecFrom(a, b, seed);
             //Offset vector
-            glm::vec2 offset{x - static_cast<float>(a), y - static_cast<float>(b)};
+            glm::vec2 offset{x - static_cast<f32>(a), y - static_cast<f32>(b)};
             return glm::dot(offset, rand_vec);
         }
-        float GenerateSingleNoise(float x, float y, const u64& seed) {
+        f32 GenerateSingleNoise(f32 x, f32 y, const u64& seed) {
             i32 x0, x1, y0, y1;
-            float sx, sy;
+            f32 sx, sy;
             x0 = std::floor(x);
             x1 = x0 + 1;
             y0 = std::floor(y);
             y1 = y0 + 1;
 
-            sx = x - static_cast<float>(x0);
-            sy = y - static_cast<float>(y0);
+            sx = x - static_cast<f32>(x0);
+            sy = y - static_cast<f32>(y0);
 
-            float f1, f2, f3, f4, fr1, fr2;
+            f32 f1, f2, f3, f4, fr1, fr2;
             f1 = PerformDot(x0, y0, x, y, seed);
             f2 = PerformDot(x1, y0, x, y, seed);
             f3 = PerformDot(x0, y1, x, y, seed);
@@ -422,19 +422,19 @@ namespace Defs
             fr2 = Interpolate(f3, f4, sx);
             return Interpolate(fr1, fr2, sy);
         }
-        Generation GetBlockAltitude(float x, float y, const WorldSeed& seed)
+        Generation GetBlockAltitude(f32 x, f32 y, const WorldSeed& seed)
         {
             //Biome distribution
-            float biome_map = GenerateSingleNoise(x / landmap_density, y / landmap_density, seed.seed_value);
+            f32 biome_map = GenerateSingleNoise(x / landmap_density, y / landmap_density, seed.seed_value);
             Biome local_biome = biome_map < -0.2f ? Biome::Desert : Biome::Plains;
 
-            float water_map = GenerateSingleNoise(x / watermap_density, y / watermap_density, seed.secundary_seeds[0]);
+            f32 water_map = GenerateSingleNoise(x / watermap_density, y / watermap_density, seed.secundary_seeds[0]);
 
             //Terrain generation
-            float fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
-            float fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
-            float fz = GenerateSingleNoise(x / 80.0f, y / 80.0f, seed.secundary_seeds[1]) * 3.0f;
-            float terrain_output = fx + fy + fz;
+            f32 fx = GenerateSingleNoise(x / 16.0f, y / 16.0f, seed.seed_value);
+            f32 fy = GenerateSingleNoise(x / 40.0f, y / 40.0f, seed.secundary_seeds[0]);
+            f32 fz = GenerateSingleNoise(x / 80.0f, y / 80.0f, seed.secundary_seeds[1]) * 3.0f;
+            f32 terrain_output = fx + fy + fz;
             //Smoothing the landscape's slopes as we approach the desert
             if (biome_map < 0.0f)
                 terrain_output *= glm::max(glm::exp(biome_map * 6.0f), 0.1f);
