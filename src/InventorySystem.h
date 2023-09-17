@@ -12,27 +12,31 @@ struct InventoryEntry
 	uint8_t block_count; //Max 64 like in the original, so small type used
 };
 
-struct InventoryMeasures
+struct GridMeasures
 {
-	glm::vec3 irn;
-	glm::vec3 irn_offset;
-	glm::vec2 irn_num;
-	glm::vec2 irn_num_offset;
-	//Spart means screen part, the screen inventory slot in the internal side
-	glm::vec3 irn_spart;
-	glm::vec2 irn_num_spart;
+	glm::ivec2 entry_position;
+	glm::ivec2 entry_stride;
+	glm::ivec2 number_position;
+	glm::ivec2 number_stride;
 
-	glm::vec3 scr;
-	float scr_offset;
-	glm::vec2 scr_num;
-	float scr_num_offset;
+	static constexpr glm::vec3 tile_transform = glm::vec3(96.0f, 75.0f, 0.0f);
+};
 
-	float single_digit_offset;
-	float double_digit_offset;
-	float pending_single_digit_offset;
-	float pending_double_digit_offset;
+struct Grid {
+	Grid() {}
+	Grid(const Grid&) = default;
+	Grid& operator=(const Grid&) = default;
+	Grid(glm::ivec2 start, glm::ivec2 end, uint32_t x_slots, uint32_t y_slots)
+	{
+		measures.entry_position = start;
+		measures.entry_stride = measures.number_stride = {
+			(end.x - start.x) / x_slots,
+			(end.y - start.y) / y_slots
+		};
+		measures.number_position = start + glm::ivec2(12, 3);
+	}
 
-	glm::vec3 tile_transform;
+	GridMeasures measures;
 };
 
 class Inventory
@@ -69,6 +73,14 @@ private:
 	glm::mat4 m_ScreenAbsTransf;
 	int32_t m_CursorIndex;
 
-	//Measures that fit the textures
-	InventoryMeasures m_Measures;
+	static constexpr float single_digit_offset = 0.0f;
+	static constexpr float double_digit_offset = 36.0f;
+	static constexpr float pending_single_digit_offset = 10.0f;
+	static constexpr float pending_double_digit_offset = -25.0f;
+
+	//Tree main grids,
+	//	internal
+	//	internal for screen section
+	//	screen section
+	Grid m_InternalGrid, m_InternalScreenGrid, m_ScreenGrid;
 };

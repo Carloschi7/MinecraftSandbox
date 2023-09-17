@@ -8,15 +8,12 @@ namespace GlCore
     void LoadResources()
     {
         State& state = State::GetState();
+        Window& wnd = state.GameWindow();
 
         Camera& cam = state.GameCamera();
         cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 
-        cam.SetPerspectiveValues(glm::radians(45.0f),
-            float(state.GameWindow().Width()) / float(state.GameWindow().Height()),
-            0.1f,
-            Defs::g_RenderDistance);
-
+        cam.SetPerspectiveValues(glm::radians(45.0f), float(wnd.Width()) / float(wnd.Height()), 0.1f, Defs::g_RenderDistance);
         cam.SetKeyboardFunction(Defs::KeyboardFunction);
         cam.SetMouseFunction(Defs::MouseFunction);
         
@@ -67,6 +64,10 @@ namespace GlCore
         rd = Inventory();
         auto inventory_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(float), rd.lyt);
         auto inventory_shd = std::make_shared<Shader>("assets/shaders/inventory.shader");
+
+
+        glm::mat4 inventory_proj = glm::ortho(0.0f, (float)wnd.Width(), (float)wnd.Height(), 0.0f);
+        inventory_shd->UniformMat4f(inventory_proj, "proj");
 
         //and also the inventory entry VM
         rd = InventoryEntryData();
@@ -194,7 +195,7 @@ namespace GlCore
             textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/Inventory.png", true, TextureFilter::Nearest);
+            textures.emplace_back("assets/textures/Inventory.png", false, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
             textures.emplace_back("assets/textures/ScreenInventorySelector.png", true, TextureFilter::Nearest);
         }

@@ -9,35 +9,20 @@ Inventory::Inventory() :
     for (uint32_t i = 0; i < 5; i++)
         m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
     
-    //Raw values from inventory dimension, a very simple way that is used only beacause the
-    //inventory is not gonna change dimensions for the time being
-    m_InternalStart = { 523, 542 };
+    //Avoid writing glm a thousand times in some of these functions
+    using namespace glm;
+    //TODO compute these from the grid calculations in some way
+    m_InternalStart = { 482, 470 };
     m_ScreenStart = { 523, 780 };
-    m_IntervalDimension = { 97, 74 };
+    m_IntervalDimension = { 588 - 482, 558 - 470 };
 
-    m_InternAbsTransf = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.25f, 0.0f));
-    m_ScreenAbsTransf = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.91f, 0.0f)), glm::vec3(1.0f, 0.15f, 0.0f));
+    m_InternAbsTransf = scale(translate(mat4(1.0f), vec3(960.0f, 468.0f, 0.0f)), vec3(1049.0f, 800.0f, 0.0f));
+    m_ScreenAbsTransf = scale(translate(mat4(1.0f), vec3(958.0f, 1030.0f, 0.0f)), vec3(1010.0f, 100.0f, 0.0f));
 
-    //Values that match the currently loaded inventory texture
-    m_Measures.irn = glm::vec3(-0.41f, -0.066f, 0.0f);
-    m_Measures.irn_offset = glm::vec3(0.1019f, -0.1352f, 0.0f);
-    m_Measures.irn_num = glm::vec2(575, 575);
-    m_Measures.irn_num_offset = glm::vec2(98, 73);
-    m_Measures.irn_spart = glm::vec3(-0.41f, -0.505f, 0.0f);
-    m_Measures.irn_num_spart = glm::vec2(575, 811);
-
-    m_Measures.scr = glm::vec3(-0.444f, -0.91f, 0.0f);
-    m_Measures.scr_offset = 0.111f;
-    m_Measures.scr_num = glm::vec2(544, 1030);
-    m_Measures.scr_num_offset = 106;
-
-    m_Measures.tile_transform = glm::vec3(0.09f, 0.122f, 0.0f);
-
-    //Number padding
-    m_Measures.single_digit_offset = 0.0f;
-    m_Measures.double_digit_offset = 36.0f;
-    m_Measures.pending_single_digit_offset = 10.0f;
-    m_Measures.pending_double_digit_offset = -25.0f;
+    //Item grids
+    m_InternalGrid = Grid(ivec2(530, 510), ivec2(1500, 772), 9, 3);
+    m_InternalScreenGrid = Grid(ivec2(530, 790), ivec2(1500, 890), 9, 1);
+    m_ScreenGrid = Grid(ivec2(510, 1030), ivec2(1526, 1070), 9, 1);
 }
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
@@ -90,7 +75,6 @@ void Inventory::HandleInventorySelection()
                     y_start = m_ScreenStart.y;
                 }
 
-                
                 if (dx >= x_start && dy >= y_start && dx < x_start + m_IntervalDimension.x && dy < y_start + m_IntervalDimension.y)
                 {
                     uint32_t index = i * 9 + j;
@@ -221,22 +205,17 @@ void Inventory::RenderPendingEntry(InventoryEntry entry)
     m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
 
     Window& wnd = GlCore::State::GetState().GameWindow();
-    double dx, dy, cx, cy;
+    double dx, dy;
     wnd.GetCursorCoord(dx, dy);
 
-    //Convert coordinates to screen space
-    cx = (dx / 1920.0) * 2.0 - 1.0;
-    cy = (dy / 1080.0) * 2.0 - 1.0;
-
-    glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(cx, -cy, 0.0f));
-    pos_mat = glm::scale(pos_mat, m_Measures.tile_transform);
+    glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
+    pos_mat = glm::scale(pos_mat, GridMeasures::tile_transform);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
-    //TODO render also the associated number
 
     glEnable(GL_BLEND);
-    InventoryMeasures& ms = m_Measures;
-    float factor = entry.block_count >= 10 ? ms.pending_double_digit_offset : ms.pending_single_digit_offset;
-    m_TextRenderer.DrawString(std::to_string(entry.block_count), {dx + factor, dy});
+    float factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
+    glm::ivec2 number_padding(2, 2);
+    m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
     glDisable(GL_BLEND);
 }
 
@@ -257,28 +236,35 @@ void Inventory::ClearUsedSlots()
 //pardon for the hardcoded section, haven't come up with a more appropriate way of doing this
 std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bool two_digit_number)
 {
-    if (slot_index >= Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount)
-        return std::make_pair(glm::mat4(), glm::vec2());
+    using namespace glm;
 
-    glm::mat4 ret(1.0f);
-    glm::vec2 num_ret(1.0f);
-    InventoryMeasures& ms = m_Measures;
+    if (slot_index >= Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount)
+        return std::make_pair(mat4(), vec2());
+
+    mat4 ret(1.0f);
+    vec2 num_ret(1.0f);
     
     //Eventual offset for two digit numbers
-    uint32_t two_digit_offset = two_digit_number ? m_Measures.double_digit_offset : m_Measures.single_digit_offset;
+    uint32_t two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
     //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
-        glm::vec3 tile_offset = ms.irn + ms.irn_offset * glm::vec3(slot_index % 9, slot_index / 9, 0.0f);
-        ret = glm::translate(ret, tile_offset);
-        num_ret = ms.irn_num + (ms.irn_num_offset * glm::vec2(slot_index % 9, slot_index / 9)) - glm::vec2(two_digit_offset, 0.0f);
+        GridMeasures& ms = m_InternalGrid.measures;
+        vec3 tile_offset = {
+            ms.entry_position + ms.entry_stride * ivec2(slot_index % 9, slot_index / 9), 
+            0.0f 
+        };
+        
+        ret = translate(ret, tile_offset);
+        num_ret = ms.number_position + (ms.number_stride * ivec2(slot_index % 9, slot_index / 9)) - ivec2(two_digit_offset, 0);
     }
     else {
-        ret = glm::translate(ret, ms.irn_spart + glm::vec3(ms.irn_offset.x * (slot_index % 9), 0.0f, 0.0f));
-        num_ret = ms.irn_num_spart + glm::vec2(ms.irn_num_offset.x * (slot_index % 9) - two_digit_offset, 0.0f);
+        GridMeasures& ms = m_InternalScreenGrid.measures;
+        ret = translate(ret, vec3(ms.entry_position, 0.0f) + vec3(ms.entry_stride.x * (slot_index % 9), 0.0f, 0.0f));
+        num_ret = ms.number_position + ivec2(ms.number_stride.x * (slot_index % 9) - two_digit_offset, 0);
     }
     
-    glm::mat4 icon_transform = glm::scale(ret, ms.tile_transform);
+    mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
     return std::make_pair(icon_transform, num_ret);
 }
 
@@ -289,13 +275,13 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_ind
 
     glm::mat4 ret(1.0f);
     glm::vec2 num_ret(1.0f);
-    InventoryMeasures& ms = m_Measures;
+    GridMeasures& ms = m_ScreenGrid.measures;
 
-    uint32_t two_digit_offset = two_digit_number ? m_Measures.double_digit_offset : m_Measures.single_digit_offset;
+    uint32_t two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
-    ret = glm::translate(ret, ms.scr + glm::vec3(ms.scr_offset * slot_index, 0.0f, 0.0f));
-    num_ret = ms.scr_num + glm::vec2(ms.scr_num_offset * slot_index - two_digit_offset, 0.0f);
+    ret = glm::translate(ret, glm::vec3(ms.entry_position, 0.0f) + glm::vec3(ms.entry_stride.x * slot_index, 0.0f, 0.0f));
+    num_ret = ms.number_position + glm::ivec2(ms.number_stride.x * slot_index - two_digit_offset, 0.0f);
 
-    glm::mat4 icon_transform = glm::scale(ret, ms.tile_transform);
+    glm::mat4 icon_transform = glm::scale(ret, GridMeasures::tile_transform);
     return std::make_pair(icon_transform, num_ret);
 }
