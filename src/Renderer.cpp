@@ -15,7 +15,7 @@ namespace GlCore
 	glm::vec3 g_FramebufferPlayerOffset = glm::vec3(0.0f, 50.0f, 0.0f);
 	glm::mat4 g_DepthSpaceMatrix(1.0f);
 
-	uint32_t g_Drawcalls = 0;
+	u32 g_Drawcalls = 0;
 
 	Renderer::Renderer()
 	{
@@ -41,7 +41,7 @@ namespace GlCore
 		GetInstance().IRender(shd, vm, cubemap, model);
 	}
 
-	void Renderer::RenderInstanced(uint32_t count)
+	void Renderer::RenderInstanced(u32 count)
 	{
 		GetInstance().IRenderInstanced(count);
 	}
@@ -69,14 +69,14 @@ namespace GlCore
 		}
 		glDrawArrays(GL_TRIANGLES, 0, vm.GetIndicesCount());
 	}
-	void Renderer::IRenderInstanced(uint32_t count)
+	void Renderer::IRenderInstanced(u32 count)
 	{
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, count);
 	}
 
 	void Renderer::IWaitForAsyncGpu(const std::vector<GLsync>& fences)
 	{
-		for (uint32_t i = 0; i < fences.size(); i++)
+		for (u32 i = 0; i < fences.size(); i++)
 		{
 			GLenum waitResult = GL_UNSIGNALED;
 			while (waitResult != GL_ALREADY_SIGNALED && waitResult != GL_CONDITION_SATISFIED) {
@@ -86,7 +86,7 @@ namespace GlCore
 	}
 
 
-	void DispatchBlockRendering(glm::vec3*& position_buf, uint32_t*& texture_buf, uint32_t& count)
+	void DispatchBlockRendering(glm::vec3*& position_buf, u32*& texture_buf, u32& count)
 	{
 		State& state = State::GetState();
 		auto block_vm = state.BlockVM();
@@ -99,12 +99,12 @@ namespace GlCore
 		block_vm->UnmapAttributePointer(1);
 		GlCore::Renderer::RenderInstanced(count);
 		position_buf = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
-		texture_buf = static_cast<uint32_t*>(block_vm->InstancedAttributePointer(1));
+		texture_buf = static_cast<u32*>(block_vm->InstancedAttributePointer(1));
 
 		g_Drawcalls++;
 		count = 0;
 	}
-	void DispatchDepthRendering(glm::vec3*& position_buf, uint32_t& count)
+	void DispatchDepthRendering(glm::vec3*& position_buf, u32& count)
 	{
 		State& state = State::GetState();
 		auto depth_vm = state.DepthVM();

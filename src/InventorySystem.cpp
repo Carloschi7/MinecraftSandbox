@@ -4,9 +4,9 @@
 Inventory::Inventory() :
     m_State(GlCore::State::GetState()), m_CursorIndex(0), 
     m_TextRenderer({m_State.GameWindow().Width(), m_State.GameWindow().Height()},
-        static_cast<uint32_t>(Defs::TextureBinding::TextureText))
+        static_cast<u32>(Defs::TextureBinding::TextureText))
 {
-    for (uint32_t i = 0; i < 5; i++)
+    for (u32 i = 0; i < 5; i++)
         m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
     
     //Avoid writing glm a thousand times in some of these functions
@@ -60,11 +60,11 @@ void Inventory::HandleInventorySelection()
     //Scan inventory
     if (mouse_left_state)
     {
-        for (uint32_t i = 0; i < 4; i++)
+        for (u32 i = 0; i < 4; i++)
         {
-            for (uint32_t j = 0; j < 9; j++)
+            for (u32 j = 0; j < 9; j++)
             {
-                uint32_t x_start, y_start;
+                u32 x_start, y_start;
 
                 if (i != 4) {
                     x_start = m_InternalStart.x + m_IntervalDimension.x * j;
@@ -77,7 +77,7 @@ void Inventory::HandleInventorySelection()
 
                 if (dx >= x_start && dy >= y_start && dx < x_start + m_IntervalDimension.x && dy < y_start + m_IntervalDimension.y)
                 {
-                    uint32_t index = i * 9 + j;
+                    u32 index = i * 9 + j;
                     if (m_PendingEntry.has_value()) {
                         if (!m_Slots[index].has_value()) {
                             m_Slots[index] = m_Slots[m_PendingEntry.value()];
@@ -105,13 +105,13 @@ void Inventory::InternalSideRender()
     glDisable(GL_DEPTH_TEST);
 
     //Actual inventory rendering
-    uint32_t inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureInventory);
+    u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureInventory);
     GlCore::GameTextures()[inventory_binding].Bind(inventory_binding);
     m_State.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_InternAbsTransf);
 
     //Draw entries
-    for (uint32_t i = 0; i < m_Slots.size(); i++) {
+    for (u32 i = 0; i < m_Slots.size(); i++) {
         std::optional<InventoryEntry> entry = m_Slots[i];
         if (!entry.has_value())
             continue;
@@ -147,13 +147,13 @@ void Inventory::ScreenSideRender()
     Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type.value().block_type : Defs::BlockType::Dirt;
     
 
-    uint32_t scr_inventory_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventory);
+    u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
     GlCore::GameTextures()[scr_inventory_binding].Bind(scr_inventory_binding);
     m_State.InventoryShader()->Uniform1i(scr_inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_ScreenAbsTransf);
 
     //Draw entities
-    for (uint32_t i = Defs::g_InventoryInternalSlotsCount; i < m_Slots.size(); i++) {
+    for (u32 i = Defs::g_InventoryInternalSlotsCount; i < m_Slots.size(); i++) {
         std::optional<InventoryEntry> entry = m_Slots[i];
         if (!entry.has_value())
             continue;
@@ -165,7 +165,7 @@ void Inventory::ScreenSideRender()
     }
 
     //Render selector
-    uint32_t selector_binding = static_cast<uint32_t>(Defs::TextureBinding::TextureScreenInventorySelector);
+    u32 selector_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventorySelector);
     GlCore::GameTextures()[selector_binding].Bind(selector_binding);
     m_State.InventoryShader()->Uniform1i(selector_binding, "texture_inventory");
     auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex, true);
@@ -174,10 +174,10 @@ void Inventory::ScreenSideRender()
     glEnable(GL_DEPTH_TEST);
 }
 
-void Inventory::RenderEntry(InventoryEntry entry, uint32_t binding_index)
+void Inventory::RenderEntry(InventoryEntry entry, u32 binding_index)
 {
     //Drawing actual block
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
+    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
     auto[icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, icon_transform);
 
@@ -189,9 +189,9 @@ void Inventory::RenderEntry(InventoryEntry entry, uint32_t binding_index)
 
 }
 
-void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
+void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
+    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
     auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
     GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, screen_slot_transform);
 
@@ -202,7 +202,7 @@ void Inventory::RenderScreenEntry(InventoryEntry entry, uint32_t binding_index)
 
 void Inventory::RenderPendingEntry(InventoryEntry entry)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<uint32_t>(entry.block_type), "texture_inventory");
+    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
 
     Window& wnd = GlCore::State::GetState().GameWindow();
     double dx, dy;
@@ -234,7 +234,7 @@ void Inventory::ClearUsedSlots()
 }
 
 //pardon for the hardcoded section, haven't come up with a more appropriate way of doing this
-std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bool two_digit_number)
+std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(u32 slot_index, bool two_digit_number)
 {
     using namespace glm;
 
@@ -245,7 +245,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bo
     vec2 num_ret(1.0f);
     
     //Eventual offset for two digit numbers
-    uint32_t two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
+    u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
     //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {
@@ -268,7 +268,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(uint32_t slot_index, bo
     return std::make_pair(icon_transform, num_ret);
 }
 
-std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_index, bool two_digit_number)
+std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(u32 slot_index, bool two_digit_number)
 {
     if (slot_index >= Defs::g_InventoryScreenSlotsCount)
         return std::make_pair(glm::mat4(), glm::vec2());
@@ -277,7 +277,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(uint32_t slot_ind
     glm::vec2 num_ret(1.0f);
     GridMeasures& ms = m_ScreenGrid.measures;
 
-    uint32_t two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
+    u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
     ret = glm::translate(ret, glm::vec3(ms.entry_position, 0.0f) + glm::vec3(ms.entry_stride.x * slot_index, 0.0f, 0.0f));
     num_ret = ms.number_position + glm::ivec2(ms.number_stride.x * slot_index - two_digit_offset, 0.0f);

@@ -26,8 +26,8 @@ public:
     //Serialization
     void Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos);
 public:
-    static uint32_t IndexForNormal(const glm::vec3& vec);
-    static glm::vec3 NormalForIndex(uint32_t index);
+    static u32 IndexForNormal(const glm::vec3& vec);
+    static glm::vec3 NormalForIndex(u32 index);
 private:
     glm::vec3 m_Position;
     //Used to determine which sides are exposed, thus

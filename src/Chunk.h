@@ -18,7 +18,7 @@ public:
 	//will be used as an alias of z
 	Chunk(World& father, glm::vec2 origin);
 	//Construct by deserialization
-	Chunk(World& father, const Utils::Serializer& sz, uint32_t index);
+	Chunk(World& father, const Utils::Serializer& sz, u32 index);
 	Chunk(const Chunk&) = delete;
 	Chunk(Chunk&& rhs) noexcept;
 	~Chunk();
@@ -27,7 +27,7 @@ public:
 	Chunk& operator=(Chunk&& rhs) noexcept;
 
 	//Stores render data and presents it if the buffers are full
-	void ForwardRenderableData(glm::vec3*& position_buf, uint32_t*& texindex_buf, uint32_t& count, bool depth_buf_draw, bool selected = false) const;
+	void ForwardRenderableData(glm::vec3*& position_buf, u32*& texindex_buf, u32& count, bool depth_buf_draw, bool selected = false) const;
 	void RenderDrops();
 
 	//Normals loaded as the chunk spawns
@@ -55,12 +55,12 @@ public:
 
 	const glm::vec2& GetChunkOrigin() const;
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
-	const std::optional<uint32_t>& GetLoadedChunk(const Defs::ChunkLocation& cl) const;
-	void SetLoadedChunk(const Defs::ChunkLocation& cl, uint32_t value);
-	uint32_t LastSelectedBlock() const;
+	const std::optional<u32>& GetLoadedChunk(const Defs::ChunkLocation& cl) const;
+	void SetLoadedChunk(const Defs::ChunkLocation& cl, u32 value);
+	u32 LastSelectedBlock() const;
 
-	uint32_t SectorIndex() const;
-	uint32_t Index() const;
+	u32 SectorIndex() const;
+	u32 Index() const;
 
 	inline const std::vector<Block>& Blocks() const { return m_LocalBlocks; }
 
@@ -74,17 +74,17 @@ public:
 	//Variable used to determine which chunk holds the selected block
 	//used instead of Gd::g_SelectedChunk in multiple iterations so we
 	//access the atomic variable only once
-	static uint32_t s_InternalSelectedBlock;
+	static u32 s_InternalSelectedBlock;
 
 private:
 	//Returns if there is a block at the location pos
 	//The last two attributes can be used to make the searching faster
-	bool IsBlock(const glm::vec3& pos, int32_t starting_index = 0, bool search_towards_end = true, uint32_t* block_index = nullptr) const;
-	Block& GetBlock(uint32_t index);
-	const Block& GetBlock(uint32_t index) const;
+	bool IsBlock(const glm::vec3& pos, i32 starting_index = 0, bool search_towards_end = true, u32* block_index = nullptr) const;
+	Block& GetBlock(u32 index);
+	const Block& GetBlock(u32 index) const;
 
 	//Wrapper function that assigns normals to border blocks if there are no other blocks even in the confining chunk
-	bool BorderCheck(Chunk* chunk, const glm::vec3& pos, uint32_t top_index, uint32_t bot_index, bool search_dir);
+	bool BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 bot_index, bool search_dir);
 private:
 	//Global OpenGL environment state
 	GlCore::State& m_State;
@@ -92,7 +92,7 @@ private:
 	World& m_RelativeWorld;
 
 	//Chunk progressive index
-	uint32_t m_ChunkIndex;
+	u32 m_ChunkIndex;
 	std::vector<Block> m_LocalBlocks;
 	//Drops of brokeen blocks, the chunk which originated them is the
 	//responsible for updating and drawing them
@@ -104,14 +104,14 @@ private:
 	glm::vec2 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;
 	//Block aimed by the player
-	uint32_t m_SelectedBlock;
+	u32 m_SelectedBlock;
 	//determining if side chunk exists
-	std::optional<uint32_t> m_PlusX, m_MinusX, m_PlusZ, m_MinusZ;
+	std::optional<u32> m_PlusX, m_MinusX, m_PlusZ, m_MinusZ;
 	//Sector index
-	uint32_t m_SectorIndex;
+	u32 m_SectorIndex;
 
 
 	static float s_DiagonalLenght;
-	static constexpr uint32_t s_ChunkWidthAndHeight = 16;
-	static constexpr uint32_t s_ChunkDepth = 50;
+	static constexpr u32 s_ChunkWidthAndHeight = 16;
+	static constexpr u32 s_ChunkDepth = 50;
 };

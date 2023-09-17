@@ -13,7 +13,7 @@ namespace GlCore
     //Pair consisting of an array of integers which represents the initial data
     //vertex for each cube face, and an integer which denotes how many faces
     //are being rendered
-    using DrawableData = std::pair<std::array<uint8_t, 3>, uint8_t>;
+    using DrawableData = std::pair<std::array<u8, 3>, u8>;
 
     static constexpr float one_third = 1.0f / 3.0f;
 
@@ -158,7 +158,7 @@ namespace GlCore
     }
 
     //Starting index of respective cube face
-    inline uint8_t GetNormVertexBegin(const glm::vec3& vec)
+    inline u8 GetNormVertexBegin(const glm::vec3& vec)
     {
         if (vec == glm::vec3(0.0f, 0.0f, -1.0f))
             return 0;

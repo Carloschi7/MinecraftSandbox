@@ -95,7 +95,7 @@ namespace GlCore
         auto& game_textures = GameTextures();
         for (auto& elem : textures)
         {
-            uint32_t tex_index = static_cast<uint32_t>(elem.second);
+            u32 tex_index = static_cast<u32>(elem.second);
             game_textures[tex_index].Bind(tex_index);
             block_shd->Uniform1i(tex_index, elem.first);
             drop_shd->Uniform1i(tex_index, elem.first);
@@ -106,8 +106,8 @@ namespace GlCore
         block_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
             block_shd->GetAttributeLocation("model_pos"), el);
 
-        el = { 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(uint32_t), 0 };
-        block_vm->PushInstancedAttribute(nullptr, sizeof(uint32_t) * g_MaxRenderedObjCount,
+        el = { 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(u32), 0 };
+        block_vm->PushInstancedAttribute(nullptr, sizeof(u32) * g_MaxRenderedObjCount,
             block_shd->GetAttributeLocation("tex_index"), el);
 
         //Root management

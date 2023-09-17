@@ -15,17 +15,17 @@ namespace Defs
 		Inventory
 	};
 
-	enum class BlockType : uint8_t
+	enum class BlockType : u8
 	{
 		Dirt = 0, Grass, Sand, Wood, Leaves
 	};
 
-	enum class HitDirection : uint8_t
+	enum class HitDirection : u8
 	{
 		None = 0, PosX, NegX, PosY, NegY, PosZ, NegZ,
 	};
 
-	enum class TextureBinding : uint8_t
+	enum class TextureBinding : u8
 	{
 		TextureDirt = 0,
 		TextureGrass,
@@ -49,17 +49,17 @@ namespace Defs
 	struct WorldSeed
 	{
 		//Chosed world seed
-		uint64_t seed_value;
+		u64 seed_value;
 		//Related seeds computed from the main one, used to generate
 		//overlapping perlin noise to give a much direct sense of realism
 		//in the scene
-		std::vector<uint64_t> secundary_seeds;
+		std::vector<u64> secundary_seeds;
 	};
 
 	//Handles section data
 	struct SectionData
 	{
-		uint32_t index;
+		u32 index;
 		glm::vec2 central_position;
 		//Determines whether or not the data is loaded in memory
 		bool loaded = true;
@@ -101,21 +101,21 @@ namespace Defs
 	extern const float g_FramedPlayerSpeed;
 	extern const float g_SectionDimension;
 	//Personal index for each chunk
-	extern uint32_t g_ChunkProgIndex;
-	extern const int32_t g_SpawnerBegin;
-	extern const int32_t g_SpawnerEnd;
-	extern const int32_t g_SpawnerIncrement;
+	extern u32 g_ChunkProgIndex;
+	extern const i32 g_SpawnerBegin;
+	extern const i32 g_SpawnerEnd;
+	extern const i32 g_SpawnerIncrement;
 	extern const glm::vec3 g_LightDirection;
 	//Variables for block selection
-	extern std::atomic_uint32_t g_SelectedBlock;
-	extern std::atomic_uint32_t g_SelectedChunk;
+	extern std::atomic<u32> g_SelectedBlock;
+	extern std::atomic<u32> g_SelectedChunk;
 	extern bool g_EnvironmentChange;
 	//Inventory
-	static constexpr uint32_t g_InventoryInternalSlotsCount = 27;
-	static constexpr uint32_t g_InventoryScreenSlotsCount = 9;
+	static constexpr u32 g_InventoryInternalSlotsCount = 27;
+	static constexpr u32 g_InventoryScreenSlotsCount = 9;
 	extern Defs::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
-	extern std::unordered_set<uint32_t> g_PushedSections;
+	extern std::unordered_set<u32> g_PushedSections;
 	extern std::string g_SerializedFileFormat;
 
 	//Perlin variables
@@ -132,7 +132,7 @@ namespace Defs
 	//every chunk of the world is loaded at once.
 	//If the player is far enough from a chunk sector, the chunks
 	//will be serialized on the disk
-	uint32_t ChunkSectorIndex(const glm::vec2& pos);
+	u32 ChunkSectorIndex(const glm::vec2& pos);
 	//Given an underwater tile coordinate, determines and caches the water level for that
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
@@ -151,9 +151,9 @@ namespace Defs
 
 		void InitSeedMap(WorldSeed& seed);
 		float Interpolate(float a0, float a1, float w);
-		glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2, const uint64_t& seed);
-		float PerformDot(int32_t a, int32_t b, float x, float y, const uint64_t& seed);
-		float GenerateSingleNoise(float x, float y, const uint64_t& seed);
+		glm::vec2 GenRandomVecFrom(i32 n1, i32 n2, const u64& seed);
+		float PerformDot(i32 a, i32 b, float x, float y, const u64& seed);
+		float GenerateSingleNoise(float x, float y, const u64& seed);
 		Generation GetBlockAltitude(float x, float y, const WorldSeed& seed);
 	}
 }

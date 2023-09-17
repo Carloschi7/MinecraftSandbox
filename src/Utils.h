@@ -296,7 +296,7 @@ namespace Utils
 		mutable std::atomic<std::thread::id> m_OwningThreadID;
 	};
 
-	static constexpr uint32_t g_PointerBytes = POINTER_BYTES;
+	static constexpr u32 g_PointerBytes = POINTER_BYTES;
 
 	//Byte aligned pointer, allows class to adapt to the 8bit alignment
 	//DOES NOT HANDLE NULL EXCEPTIONS
@@ -317,9 +317,9 @@ namespace Utils
 		T* Get()
 		{
 #ifdef ENV64
-			uint64_t res;
+			u64 res;
 #else
-			uint32_t res;
+			u32 res;
 #endif
 			std::memcpy(&res, m_Data, g_PointerBytes);
 			return reinterpret_cast<T*>(res);
@@ -327,9 +327,9 @@ namespace Utils
 		const T* Get() const
 		{
 #ifdef ENV64
-			uint64_t res;
+			u64 res;
 #else
-			uint32_t res;
+			u32 res;
 #endif
 			std::memcpy(&res, m_Data, g_PointerBytes);
 			return reinterpret_cast<T*>(res);
@@ -338,15 +338,15 @@ namespace Utils
 		AlignedPtr& operator=(T* ptr)
 		{
 #ifdef ENV64
-			uint64_t pointer_val = reinterpret_cast<uint64_t>(ptr);
+			u64 pointer_val = reinterpret_cast<u64>(ptr);
 #else
-			uint32_t pointer_val = reinterpret_cast<uint32_t>(ptr);
+			u32 pointer_val = reinterpret_cast<u32>(ptr);
 #endif
 			std::memcpy(m_Data, &pointer_val, g_PointerBytes);
 			return *this;
 		}
 	private:
-		uint8_t m_Data[g_PointerBytes];
+		u8 m_Data[g_PointerBytes];
 	};
 
 	class Timer
@@ -419,7 +419,7 @@ namespace Utils
 
 		bool Eof() const
 		{
-			uint32_t cur_pos = std::ftell(m_File);
+			u32 cur_pos = std::ftell(m_File);
 			std::fseek(m_File, 0, SEEK_END);
 			bool is_eof = cur_pos == std::ftell(m_File);
 			std::fseek(m_File, cur_pos, SEEK_SET);
@@ -472,19 +472,19 @@ namespace Utils
 
 	//Calculates a u8 array dimension for the given number of bits
 	//In this project, helps with block normal serialization
-	template<uint32_t Bits>
+	template<u32 Bits>
 	class Bitfield
 	{
 		static_assert(Bits != 0);
 	public:
 		Bitfield() = default;
 		Bitfield(const Bitfield&) = default;
-		Bitfield(const std::array<uint8_t, BYTE_INDEX_FOR_BITS(Bits)>& arr)
+		Bitfield(const std::array<u8, BYTE_INDEX_FOR_BITS(Bits)>& arr)
 			:m_Data(arr)
 		{
 		}
 
-		void Set(uint32_t pos, bool state)
+		void Set(u32 pos, bool state)
 		{
 			if (pos >= Bits)
 			{
@@ -492,12 +492,12 @@ namespace Utils
 				return;
 			}
 
-			uint8_t& cur_byte = m_Data[pos / 8];
-			uint32_t wrapped_pos = 7 - (pos % 8);
+			u8& cur_byte = m_Data[pos / 8];
+			u32 wrapped_pos = 7 - (pos % 8);
 
 			cur_byte = (cur_byte & ~(1 << wrapped_pos)) | (state << wrapped_pos);
 		}
-		bool Get(uint32_t pos) const
+		bool Get(u32 pos) const
 		{
 			//If index over bounds, just return false
 			if (pos >= Bits)
@@ -506,16 +506,16 @@ namespace Utils
 				return false;
 			}
 
-			const uint8_t& cur_byte = m_Data[pos / 8];
-			uint32_t wrapped_pos = 7 - (pos % 8);
+			const u8& cur_byte = m_Data[pos / 8];
+			u32 wrapped_pos = 7 - (pos % 8);
 
-			auto val = static_cast<uint8_t>((cur_byte & (1 << wrapped_pos)) >> wrapped_pos);
+			auto val = static_cast<u8>((cur_byte & (1 << wrapped_pos)) >> wrapped_pos);
 			return val != 0;
 		}
-		uint32_t Size() const { return Bits; }
-		bool operator[](uint32_t bit) const { return Get(bit); }
+		u32 Size() const { return Bits; }
+		bool operator[](u32 bit) const { return Get(bit); }
 
-		uint8_t Getu8Payload(uint32_t index)
+		u8 Getu8Payload(u32 index)
 		{
 			if (index >= m_Data.size())
 				return 0;
@@ -525,14 +525,14 @@ namespace Utils
 
 		bool AllOf(bool state) const
 		{
-			for (const uint8_t& byte : m_Data)
-				if (byte != static_cast<uint8_t>(-state))
+			for (const u8& byte : m_Data)
+				if (byte != static_cast<u8>(-state))
 					return false;
 
 			return true;
 		}
 
 	private:
-		std::array<uint8_t, BYTE_INDEX_FOR_BITS(Bits)> m_Data{};
+		std::array<u8, BYTE_INDEX_FOR_BITS(Bits)> m_Data{};
 	};
 }

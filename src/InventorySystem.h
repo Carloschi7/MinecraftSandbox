@@ -9,7 +9,7 @@
 struct InventoryEntry
 {
 	Defs::BlockType block_type;
-	uint8_t block_count; //Max 64 like in the original, so small type used
+	u8 block_count; //Max 64 like in the original, so small type used
 };
 
 struct GridMeasures
@@ -26,7 +26,7 @@ struct Grid {
 	Grid() {}
 	Grid(const Grid&) = default;
 	Grid& operator=(const Grid&) = default;
-	Grid(glm::ivec2 start, glm::ivec2 end, uint32_t x_slots, uint32_t y_slots)
+	Grid(glm::ivec2 start, glm::ivec2 end, u32 x_slots, u32 y_slots)
 	{
 		measures.entry_position = start;
 		measures.entry_stride = measures.number_stride = {
@@ -50,19 +50,19 @@ public:
 	std::optional<InventoryEntry>& HoveredFromSelector();
 	void ClearUsedSlots();
 private:
-	void RenderEntry(InventoryEntry entry, uint32_t binding_index);
-	void RenderScreenEntry(InventoryEntry binding, uint32_t binding_index);
+	void RenderEntry(InventoryEntry entry, u32 binding_index);
+	void RenderScreenEntry(InventoryEntry binding, u32 binding_index);
 	void RenderPendingEntry(InventoryEntry entry);
-	std::pair<glm::mat4, glm::vec2> SlotTransform(uint32_t slot_index, bool two_digit_number);
-	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(uint32_t slot_index, bool two_digit_number);
+	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
+	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
 private:
 	GlCore::State& m_State;
 	TextRenderer m_TextRenderer;
 
-	static constexpr uint32_t s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
-	static constexpr uint8_t s_MaxItemsPerSlot = 64;
+	static constexpr u32 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
+	static constexpr u8 s_MaxItemsPerSlot = 64;
 	std::array<std::optional<InventoryEntry>, s_InventorySize> m_Slots;
-	std::optional<uint32_t> m_PendingEntry;
+	std::optional<u32> m_PendingEntry;
 
 	//This values fit the inventory only for the current image scaling, very important to note
 	glm::vec2 m_InternalStart;
@@ -71,7 +71,7 @@ private:
 
 	glm::mat4 m_InternAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
-	int32_t m_CursorIndex;
+	i32 m_CursorIndex;
 
 	static constexpr float single_digit_offset = 0.0f;
 	static constexpr float double_digit_offset = 36.0f;

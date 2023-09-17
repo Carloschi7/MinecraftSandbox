@@ -20,20 +20,20 @@ public:
     void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);
 
     //Returns the corresponding chunk index if exists
-    std::optional<uint32_t> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
-    Chunk& GetChunk(uint32_t index);
+    std::optional<u32> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
+    Chunk& GetChunk(u32 index);
 
     Defs::WorldSeed& Seed();
     const Defs::WorldSeed& Seed() const;
 
     //Serialization utilities
-    void SerializeSector(uint32_t index);
-    void DeserializeSector(uint32_t index);
+    void SerializeSector(u32 index);
+    void DeserializeSector(u32 index);
 
 private:
     //Function which handles spawnable chunk pushing conditions
     bool IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec);
-    glm::vec2 SectionCentralPosFrom(uint32_t index);
+    glm::vec2 SectionCentralPosFrom(u32 index);
     
 private:
     //Global OpenGL environment state

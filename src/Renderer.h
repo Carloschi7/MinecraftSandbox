@@ -20,10 +20,10 @@ namespace GlCore
 #else
 	static constexpr bool g_MultithreadedRendering = false;
 #endif
-	static constexpr uint32_t g_MaxRenderedObjCount = 200000;
-	static constexpr uint32_t g_MaxWaterLayersCount = 200000;
-	static constexpr uint32_t g_DepthMapWidth = 1024;
-	static constexpr uint32_t g_DepthMapHeight = 1024;
+	static constexpr u32 g_MaxRenderedObjCount = 200000;
+	static constexpr u32 g_MaxWaterLayersCount = 200000;
+	static constexpr u32 g_DepthMapWidth = 1024;
+	static constexpr u32 g_DepthMapHeight = 1024;
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//thread id of the thread which is allowed to modify m_Chunks
 	extern std::atomic_bool g_SerializationRunning;
@@ -40,10 +40,10 @@ namespace GlCore
 	extern glm::mat4 g_DepthSpaceMatrix;
 
 	//For debug purposes
-	extern uint32_t g_Drawcalls;
+	extern u32 g_Drawcalls;
 
-	void DispatchBlockRendering(glm::vec3*& position_buf, uint32_t*& texture_buf, uint32_t& count);
-	void DispatchDepthRendering(glm::vec3*& position_buf, uint32_t& count);
+	void DispatchBlockRendering(glm::vec3*& position_buf, u32*& texture_buf, u32& count);
+	void DispatchDepthRendering(glm::vec3*& position_buf, u32& count);
 
 	class Renderer
 	{
@@ -54,13 +54,13 @@ namespace GlCore
 		//Single instance rendering(used for cubemap and crossaim)
 		static void Render(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model);
 		//Chunk optimized rendering
-		static void RenderInstanced(uint32_t count);
+		static void RenderInstanced(u32 count);
 		static void WaitForAsyncGpu(const std::vector<GLsync>& fences);
 	private:
 		Renderer();
 		~Renderer();
 		void IRender(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model);
-		void IRenderInstanced(uint32_t count);
+		void IRenderInstanced(u32 count);
 		void IWaitForAsyncGpu(const std::vector<GLsync>& fences);
 	};
 }

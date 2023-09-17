@@ -9,12 +9,12 @@ Block::Block(const glm::vec3& position, const Defs::BlockType& bt)
 
 void Block::UpdateRenderableSides(const glm::vec3& camera_pos)
 {
-    uint8_t& counter = m_DrawableSides.second;
+    u8& counter = m_DrawableSides.second;
     counter = 0;
 
     //Should never go above 3 elements
     glm::vec3 dir = Position() - camera_pos;
-    for (uint32_t i = 0; i < m_ExposedNormals.size(); i++)
+    for (u32 i = 0; i < m_ExposedNormals.size(); i++)
     {
         const bool& is_norm = m_ExposedNormals[i];
         if (is_norm)
@@ -81,16 +81,16 @@ void Block::Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos)
     sz& offset_vec.x& offset_vec.y& offset_vec.z;
 
     Utils::Bitfield<6> bitfield;
-    for (uint32_t i = 0; i < m_ExposedNormals.size(); i++)
+    for (u32 i = 0; i < m_ExposedNormals.size(); i++)
         bitfield.Set(i, m_ExposedNormals[i]);
 
     sz& bitfield.Getu8Payload(0);
     //m_BlockStructure and m_DrawableData do not need to be serialized
 
-    sz& static_cast<uint8_t>(m_BlockType);
+    sz& static_cast<u8>(m_BlockType);
 }
 
-uint32_t Block::IndexForNormal(const glm::vec3& vec)
+u32 Block::IndexForNormal(const glm::vec3& vec)
 {
     if (vec == glm::vec3(1.0f, 0.0f, 0.0f))
         return 0;
@@ -105,10 +105,10 @@ uint32_t Block::IndexForNormal(const glm::vec3& vec)
     if (vec == glm::vec3(0.0f, 0.0f, -1.0f))
         return 5;
 
-    return static_cast<uint32_t>(-1);
+    return static_cast<u32>(-1);
 }
 
-glm::vec3 Block::NormalForIndex(uint32_t index)
+glm::vec3 Block::NormalForIndex(u32 index)
 {
     switch (index)
     {
@@ -165,8 +165,8 @@ void Drop::Render()
 
     
     shader->UniformMat4f(m_Model, "model");
-    //shader->Uniform1i(static_cast<uint32_t>(m_Type), "texture_diffuse");
-    shader->Uniform1i(static_cast<uint32_t>(m_Type), "drop_texture_index");
+    //shader->Uniform1i(static_cast<u32>(m_Type), "texture_diffuse");
+    shader->Uniform1i(static_cast<u32>(m_Type), "drop_texture_index");
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
@@ -175,7 +175,7 @@ void Drop::Update(Chunk* chunk, float elapsed_time)
     m_Velocity += m_Acceleration * elapsed_time * 0.5f;
     m_Position += m_Velocity;
 
-    glm::vec3 to_find = glm::vec3(std::roundf(m_Position.x), static_cast<int32_t>(m_Position.y), std::roundf(m_Position.z));
+    glm::vec3 to_find = glm::vec3(std::roundf(m_Position.x), static_cast<i32>(m_Position.y), std::roundf(m_Position.z));
 
     const auto& vec = chunk->Blocks();
     auto iter = std::find_if(vec.begin(), vec.end(), [to_find](const Block& b) {return b.Position() == to_find; });

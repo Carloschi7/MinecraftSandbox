@@ -14,18 +14,18 @@ namespace Defs
 	const float g_RenderDistance = 1500.0f;
     const float g_FramedPlayerSpeed = 80.0f;
     const float g_SectionDimension = 512.0f;
-    uint32_t g_ChunkProgIndex = 0;
-	const int32_t g_SpawnerBegin = -64;
-	const int32_t g_SpawnerEnd = 64;
-	const int32_t g_SpawnerIncrement = 16;
+    u32 g_ChunkProgIndex = 0;
+	const i32 g_SpawnerBegin = -64;
+	const i32 g_SpawnerEnd = 64;
+	const i32 g_SpawnerIncrement = 16;
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
-    std::atomic_uint32_t g_SelectedBlock{static_cast<uint32_t>(-1)};
-    std::atomic_uint32_t g_SelectedChunk{static_cast<uint32_t>(-1)};
+    std::atomic<u32> g_SelectedBlock{static_cast<u32>(-1)};
+    std::atomic<u32> g_SelectedChunk{static_cast<u32>(-1)};
     Defs::BlockType g_InventorySelectedBlock = Defs::BlockType::Dirt;
     bool g_EnvironmentChange = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";
-    std::unordered_set<uint32_t> g_PushedSections;
+    std::unordered_set<u32> g_PushedSections;
     float water_limit = -0.25f;
     
     void KeyboardFunction(const Window& window, Camera* camera, double time)
@@ -143,15 +143,15 @@ namespace Defs
         return HitDirection::None;
     }
 
-    uint32_t ChunkSectorIndex(const glm::vec2& pos)
+    u32 ChunkSectorIndex(const glm::vec2& pos)
     {
         //Determine the chunk's level of distance
-        int16_t dist[2];
-        dist[0] = static_cast<int16_t>(glm::floor(pos.x / g_SectionDimension));
-        dist[1] = static_cast<int16_t>(glm::floor(pos.y / g_SectionDimension));
+        i16 dist[2];
+        dist[0] = static_cast<i16>(glm::floor(pos.x / g_SectionDimension));
+        dist[1] = static_cast<i16>(glm::floor(pos.y / g_SectionDimension));
 
-        uint32_t ret = 0;
-        std::memcpy(&ret, dist, sizeof(uint32_t));
+        u32 ret = 0;
+        std::memcpy(&ret, dist, sizeof(u32));
         return ret;
     }
 
@@ -188,7 +188,7 @@ namespace Defs
         WaterArea wa;
         glm::vec2 prev_selection{ 0 };
         glm::vec2 curr_selection{ sx,sy };
-        uint32_t iterations = 0;
+        u32 iterations = 0;
 
         wa.pos_xz = curr_selection;
         wa.neg_xz = curr_selection;
@@ -297,9 +297,9 @@ namespace Defs
         static std::mt19937 rand_engine;
 
         if (possible_positions.empty()) {
-            for (int32_t x = -2.0f; x <= 2.0f; x++) {
-                for (int32_t y = -1.0f; y <= 3.0f; y++) {
-                    for (int32_t z = -2.0f; z <= 2.0f; z++) {
+            for (i32 x = -2.0f; x <= 2.0f; x++) {
+                for (i32 y = -1.0f; y <= 3.0f; y++) {
+                    for (i32 z = -2.0f; z <= 2.0f; z++) {
                         possible_positions.emplace_back((float)x, (float)y, (float)z);
                     }
                 }
@@ -313,10 +313,10 @@ namespace Defs
 
         
 
-        std::vector<uint32_t> selected_indices;
+        std::vector<u32> selected_indices;
         std::vector<glm::vec3> ret;
-        for (uint32_t i = 0; i < 14; i++) {
-            uint32_t index;
+        for (u32 i = 0; i < 14; i++) {
+            u32 index;
             do {
                 index = rand_engine() % possible_positions.size();
             } while (std::find(selected_indices.begin(), selected_indices.end(), index) != selected_indices.end());
@@ -324,7 +324,7 @@ namespace Defs
             glm::vec3 selected = possible_positions[index];
             ret.push_back(selected);
 
-            auto push_next_leafblock = [&](uint32_t index) {
+            auto push_next_leafblock = [&](u32 index) {
                 if (selected[index] == 0.0f)
                     return;
 
@@ -382,27 +382,27 @@ namespace Defs
         {
             return (a1 - a0) * w + a0;
         }
-        glm::vec2 GenRandomVecFrom(int32_t n1, int32_t n2, const uint64_t& seed)
+        glm::vec2 GenRandomVecFrom(i32 n1, i32 n2, const u64& seed)
         {
             // Snippet of code i took from the internet. scrambles
             //some values and spits out a reasonable random value
-            const uint32_t w = 8 * sizeof(uint32_t);
-            const uint32_t s = w / 2; // rotation width
-            uint32_t a = n1, b = n2;
+            const u32 w = 8 * sizeof(u32);
+            const u32 s = w / 2; // rotation width
+            u32 a = n1, b = n2;
             a *= 3284157443 * seed; b ^= a << s | a >> w - s;
             b *= 1911520717; a ^= b << s | b >> w - s;
             a *= 2048419325;
             float random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
             return { glm::cos(random), glm::sin(random) };
         }
-        float PerformDot(int32_t a, int32_t b, float x, float y, const uint64_t& seed) {
+        float PerformDot(i32 a, i32 b, float x, float y, const u64& seed) {
             glm::vec2 rand_vec = GenRandomVecFrom(a, b, seed);
             //Offset vector
             glm::vec2 offset{x - static_cast<float>(a), y - static_cast<float>(b)};
             return glm::dot(offset, rand_vec);
         }
-        float GenerateSingleNoise(float x, float y, const uint64_t& seed) {
-            int32_t x0, x1, y0, y1;
+        float GenerateSingleNoise(float x, float y, const u64& seed) {
+            i32 x0, x1, y0, y1;
             float sx, sy;
             x0 = std::floor(x);
             x1 = x0 + 1;
