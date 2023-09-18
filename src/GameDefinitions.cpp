@@ -65,7 +65,6 @@ namespace Defs
         }
         else {
             if (window.IsKeyboardEvent({ GLFW_KEY_SPACE, GLFW_PRESS })) {
-                //TODO add jump mechanic
                 if (jump.second) {
                     jump = { 20.0f, false };
                 }
@@ -479,7 +478,7 @@ namespace Physics {
         Window& window = GlCore::State::GetState().GameWindow();
         camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
     }
-    //elapsed_time seems to influence the jump speed, depending on how many chunks are being rendered
+    //TODO implement a way to keep jump constistency, make this be indipendent from how many chunks are being rendered + code cleanup
     void HandlePlayerGravity(f32 elapsed_time) 
     {
         Camera& camera = GlCore::State::GetState().GameCamera();
