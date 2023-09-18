@@ -15,9 +15,9 @@ namespace Defs
     const f32 g_FramedPlayerSpeed = 80.0f;
     const f32 g_SectionDimension = 512.0f;
     u32 g_ChunkProgIndex = 0;
-	const i32 g_SpawnerBegin = -64;
-	const i32 g_SpawnerEnd = 64;
-	const i32 g_SpawnerIncrement = 16;
+	const s32 g_SpawnerBegin = -64;
+	const s32 g_SpawnerEnd = 64;
+	const s32 g_SpawnerIncrement = 16;
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic<u32> g_SelectedBlock{static_cast<u32>(-1)};
     std::atomic<u32> g_SelectedChunk{static_cast<u32>(-1)};
@@ -146,9 +146,9 @@ namespace Defs
     u32 ChunkSectorIndex(const glm::vec2& pos)
     {
         //Determine the chunk's level of distance
-        i16 dist[2];
-        dist[0] = static_cast<i16>(glm::floor(pos.x / g_SectionDimension));
-        dist[1] = static_cast<i16>(glm::floor(pos.y / g_SectionDimension));
+        s16 dist[2];
+        dist[0] = static_cast<s16>(glm::floor(pos.x / g_SectionDimension));
+        dist[1] = static_cast<s16>(glm::floor(pos.y / g_SectionDimension));
 
         u32 ret = 0;
         std::memcpy(&ret, dist, sizeof(u32));
@@ -297,9 +297,9 @@ namespace Defs
         static std::mt19937 rand_engine;
 
         if (possible_positions.empty()) {
-            for (i32 x = -2.0f; x <= 2.0f; x++) {
-                for (i32 y = -1.0f; y <= 3.0f; y++) {
-                    for (i32 z = -2.0f; z <= 2.0f; z++) {
+            for (s32 x = -2.0f; x <= 2.0f; x++) {
+                for (s32 y = -1.0f; y <= 3.0f; y++) {
+                    for (s32 z = -2.0f; z <= 2.0f; z++) {
                         possible_positions.emplace_back((f32)x, (f32)y, (f32)z);
                     }
                 }
@@ -382,7 +382,7 @@ namespace Defs
         {
             return (a1 - a0) * w + a0;
         }
-        glm::vec2 GenRandomVecFrom(i32 n1, i32 n2, const u64& seed)
+        glm::vec2 GenRandomVecFrom(s32 n1, s32 n2, const u64& seed)
         {
             // Snippet of code i took from the internet. scrambles
             //some values and spits out a reasonable random value
@@ -395,14 +395,14 @@ namespace Defs
             f32 random = a * (3.14159265 / ~(~0u >> 1)); // in [0, 2*Pi]
             return { glm::cos(random), glm::sin(random) };
         }
-        f32 PerformDot(i32 a, i32 b, f32 x, f32 y, const u64& seed) {
+        f32 PerformDot(s32 a, s32 b, f32 x, f32 y, const u64& seed) {
             glm::vec2 rand_vec = GenRandomVecFrom(a, b, seed);
             //Offset vector
             glm::vec2 offset{x - static_cast<f32>(a), y - static_cast<f32>(b)};
             return glm::dot(offset, rand_vec);
         }
         f32 GenerateSingleNoise(f32 x, f32 y, const u64& seed) {
-            i32 x0, x1, y0, y1;
+            s32 x0, x1, y0, y1;
             f32 sx, sy;
             x0 = std::floor(x);
             x1 = x0 + 1;

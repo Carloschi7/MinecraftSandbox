@@ -17,8 +17,8 @@ World::World()
 	m_WorldSeed.seed_value = 1;
 	PerlNoise::InitSeedMap(m_WorldSeed);
 
-	for (i32 i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
-		for (i32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
+	for (s32 i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
+		for (s32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
 			m_Chunks.emplace_back(*this, glm::vec2(f32(i), f32(j)));
 
 	HandleSectionData();
@@ -332,7 +332,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 void World::HandleSelection(Inventory& inventory)
 {
 	f32 nearest_selection = INFINITY;
-	i32 involved_chunk = static_cast<u32>(-1);
+	s32 involved_chunk = static_cast<u32>(-1);
 
 	auto& window = m_State.GameWindow();
 
@@ -516,7 +516,7 @@ bool World::IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const 
 glm::vec2 World::SectionCentralPosFrom(u32 index)
 {
 	//extract the 2 u16
-	i16 coords[2];
+	s16 coords[2];
 	std::memcpy(coords, &index, sizeof(u32));
 
 	glm::vec2 pos = glm::vec2(coords[0], coords[1]) * Defs::g_SectionDimension;

@@ -79,7 +79,7 @@ public:
 private:
 	//Returns if there is a block at the location pos
 	//The last two attributes can be used to make the searching faster
-	bool IsBlock(const glm::vec3& pos, i32 starting_index = 0, bool search_towards_end = true, u32* block_index = nullptr) const;
+	bool IsBlock(const glm::vec3& pos, s32 starting_index = 0, bool search_towards_end = true, u32* block_index = nullptr) const;
 	Block& GetBlock(u32 index);
 	const Block& GetBlock(u32 index) const;
 

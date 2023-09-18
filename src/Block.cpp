@@ -175,7 +175,7 @@ void Drop::Update(Chunk* chunk, f32 elapsed_time)
     m_Velocity += m_Acceleration * elapsed_time * 0.5f;
     m_Position += m_Velocity;
 
-    glm::vec3 to_find = glm::vec3(std::roundf(m_Position.x), static_cast<i32>(m_Position.y), std::roundf(m_Position.z));
+    glm::vec3 to_find = glm::vec3(std::roundf(m_Position.x), static_cast<s32>(m_Position.y), std::roundf(m_Position.z));
 
     const auto& vec = chunk->Blocks();
     auto iter = std::find_if(vec.begin(), vec.end(), [to_find](const Block& b) {return b.Position() == to_find; });

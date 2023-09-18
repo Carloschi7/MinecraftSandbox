@@ -102,9 +102,9 @@ namespace Defs
 	extern const f32 g_SectionDimension;
 	//Personal index for each chunk
 	extern u32 g_ChunkProgIndex;
-	extern const i32 g_SpawnerBegin;
-	extern const i32 g_SpawnerEnd;
-	extern const i32 g_SpawnerIncrement;
+	extern const s32 g_SpawnerBegin;
+	extern const s32 g_SpawnerEnd;
+	extern const s32 g_SpawnerIncrement;
 	extern const glm::vec3 g_LightDirection;
 	//Variables for block selection
 	extern std::atomic<u32> g_SelectedBlock;
@@ -151,8 +151,8 @@ namespace Defs
 
 		void InitSeedMap(WorldSeed& seed);
 		f32 Interpolate(f32 a0, f32 a1, f32 w);
-		glm::vec2 GenRandomVecFrom(i32 n1, i32 n2, const u64& seed);
-		f32 PerformDot(i32 a, i32 b, f32 x, f32 y, const u64& seed);
+		glm::vec2 GenRandomVecFrom(s32 n1, s32 n2, const u64& seed);
+		f32 PerformDot(s32 a, s32 b, f32 x, f32 y, const u64& seed);
 		f32 GenerateSingleNoise(f32 x, f32 y, const u64& seed);
 		Generation GetBlockAltitude(f32 x, f32 y, const WorldSeed& seed);
 	}

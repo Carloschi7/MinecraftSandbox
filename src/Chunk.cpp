@@ -32,15 +32,15 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
-	for (i32 i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
+	for (s32 i = origin.x; i < origin.x + s_ChunkWidthAndHeight; i++)
 	{
-		for (i32 k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
+		for (s32 k = origin.y; k < origin.y + s_ChunkWidthAndHeight; k++)
 		{
 			f32 fx = static_cast<f32>(i), fy = static_cast<f32>(k);
 			auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
 			u32 final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
 
-			for (i32 j = 0; j < final_height; j++)
+			for (s32 j = 0; j < final_height; j++)
 			{
 				switch (perlin_data.biome)
 				{
@@ -151,9 +151,9 @@ void Chunk::InitGlobalNorms()
 	//until a side block is found
 	f32 local_x =  m_LocalBlocks[0].Position().x, local_z = m_LocalBlocks[0].Position().z;
 	f32 last_y = 0.0f;
-	i32 starting_index = 0;
+	s32 starting_index = 0;
 	//+1 because we need to parse the last column
-	for (i32 i = 0; i < m_LocalBlocks.size(); i++)
+	for (s32 i = 0; i < m_LocalBlocks.size(); i++)
 	{
 		auto& loc_pos = m_LocalBlocks[i].Position();
 
@@ -188,7 +188,7 @@ void Chunk::InitGlobalNorms()
 		//Upper block of a column is always visible from the top
 		top_block.AddNormal(GlCore::g_PosY);
 
-		i32 p = top_column_index;
+		s32 p = top_column_index;
 		if (conf_rlfb[0] || conf_rlfb[1] || conf_rlfb[2] || conf_rlfb[3])
 		{
 			u32 blk_index;
@@ -891,7 +891,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 	return sz;
 }
 
-bool Chunk::IsBlock(const glm::vec3& pos, i32 starting_index, bool search_towards_end, u32* block_index) const
+bool Chunk::IsBlock(const glm::vec3& pos, s32 starting_index, bool search_towards_end, u32* block_index) const
 {
 	if (starting_index < 0 || starting_index >= m_LocalBlocks.size())
 		throw std::runtime_error("Starting index out of bounds");
@@ -899,7 +899,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, i32 starting_index, bool search_toward
 	if (search_towards_end)
 	{
 		//Searching before in the defined batch
-		for (i32 i = starting_index; i < m_LocalBlocks.size(); i++)
+		for (s32 i = starting_index; i < m_LocalBlocks.size(); i++)
 		{
 			if (m_LocalBlocks[i].Position() == pos)
 			{
@@ -913,7 +913,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, i32 starting_index, bool search_toward
 	}
 	else
 	{
-		for (i32 i = starting_index; i >= 0; i--)
+		for (s32 i = starting_index; i >= 0; i--)
 		{
 			if (m_LocalBlocks[i].Position() == pos)
 			{

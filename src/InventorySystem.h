@@ -71,7 +71,7 @@ private:
 
 	glm::mat4 m_InternAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
-	i32 m_CursorIndex;
+	s32 m_CursorIndex;
 
 	static constexpr f32 single_digit_offset = 0.0f;
 	static constexpr f32 double_digit_offset = 36.0f;
