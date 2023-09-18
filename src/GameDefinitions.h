@@ -15,6 +15,10 @@ namespace Defs
 		Inventory
 	};
 
+	enum class MovementType : u8 {
+		Normal, Creative
+	};
+
 	enum class BlockType : u8
 	{
 		Dirt = 0, Grass, Sand, Wood, Leaves
@@ -90,6 +94,8 @@ namespace Defs
 	extern std::atomic<ViewMode> g_ViewMode;
 
 	//Game global variables
+	extern u16 g_InventoryKey;
+	extern MovementType g_MovementType;
 
 	//Helps the update of the player position when he is colliding with world objects
 	extern glm::vec3 g_PlayerAxisMapping;
@@ -156,4 +162,9 @@ namespace Defs
 		f32 GenerateSingleNoise(f32 x, f32 y, const u64& seed);
 		Generation GetBlockAltitude(f32 x, f32 y, const WorldSeed& seed);
 	}
+}
+
+namespace Physics {
+	void HandlePlayerMovement(f32 elapsed_time);
+	void HandlePlayerGravity(f32 elapsed_time);
 }

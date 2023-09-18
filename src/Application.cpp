@@ -74,7 +74,7 @@ void Application::OnUserRun()
         {
             timer.StartTimer();
             //The gamemode check is here because the key state update is reqwuired by the logic thread
-            if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
+            if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
             world_instance.UpdateScene(game_inventory, recorded_time);
@@ -102,28 +102,24 @@ void Application::OnUserRun()
     glEnable(GL_DEPTH_TEST);
     Utils::Timer timer;
     //Standard value for the first frame
-    f32 recorded_time = 0.1f;
+    f32 elapsed_time = 0.1f;
     while (!m_Window.ShouldClose())
     {
         if constexpr (!GlCore::g_MultithreadedRendering)
-            if (m_Window.IsKeyPressed(GLFW_KEY_SPACE))
+            if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
         timer.StartTimer();
-        if constexpr (GlCore::g_MultithreadedRendering)
+        //No need to render every frame, while the logic thread computes,
+        //sleeping every few milliseconds can save lots of performances without
+        //resulting too slow
+        if constexpr (!GlCore::g_MultithreadedRendering) 
         {
-            //No need to render every frame, while the logic thread computes,
-            //sleeping every few milliseconds can save lots of performances without
-            //resulting too slow
-            world_instance.Render();
-        }
-        else
-        {
-            world_instance.UpdateScene(game_inventory, recorded_time);
+            world_instance.UpdateScene(game_inventory, elapsed_time);
             game_inventory.HandleInventorySelection();
             state.GameWindow().UpdateKeys();
-            world_instance.Render();
         }
+        world_instance.Render();
         game_inventory.ScreenSideRender();
 
         if (Defs::g_ViewMode == Defs::ViewMode::Inventory)
@@ -144,8 +140,11 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
-            recorded_time = timer.GetElapsedSeconds();
-            m_Camera.ProcessInput(m_Window, recorded_time * Defs::g_FramedPlayerSpeed, 0.8);
+            elapsed_time = timer.GetElapsedSeconds();
+            Physics::HandlePlayerMovement(elapsed_time);
+
+            if(Defs::g_MovementType != Defs::MovementType::Creative)
+                Physics::HandlePlayerGravity(elapsed_time);
         }
 
         //CAMERA DEBUG

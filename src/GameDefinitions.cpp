@@ -6,6 +6,9 @@ namespace Defs
 {
     std::atomic<ViewMode> g_ViewMode = ViewMode::WorldInteraction;
 
+    u16 g_InventoryKey = GLFW_KEY_T;
+    MovementType g_MovementType = MovementType::Normal;
+
     glm::vec3 g_PlayerAxisMapping = glm::vec3(1.0f);
     f32 g_PlayerSpeed = 0.0f;
 	const f32 g_ChunkSpawningDistance = 500.0f;
@@ -27,6 +30,9 @@ namespace Defs
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<u32> g_PushedSections;
     f32 water_limit = -0.25f;
+
+    //Local variables for now
+    std::pair<f32, bool> jump = std::make_pair(0.0f, false);
     
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
@@ -37,7 +43,11 @@ namespace Defs
         if (g_PlayerSpeed == 0.0f)
             g_PlayerSpeed = 0.002f;
 
-        const glm::vec3& front = camera->GetFront();
+        glm::vec3 front = camera->GetFront();
+        if (g_MovementType != MovementType::Creative) {
+            front.y = 0.0f;
+        }
+
         if (window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS }))
             camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS }))
@@ -46,10 +56,21 @@ namespace Defs
             camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
         if (window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS }))
             camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
-        if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
-            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
-        if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
-            camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
+
+        if (g_MovementType == MovementType::Creative) {
+            if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
+                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
+            if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
+                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
+        }
+        else {
+            if (window.IsKeyboardEvent({ GLFW_KEY_SPACE, GLFW_PRESS })) {
+                //TODO add jump mechanic
+                if (jump.second) {
+                    jump = { 20.0f, false };
+                }
+            }
+        }
 
         //If the player stops, then reduce the acceleration
         if (old_position != camera->position) {
@@ -448,5 +469,28 @@ namespace Defs
 
             return { terrain_output, local_biome, water_map < water_limit };
         }
+    }
+}
+
+namespace Physics {
+    void HandlePlayerMovement(f32 elapsed_time) 
+    {
+        Camera& camera = GlCore::State::GetState().GameCamera();
+        Window& window = GlCore::State::GetState().GameWindow();
+        camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
+    }
+    //elapsed_time seems to influence the jump speed, depending on how many chunks are being rendered
+    void HandlePlayerGravity(f32 elapsed_time) 
+    {
+        Camera& camera = GlCore::State::GetState().GameCamera();
+        //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
+        f32 clamped_y = Defs::g_PlayerAxisMapping.y;
+
+        if (Defs::jump.first != 20.0f && clamped_y == 0.0f) {
+            Defs::jump = { 0.0f, true };
+        }
+
+        Defs::jump.first -= clamped_y * 0.3f;
+        camera.position.y += Defs::jump.first * clamped_y * elapsed_time;
     }
 }

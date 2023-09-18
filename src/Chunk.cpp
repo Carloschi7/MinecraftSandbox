@@ -511,7 +511,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 		if (cd > 1.0f) {
 			cd = 1.0f;
 		}
-		if (cd > 0.05f && cd < 1.0f) {
+		else if (cd > 0.05f && cd < 1.0f) {
 			cd += 0.475f;
 		}
 		else {
