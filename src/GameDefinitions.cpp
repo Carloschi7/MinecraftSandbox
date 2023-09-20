@@ -32,7 +32,7 @@ namespace Defs
     f32 water_limit = -0.25f;
 
     //Local variables for now
-    std::pair<f32, bool> jump = std::make_pair(0.0f, false);
+    std::pair<f32, bool> jump_data = std::make_pair(0.0f, false);
     
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
@@ -65,8 +65,8 @@ namespace Defs
         }
         else {
             if (window.IsKeyboardEvent({ GLFW_KEY_SPACE, GLFW_PRESS })) {
-                if (jump.second) {
-                    jump = { 20.0f, false };
+                if (jump_data.second) {
+                    jump_data = { 10.0f, false };
                 }
             }
         }
@@ -478,18 +478,27 @@ namespace Physics {
         Window& window = GlCore::State::GetState().GameWindow();
         camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
     }
-    //TODO implement a way to keep jump constistency, make this be indipendent from how many chunks are being rendered + code cleanup
+    //TODO code cleanup
     void HandlePlayerGravity(f32 elapsed_time) 
     {
+        using Defs::jump_data;
         Camera& camera = GlCore::State::GetState().GameCamera();
         //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
 
-        if (Defs::jump.first != 20.0f && clamped_y == 0.0f) {
-            Defs::jump = { 0.0f, true };
+        if (jump_data.first != 10.0f && clamped_y == 0.0f) {
+            jump_data = { 0.0f, true };
         }
 
-        Defs::jump.first -= clamped_y * 0.3f;
-        camera.position.y += Defs::jump.first * clamped_y * elapsed_time;
+        jump_data.first -= clamped_y * 50.0f * elapsed_time;
+        if (jump_data.first < -3.0f)
+            jump_data.first = -3.0f;
+
+        //Keep the 0.0f as it interrupts the player upon hitting blocks, but remove the exponential rise until 0.12
+        //this makes the jump_data more sudden
+        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.2f ? 0.2f : clamped_y;
+        //the pow function is used to make the result higher on lower elapsed_time values, to make the jump_data speed
+        //more linear as the rendering gets heavier, the exponent is arbitrary for now
+        camera.position.y += Defs::jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);
     }
 }
