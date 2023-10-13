@@ -474,15 +474,15 @@ namespace Defs
 namespace Physics {
     void HandlePlayerMovement(f32 elapsed_time) 
     {
-        Camera& camera = GlCore::State::GetState().GameCamera();
-        Window& window = GlCore::State::GetState().GameWindow();
+        Camera& camera = *GlCore::State::GlobalInstance().camera;
+        Window& window = *GlCore::State::GlobalInstance().game_window;
         camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
     }
     //TODO code cleanup
     void HandlePlayerGravity(f32 elapsed_time) 
     {
         using Defs::jump_data;
-        Camera& camera = GlCore::State::GetState().GameCamera();
+        Camera& camera = *GlCore::State::GlobalInstance().camera;
         //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
 

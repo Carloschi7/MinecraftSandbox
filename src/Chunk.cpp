@@ -9,7 +9,7 @@ f32 Chunk::s_DiagonalLenght = 0.0f;
 u32 Chunk::s_InternalSelectedBlock = static_cast<u32>(-1);
 
 Chunk::Chunk(World& father, glm::vec2 origin)
-	:m_RelativeWorld(father), m_State(GlCore::State::GetState()),
+	:m_RelativeWorld(father), m_State(GlCore::State::GlobalInstance()),
 	m_ChunkOrigin(origin), m_SelectedBlock(static_cast<u32>(-1)),
 	m_ChunkCenter(0.0f), m_SectorIndex(0)
 {
@@ -88,7 +88,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 }
 
 Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
-	m_RelativeWorld(father), m_State(GlCore::State::GetState()),
+	m_RelativeWorld(father), m_State(GlCore::State::GlobalInstance()),
 	m_SectorIndex(index), m_SelectedBlock(static_cast<u32>(-1))
 {
 	//Init water layer position vector
@@ -99,7 +99,7 @@ Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
 }
 
 Chunk::Chunk(Chunk&& rhs) noexcept :
-	m_State(GlCore::State::GetState()), m_RelativeWorld(rhs.m_RelativeWorld)
+	m_State(GlCore::State::GlobalInstance()), m_RelativeWorld(rhs.m_RelativeWorld)
 {
 	*this = std::move(rhs);
 }
@@ -408,8 +408,8 @@ f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_c
 	std::size_t vec_size = m_LocalBlocks.size();
 	m_SelectedBlock = static_cast<u32>(-1);
 
-	auto& camera_position = m_State.GameCamera().GetPosition();
-	auto& camera_direction = m_State.GameCamera().GetFront();
+	auto& camera_position = m_State.camera->GetPosition();
+	auto& camera_direction = m_State.camera->GetFront();
 
 	Defs::HitDirection selection = Defs::HitDirection::None;
 
@@ -548,7 +548,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 
 void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 {
-	auto& camera_position = m_State.GameCamera().GetPosition();
+	auto& camera_position = m_State.camera->GetPosition();
 
 	//Update each single block
 	for (auto& block : m_LocalBlocks)
@@ -560,7 +560,7 @@ void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 		drop.Update(this, elapsed_time);
 		drop.UpdateModel(elapsed_time);
 
-		if (glm::length(drop.Position() - m_State.GameCamera().GetPosition()) < 1.0f) {
+		if (glm::length(drop.Position() - m_State.camera->GetPosition()) < 1.0f) {
 			inventory.AddToNewSlot(drop.Type());
 			bool last_flag = iter == std::prev(m_LocalDrops.end());
 			iter = m_LocalDrops.erase(iter);
@@ -574,7 +574,7 @@ void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 
 bool Chunk::IsChunkRenderable() const
 {
-	auto& camera_position = m_State.GameCamera().GetPosition();
+	auto& camera_position = m_State.camera->GetPosition();
 
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(camera_position.x, camera_position.z);
@@ -584,8 +584,8 @@ bool Chunk::IsChunkRenderable() const
 
 bool Chunk::IsChunkVisible() const
 {
-	auto& camera_position = m_State.GameCamera().GetPosition();
-	auto& camera_direction = m_State.GameCamera().GetFront();
+	auto& camera_position = m_State.camera->GetPosition();
+	auto& camera_direction = m_State.camera->GetFront();
 
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
 	return (glm::dot(camera_to_midway, camera_direction) > 0.4f ||
@@ -594,7 +594,7 @@ bool Chunk::IsChunkVisible() const
 
 bool Chunk::IsChunkVisibleByShadow() const
 {
-	glm::vec3 camera_position = m_State.GameCamera().GetPosition() + GlCore::g_FramebufferPlayerOffset;
+	glm::vec3 camera_position = m_State.camera->GetPosition() + GlCore::g_FramebufferPlayerOffset;
 	const glm::vec3& camera_direction = GlCore::g_NegY;
 	
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);

@@ -2,8 +2,8 @@
 #include "GlStructure.h"
 
 Inventory::Inventory() :
-    m_State(GlCore::State::GetState()), m_CursorIndex(0), 
-    m_TextRenderer({m_State.GameWindow().Width(), m_State.GameWindow().Height()},
+    m_State(GlCore::State::GlobalInstance()), m_CursorIndex(0), 
+    m_TextRenderer({m_State.game_window->Width(), m_State.game_window->Height()},
         static_cast<u32>(Defs::TextureBinding::TextureText))
 {
     for (u32 i = 0; i < 5; i++)
@@ -52,7 +52,7 @@ void Inventory::AddToNewSlot(Defs::BlockType type)
 
 void Inventory::HandleInventorySelection()
 {
-    Window& wnd = GlCore::State::GetState().GameWindow();
+    Window& wnd = *GlCore::State::GlobalInstance().game_window;
     double dx, dy;
     wnd.GetCursorCoord(dx, dy);
     bool mouse_left_state = wnd.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
@@ -107,8 +107,8 @@ void Inventory::InternalSideRender()
     //Actual inventory rendering
     u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureInventory);
     GlCore::GameTextures()[inventory_binding].Bind(inventory_binding);
-    m_State.InventoryShader()->Uniform1i(inventory_binding, "texture_inventory");
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_InternAbsTransf);
+    m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
 
     //Draw entries
     for (u32 i = 0; i < m_Slots.size(); i++) {
@@ -136,7 +136,7 @@ void Inventory::ScreenSideRender()
     glDisable(GL_DEPTH_TEST);
 
     //Move cursor if necessary
-    Window& wnd = GlCore::State::GetState().GameWindow();
+    Window& wnd = *GlCore::State::GlobalInstance().game_window;
     if (wnd.IsMouseWheelUp() && m_CursorIndex < Defs::g_InventoryScreenSlotsCount - 1)
         m_CursorIndex = (m_CursorIndex + 1) % 9;
     if (wnd.IsMouseWheelDown() && m_CursorIndex > 0)
@@ -149,8 +149,8 @@ void Inventory::ScreenSideRender()
 
     u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
     GlCore::GameTextures()[scr_inventory_binding].Bind(scr_inventory_binding);
-    m_State.InventoryShader()->Uniform1i(scr_inventory_binding, "texture_inventory");
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, m_ScreenAbsTransf);
+    m_State.inventory_shader->Uniform1i(scr_inventory_binding, "texture_inventory");
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_ScreenAbsTransf);
 
     //Draw entities
     for (u32 i = Defs::g_InventoryInternalSlotsCount; i < m_Slots.size(); i++) {
@@ -167,9 +167,9 @@ void Inventory::ScreenSideRender()
     //Render selector
     u32 selector_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventorySelector);
     GlCore::GameTextures()[selector_binding].Bind(selector_binding);
-    m_State.InventoryShader()->Uniform1i(selector_binding, "texture_inventory");
+    m_State.inventory_shader->Uniform1i(selector_binding, "texture_inventory");
     auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex, true);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryVM(), nullptr, screen_slot_transform);
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, screen_slot_transform);
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -177,9 +177,9 @@ void Inventory::ScreenSideRender()
 void Inventory::RenderEntry(InventoryEntry entry, u32 binding_index)
 {
     //Drawing actual block
-    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
     auto[icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, icon_transform);
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, icon_transform);
 
     //Drawing block count
     //Number testing, needs to be removed soon
@@ -191,9 +191,9 @@ void Inventory::RenderEntry(InventoryEntry entry, u32 binding_index)
 
 void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
     auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, screen_slot_transform);
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
 
     glEnable(GL_BLEND);
     m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
@@ -202,15 +202,15 @@ void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
 
 void Inventory::RenderPendingEntry(InventoryEntry entry)
 {
-    m_State.InventoryShader()->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
 
-    Window& wnd = GlCore::State::GetState().GameWindow();
+    Window& wnd = *GlCore::State::GlobalInstance().game_window;
     double dx, dy;
     wnd.GetCursorCoord(dx, dy);
 
     glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
     pos_mat = glm::scale(pos_mat, GridMeasures::tile_transform);
-    GlCore::Renderer::Render(m_State.InventoryShader(), *m_State.InventoryEntryVM(), nullptr, pos_mat);
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, pos_mat);
 
     glEnable(GL_BLEND);
     f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;

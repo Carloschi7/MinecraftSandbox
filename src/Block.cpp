@@ -130,7 +130,7 @@ glm::vec3 Block::NormalForIndex(u32 index)
 }
 
 Drop::Drop(const glm::vec3& position, Defs::BlockType type) :
-    m_State(GlCore::State::GetState()),
+    m_State(GlCore::State::GlobalInstance()),
     m_Type(type), m_Position(position), m_RotationAngle(0.0f), m_Model(1.0f)
 {
     GlCore::VertexData vd = GlCore::Cube();
@@ -159,9 +159,9 @@ Drop& Drop::operator=(Drop&& right) noexcept
 
 void Drop::Render()
 {
-    auto shader = m_State.DropShader();
+    auto shader = m_State.drop_shader;
     shader->Use();
-    m_State.DropVM()->BindVertexArray();
+    m_State.drop_vm->BindVertexArray();
 
     
     shader->UniformMat4f(m_Model, "model");

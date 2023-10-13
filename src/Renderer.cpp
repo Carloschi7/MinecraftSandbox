@@ -88,10 +88,10 @@ namespace GlCore
 
 	void DispatchBlockRendering(glm::vec3*& position_buf, u32*& texture_buf, u32& count)
 	{
-		State& state = State::GetState();
-		auto block_vm = state.BlockVM();
+		State& state = State::GlobalInstance();
+		auto block_vm = state.block_vm;
 
-		state.BlockShader()->Use();
+		state.block_shader->Use();
 		block_vm->BindVertexArray();
 
 		//Unmap buffers for rendering and then remapping them
@@ -106,10 +106,10 @@ namespace GlCore
 	}
 	void DispatchDepthRendering(glm::vec3*& position_buf, u32& count)
 	{
-		State& state = State::GetState();
-		auto depth_vm = state.DepthVM();
+		State& state = State::GlobalInstance();
+		auto depth_vm = state.depth_vm;
 
-		state.DepthShader()->Use();
+		state.depth_shader->Use();
 		depth_vm->BindVertexArray();
 
 		depth_vm->UnmapAttributePointer(0);

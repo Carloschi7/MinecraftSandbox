@@ -6,7 +6,7 @@
 
 //Initializing a single block for now
 World::World()
-	: m_State(GlCore::State::GetState()), m_LastPos(0.0f)
+	: m_State(GlCore::State::GlobalInstance()), m_LastPos(0.0f)
 {
 	using namespace Defs;
 
@@ -55,7 +55,7 @@ World::World()
 
 	u32 water_binding = static_cast<u32>(Defs::TextureBinding::TextureWater);
 	textures[water_binding].Bind(water_binding);
-	m_State.WaterShader()->Uniform1i(water_binding, "texture_water");
+	m_State.water_shader->Uniform1i(water_binding, "texture_water");
 }
 
 World::~World()
@@ -65,15 +65,15 @@ World::~World()
 void World::Render()
 {
 	//Draw to depth framebuffer
-	auto& window = m_State.GameWindow();
-	auto& camera = m_State.GameCamera();
-	auto block_vm = m_State.BlockVM();
-	auto depth_vm = m_State.DepthVM();
+	auto& window = *m_State.game_window;
+	auto& camera = *m_State.camera;
+	auto block_vm = m_State.block_vm;
+	auto depth_vm = m_State.depth_vm;
 
 	//Map the shader buffers so we can use them to write data
 	glm::vec3* block_positions = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
 	glm::vec3* depth_positions = static_cast<glm::vec3*>(depth_vm->InstancedAttributePointer(0));
-	glm::vec3* water_positions = static_cast<glm::vec3*>(m_State.WaterVM()->InstancedAttributePointer(0));
+	glm::vec3* water_positions = static_cast<glm::vec3*>(m_State.water_vm->InstancedAttributePointer(0));
 	u32* block_texindices = static_cast<u32*>(block_vm->InstancedAttributePointer(1));
 
 	u32 count = 0;
@@ -86,7 +86,7 @@ void World::Render()
 		m_LastPos = camera.GetPosition();
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
-		m_State.DepthFramebuffer()->Bind();
+		m_State.shadow_framebuffer->Bind();
 		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
 		//Update depth framebuffer
@@ -109,8 +109,8 @@ void World::Render()
 		GlCore::DispatchDepthRendering(depth_positions, count);
 
 		u32 depth_binding = static_cast<u32>(Defs::TextureBinding::TextureDepth);
-		m_State.DepthFramebuffer()->BindFrameTexture(depth_binding);
-		m_State.BlockShader()->Uniform1i(depth_binding, "texture_depth");
+		m_State.shadow_framebuffer->BindFrameTexture(depth_binding);
+		m_State.block_shader->Uniform1i(depth_binding, "texture_depth");
 
 		glViewport(0, 0, window.Width(), window.Height());
 		FrameBuffer::BindDefault();
@@ -125,7 +125,7 @@ void World::Render()
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Defs::g_SelectedBlock.load();	
 	//Uniform light space matrix
-	m_State.BlockShader()->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
+	m_State.block_shader->UniformMat4f(GlCore::g_DepthSpaceMatrix, "light_space");
 
 	//Draw to scene
 	for (u32 i = 0; i < m_Chunks.size(); i++)
@@ -147,15 +147,15 @@ void World::Render()
 	count = 0;
 	//Draw water layers(normal instanced rendering for the water layer)
 	glEnable(GL_BLEND);
-	m_State.WaterShader()->Use();
-	m_State.WaterVM()->BindVertexArray();
+	m_State.water_shader->Use();
+	m_State.water_vm->BindVertexArray();
 	for (auto vec : m_DrawableWaterLayers)
 	{
 		std::memcpy(water_positions + count, vec->data(), vec->size() * sizeof(glm::vec3));
 		count += vec->size();
 	}
 	//Render water layers
-	m_State.WaterVM()->UnmapAttributePointer(0);
+	m_State.water_vm->UnmapAttributePointer(0);
 	GlCore::Renderer::RenderInstanced(count);
 
 	glDisable(GL_BLEND);
@@ -168,7 +168,7 @@ void World::Render()
 void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 {
 	//Chunk dynamic spawning
-	auto& camera_position = m_State.GameCamera().GetPosition();
+	auto& camera_position = m_State.camera->GetPosition();
 	glm::vec2 camera_2d(camera_position.x, camera_position.z);
 	
 	if (!GlCore::g_SerializationRunning)
@@ -261,8 +261,8 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 		//We update blocks drawing conditions only if we move or if we break blocks
 		chunk->UpdateBlocks(inventory, elapsed_time);
 		//Check if the player collides with blocks himself
-		Camera& cam = m_State.GameCamera();
-		chunk->BlockCollisionLogic(cam.position);
+		Camera* cam = m_State.camera;
+		chunk->BlockCollisionLogic(cam->position);
 	}
 
 	if constexpr (GlCore::g_MultithreadedRendering)
@@ -334,11 +334,11 @@ void World::HandleSelection(Inventory& inventory)
 	f32 nearest_selection = INFINITY;
 	s32 involved_chunk = static_cast<u32>(-1);
 
-	auto& window = m_State.GameWindow();
+	auto window = m_State.game_window;
 
 	//One block at a time
-	bool left_click = window.IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
-	bool right_click = window.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
+	bool left_click = window->IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+	bool right_click = window->IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{

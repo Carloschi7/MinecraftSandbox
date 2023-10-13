@@ -46,9 +46,9 @@ void Application::OnUserCreate()
 void Application::OnUserRun()
 {
     //Init global vars
-    GlCore::State& state = GlCore::State::GetState();
-    state.SetGameWindow(&m_Window);
-    state.SetGameCamera(&m_Camera);
+    GlCore::State& state = GlCore::State::GlobalInstance();
+    state.game_window = &m_Window;
+    state.camera = &m_Camera;
     static bool state_switch = false;
 
     //Game data
@@ -79,7 +79,7 @@ void Application::OnUserRun()
 
             world_instance.UpdateScene(game_inventory, recorded_time);
             game_inventory.HandleInventorySelection();
-            state.GameWindow().UpdateKeys();
+            state.game_window->UpdateKeys();
             //Update local timer
             recorded_time = timer.GetElapsedSeconds();
         }
@@ -117,7 +117,7 @@ void Application::OnUserRun()
         {
             world_instance.UpdateScene(game_inventory, elapsed_time);
             game_inventory.HandleInventorySelection();
-            state.GameWindow().UpdateKeys();
+            state.game_window->UpdateKeys();
         }
         world_instance.Render();
         game_inventory.ScreenSideRender();
@@ -126,7 +126,7 @@ void Application::OnUserRun()
         {
             if (state_switch)
             {
-                state.GameWindow().EnableCursor();
+                state.game_window->EnableCursor();
                 state_switch = false;
             }
             
@@ -136,7 +136,7 @@ void Application::OnUserRun()
         {
             if (state_switch)
             {
-                state.GameWindow().DisableCursor();
+                state.game_window->DisableCursor();
                 state_switch = false;
             }
 
