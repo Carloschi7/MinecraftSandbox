@@ -504,18 +504,20 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 	if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(m_ChunkCenter.x, m_ChunkCenter.z)) > 12.0f)
 		return;
 
-	//Defs::g_PlayerAxisMapping = glm::vec3(1.0f);
+	f32 initial_treshold = 0.01f;
+	//TODO play with the values to fix clipping problems
 	for (u32 i = 0; i < 3; i++) {
 		f32& cd = Defs::g_PlayerAxisMapping[i];
 		//accelerated increase in this axis speed
 		if (cd > 1.0f) {
 			cd = 1.0f;
 		}
-		else if (cd > 0.05f && cd < 1.0f) {
+		else if (cd > initial_treshold && cd < 1.0f) {
 			cd += 0.475f;
 		}
 		else {
-			cd += 0.01f;
+			//Four frames to get there
+			cd += initial_treshold / 4.0f;
 		}
 	}
 
@@ -538,9 +540,15 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 				Defs::g_PlayerAxisMapping.x = 0.0f;
 			}
 
-			if(abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
-				position.y = position.y < block_pos.y ? block_pos.y - 1.0f : block_pos.y + 1.0f;
+			if (abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
 				Defs::g_PlayerAxisMapping.y = 0.0f;
+				if (position.y < block_pos.y) {
+					position.y = block_pos.y - 1.0f;
+				}
+				else {
+					position.y = block_pos.y + 1.0f;
+					Defs::jump_data = { 0.0f, true };
+				}
 			}
 		}
 	}

@@ -80,6 +80,12 @@ namespace Defs
             //Player did not move
             g_PlayerSpeed = 0.0f;
         }
+
+
+
+        //DEBUG issue key
+        if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
+            __debugbreak();
     }
 
     void MouseFunction(const Window &window, Camera *camera, double x, double y, double dpi, double time)
@@ -486,9 +492,9 @@ namespace Physics {
         //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
 
-        if (jump_data.first != 10.0f && clamped_y == 0.0f) {
+        /*if (jump_data.first != 10.0f && clamped_y == 0.0f) {
             jump_data = { 0.0f, true };
-        }
+        }*/
 
         jump_data.first -= clamped_y * 50.0f * elapsed_time;
         if (jump_data.first < -3.0f)
@@ -496,7 +502,7 @@ namespace Physics {
 
         //Keep the 0.0f as it interrupts the player upon hitting blocks, but remove the exponential rise until 0.12
         //this makes the jump_data more sudden
-        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.2f ? 0.2f : clamped_y;
+        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.3f ? 0.3f : clamped_y;
         //the pow function is used to make the result higher on lower elapsed_time values, to make the jump_data speed
         //more linear as the rendering gets heavier, the exponent is arbitrary for now
         camera.position.y += Defs::jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);

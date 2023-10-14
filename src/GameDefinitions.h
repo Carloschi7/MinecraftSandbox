@@ -128,6 +128,8 @@ namespace Defs
 	extern f32 water_limit;
 	static f32 landmap_density = 1000.0f;
 	static f32 watermap_density = 900.0f;
+
+	extern std::pair<f32, bool> jump_data;
 	
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
