@@ -2,6 +2,16 @@
 #include "Vertices.h"
 #include "Chunk.h"
 
+//For block normal handling
+static const std::array<u8, 6> bitshifts = {
+    (1 << 0), //pos x
+    (1 << 1), //neg x
+    (1 << 2), //pos y
+    (1 << 3), //neg y
+    (1 << 4), //pos z 
+    (1 << 5), //neg z
+};
+
 Block::Block(const glm::vec3& position, const Defs::BlockType& bt)
     :m_Position(position), m_BlockType(bt), m_ExposedNormals{}
 {
@@ -14,9 +24,9 @@ void Block::UpdateRenderableSides(const glm::vec3& camera_pos)
 
     //Should never go above 3 elements
     glm::vec3 dir = Position() - camera_pos;
-    for (u32 i = 0; i < m_ExposedNormals.size(); i++)
+    for (u32 i = 0; i < bitshifts.size(); i++)
     {
-        const bool& is_norm = m_ExposedNormals[i];
+        const bool is_norm = m_ExposedNormals & bitshifts[i];
         if (is_norm)
         {
             glm::vec3 norm = NormalForIndex(i);
@@ -43,7 +53,7 @@ const GlCore::DrawableData& Block::DrawableSides() const
 
 void Block::AddNormal(const glm::vec3& norm)
 {
-    m_ExposedNormals[IndexForNormal(norm)] = true;
+    m_ExposedNormals |= (1 << IndexForNormal(norm));
 }
 
 void Block::AddNormal(f32 x, f32 y, f32 z)
@@ -53,7 +63,7 @@ void Block::AddNormal(f32 x, f32 y, f32 z)
 
 void Block::RemoveNormal(const glm::vec3& norm)
 {
-    m_ExposedNormals[IndexForNormal(norm)] = false;
+    m_ExposedNormals &= ~(1 << IndexForNormal(norm));
 }
 
 void Block::RemoveNormal(f32 x, f32 y, f32 z)
@@ -63,8 +73,8 @@ void Block::RemoveNormal(f32 x, f32 y, f32 z)
 
 bool Block::HasNormals() const
 {
-    for (bool b : m_ExposedNormals)
-        if (b)
+    for (u8 i = 0; i < bitshifts.size(); i++)
+        if (m_ExposedNormals & bitshifts[i])
             return true;
 
     return false;
@@ -81,8 +91,8 @@ void Block::Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos)
     sz& offset_vec.x& offset_vec.y& offset_vec.z;
 
     Utils::Bitfield<6> bitfield;
-    for (u32 i = 0; i < m_ExposedNormals.size(); i++)
-        bitfield.Set(i, m_ExposedNormals[i]);
+    for (u32 i = 0; i < bitshifts.size(); i++)
+        bitfield.Set(i, m_ExposedNormals & bitshifts[i]);
 
     sz& bitfield.Getu8Payload(0);
     //m_BlockStructure and m_DrawableData do not need to be serialized
@@ -90,7 +100,7 @@ void Block::Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos)
     sz& static_cast<u8>(m_BlockType);
 }
 
-u32 Block::IndexForNormal(const glm::vec3& vec)
+u8 Block::IndexForNormal(const glm::vec3& vec)
 {
     if (vec == glm::vec3(1.0f, 0.0f, 0.0f))
         return 0;

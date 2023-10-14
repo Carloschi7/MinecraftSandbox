@@ -26,7 +26,7 @@ public:
     //Serialization
     void Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos);
 public:
-    static u32 IndexForNormal(const glm::vec3& vec);
+    static u8 IndexForNormal(const glm::vec3& vec);
     static glm::vec3 NormalForIndex(u32 index);
 private:
     glm::vec3 m_Position;
@@ -34,7 +34,7 @@ private:
     //determining if the cube can be drawn
     //The normal is present if the matching index in
     //the array is one
-    std::array<bool, 6> m_ExposedNormals;
+    u8 m_ExposedNormals;
     //Drawable sides of a cube(max 3 in 3d space obv)
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
