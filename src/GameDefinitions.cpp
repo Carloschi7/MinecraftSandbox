@@ -82,10 +82,11 @@ namespace Defs
         }
 
 
-
+#ifdef _DEBUG
         //DEBUG issue key
         if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
             __debugbreak();
+#endif
     }
 
     void MouseFunction(const Window &window, Camera *camera, double x, double y, double dpi, double time)
@@ -491,10 +492,6 @@ namespace Physics {
         Camera& camera = *GlCore::State::GlobalInstance().camera;
         //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
-
-        /*if (jump_data.first != 10.0f && clamped_y == 0.0f) {
-            jump_data = { 0.0f, true };
-        }*/
 
         jump_data.first -= clamped_y * 50.0f * elapsed_time;
         if (jump_data.first < -3.0f)
