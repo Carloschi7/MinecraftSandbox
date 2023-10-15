@@ -565,31 +565,23 @@ void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 	}
 }
 
-bool Chunk::IsChunkRenderable() const
+bool Chunk::IsChunkRenderable(const glm::vec3& camera_position) const
 {
-	auto& camera_position = m_State.camera->GetPosition();
-
 	//This algorithm does not take account for the player altitude in space
 	glm::vec2 cam_pos(camera_position.x, camera_position.z);
 	glm::vec2 chunk_center_pos(m_ChunkCenter.x, m_ChunkCenter.z);
 	return (glm::length(cam_pos - chunk_center_pos) < Defs::g_ChunkRenderingDistance);
 }
 
-bool Chunk::IsChunkVisible() const
+bool Chunk::IsChunkVisible(const glm::vec3& camera_position, const glm::vec3& camera_direction) const
 {
-	auto& camera_position = m_State.camera->GetPosition();
-	auto& camera_direction = m_State.camera->GetFront();
-
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
 	return (glm::dot(camera_to_midway, camera_direction) > 0.4f ||
 		glm::length(camera_position - m_ChunkCenter) < s_DiagonalLenght + Defs::g_CameraCompensation);
 }
 
-bool Chunk::IsChunkVisibleByShadow() const
+bool Chunk::IsChunkVisibleByShadow(const glm::vec3& camera_position, const glm::vec3& camera_direction) const
 {
-	glm::vec3 camera_position = m_State.camera->GetPosition() + GlCore::g_FramebufferPlayerOffset;
-	const glm::vec3& camera_direction = GlCore::g_NegY;
-	
 	glm::vec3 camera_to_midway = glm::normalize(m_ChunkCenter - camera_position);
 	return (glm::dot(camera_to_midway, camera_direction) > 0.5f);
 }

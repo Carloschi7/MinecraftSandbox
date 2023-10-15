@@ -133,7 +133,10 @@ void Application::OnUserRun()
             game_inventory.HandleInventorySelection();
             state.game_window->UpdateKeys();
         }
-        world_instance.Render();
+        //Copy these vector to make the camera indipendent from the logic thread
+        glm::vec3 camera_position = m_Camera.position;
+        glm::vec3 camera_direction = m_Camera.GetFront();
+        world_instance.Render(camera_position, camera_direction);
         game_inventory.ScreenSideRender();
 
         if (Defs::g_ViewMode == Defs::ViewMode::Inventory)
@@ -153,7 +156,7 @@ void Application::OnUserRun()
                 state.game_window->DisableCursor();
                 state_switch = false;
             }
-            
+
             Physics::HandlePlayerMovement(elapsed_time);
             if (Defs::g_MovementType != Defs::MovementType::Creative)
                 Physics::HandlePlayerGravity(elapsed_time);

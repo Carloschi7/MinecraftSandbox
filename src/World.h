@@ -12,9 +12,9 @@ public:
     World();
     ~World();
     //Renders visible world
-    void Render();
+    void Render(const glm::vec3& camera_position, const glm::vec3& camera_direction);
     void UpdateScene(Inventory& inventory, f32 elapsed_time);
-    void HandleSelection(Inventory& inventory);
+    void HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
     void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);

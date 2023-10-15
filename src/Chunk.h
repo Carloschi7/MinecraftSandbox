@@ -45,11 +45,11 @@ public:
 
 	void UpdateBlocks(Inventory& inventory, f32 elapsed_time);
 	//Checks if this chunk is near enough to the player to be rendered
-	bool IsChunkRenderable() const;
+	bool IsChunkRenderable(const glm::vec3& camera_position) const;
 	//Checks if this chunk (within the renderable space) is visible by the player
-	bool IsChunkVisible() const;
+	bool IsChunkVisible(const glm::vec3& camera_position, const glm::vec3& camera_direction) const;
 	//Determines if the chunk is visible by the shadow shader
-	bool IsChunkVisibleByShadow() const;
+	bool IsChunkVisibleByShadow(const glm::vec3& camera_position, const glm::vec3& camera_direction) const;
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
 

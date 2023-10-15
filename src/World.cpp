@@ -62,11 +62,10 @@ World::~World()
 {
 }
 
-void World::Render()
+void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
 	//Draw to depth framebuffer
 	auto& window = *m_State.game_window;
-	auto& camera = *m_State.camera;
 	auto block_vm = m_State.block_vm;
 	auto depth_vm = m_State.depth_vm;
 
@@ -79,11 +78,11 @@ void World::Render()
 	u32 count = 0;
 
 	//If at least one of this conditions are verified, we need to update the shadow texture
-	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera.GetPosition()) > 10.0f)
+	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera_position) > 10.0f)
 	{
 		//Reset state
 		Defs::g_EnvironmentChange = false;
-		m_LastPos = camera.GetPosition();
+		m_LastPos = camera_position;
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
 		m_State.shadow_framebuffer->Bind();
@@ -101,7 +100,7 @@ void World::Render()
 			if (chunk == nullptr)
 				break;
 
-			if (chunk->IsChunkRenderable() && chunk->IsChunkVisibleByShadow())
+			if (chunk->IsChunkRenderable(camera_position) && chunk->IsChunkVisibleByShadow(camera_position, camera_direction))
 				chunk->ForwardRenderableData(depth_positions, block_texindices, count, true);
 		}
 
@@ -135,7 +134,7 @@ void World::Render()
 		if (chunk == nullptr)
 			break;
 		
-		if (chunk->IsChunkRenderable() && chunk->IsChunkVisible()) {
+		if (chunk->IsChunkRenderable(camera_position) && chunk->IsChunkVisible(camera_position, camera_direction)) {
 			chunk->ForwardRenderableData(block_positions, block_texindices, count, false, ch == i);
 			chunk->RenderDrops();
 		}
@@ -169,6 +168,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 {
 	//Chunk dynamic spawning
 	auto& camera_position = m_State.camera->GetPosition();
+	auto& camera_direction = m_State.camera->GetFront();
 	glm::vec2 camera_2d(camera_position.x, camera_position.z);
 	
 	if (!GlCore::g_SerializationRunning)
@@ -246,7 +246,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 	}
 
 	//Determine selection
-	HandleSelection(inventory);
+	HandleSelection(inventory, camera_position, camera_direction);
 	Physics::ProcessPlayerAxisMovement(elapsed_time);
 
 	//normal updating & player collision
@@ -256,7 +256,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 		if (m_Chunks[i] == nullptr)
 			break;
 
-		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
+		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
 		//We update blocks drawing conditions only if we move or if we break blocks
@@ -330,7 +330,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 	}
 }
 
-void World::HandleSelection(Inventory& inventory)
+void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
 	f32 nearest_selection = INFINITY;
 	s32 involved_chunk = static_cast<u32>(-1);
@@ -347,7 +347,7 @@ void World::HandleSelection(Inventory& inventory)
 		if (chunk == nullptr)
 			break;
 
-		if (!chunk->IsChunkRenderable() || !chunk->IsChunkVisible())
+		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
 		f32 current_selection = chunk->RayCollisionLogic(inventory, left_click, right_click);

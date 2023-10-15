@@ -30,10 +30,11 @@ namespace Defs
     std::string g_SerializedFileFormat = ".sszd";
     std::unordered_set<u32> g_PushedSections;
     f32 water_limit = -0.25f;
-
-    //Local variables for now
     std::pair<f32, bool> jump_data = std::make_pair(0.0f, false);
     
+    //Local variables for now
+    f32 jump_height = 6.0f;
+
     void KeyboardFunction(const Window& window, Camera* camera, double time)
     {
         f32 fScalar = 0.2f;
@@ -66,7 +67,7 @@ namespace Defs
         else {
             if (window.IsKeyboardEvent({ GLFW_KEY_SPACE, GLFW_PRESS })) {
                 if (jump_data.second) {
-                    jump_data = { 10.0f, false };
+                    jump_data = { jump_height, false };
                 }
             }
         }
