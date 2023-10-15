@@ -54,6 +54,7 @@ void Application::OnUserRun()
     //Game data
     World world_instance;
     Inventory game_inventory;
+    TextRenderer info_text_renderer{ {m_Window.Width(), m_Window.Height() }, static_cast<u32>(Defs::TextureBinding::TextureText) };
 
     auto switch_game_state = [&]() 
     {
@@ -65,11 +66,17 @@ void Application::OnUserRun()
         state_switch = true;
     };
 
+    f32 thread1_record = 0.0f;
+    f32 thread2_record = 0.0f;
+    Utils::Timer thread1_record_timer;
+    Utils::Timer thread2_record_timer;
+
     //Logic thread function
     auto logic_thread_impl = [&]()
     {
         Utils::Timer timer;
-        f32 recorded_time = 0.1f;
+        f32 elapsed_time = 0.1f;
+        thread1_record_timer.StartTimer();
         while (GlCore::g_LogicThreadShouldRun)
         {
             timer.StartTimer();
@@ -77,11 +84,15 @@ void Application::OnUserRun()
             if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
-            world_instance.UpdateScene(game_inventory, recorded_time);
+            world_instance.UpdateScene(game_inventory, elapsed_time);
             game_inventory.HandleInventorySelection();
             state.game_window->UpdateKeys();
-            //Update local timer
-            recorded_time = timer.GetElapsedSeconds();
+            //Update local elapsed_timer
+            elapsed_time = timer.GetElapsedSeconds();
+            if (thread2_record_timer.GetElapsedMilliseconds() > 500.0f) {
+                thread2_record = elapsed_time;
+                thread2_record_timer.StartTimer();
+            }
         }
     };
 
@@ -100,7 +111,8 @@ void Application::OnUserRun()
     glDisable(GL_BLEND);
 
     glEnable(GL_DEPTH_TEST);
-    Utils::Timer timer;
+    Utils::Timer elapsed_timer;
+    thread1_record_timer.StartTimer();
     //Standard value for the first frame
     f32 elapsed_time = 0.1f;
     while (!m_Window.ShouldClose())
@@ -109,7 +121,7 @@ void Application::OnUserRun()
             if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
-        timer.StartTimer();
+        elapsed_timer.StartTimer();
         //No need to render every frame, while the logic thread computes,
         //sleeping every few milliseconds can save lots of performances without
         //resulting too slow
@@ -140,15 +152,19 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
-            elapsed_time = timer.GetElapsedSeconds();
             Physics::HandlePlayerMovement(elapsed_time);
 
             if(Defs::g_MovementType != Defs::MovementType::Creative)
                 Physics::HandlePlayerGravity(elapsed_time);
         }
+        elapsed_time = elapsed_timer.GetElapsedSeconds();
+        if (thread1_record_timer.GetElapsedMilliseconds() > 500.0f) {
+            thread1_record = elapsed_time;
+            thread1_record_timer.StartTimer();
+        }
 
-        //CAMERA DEBUG
-        //std::cout << m_Camera.GetPosition().x << ", " << m_Camera.GetPosition().z << std::endl;
+        info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", {0,0});
+        info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0,40 });
         m_Window.Update();
     }
 
