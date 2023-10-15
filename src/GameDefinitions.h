@@ -169,4 +169,5 @@ namespace Defs
 namespace Physics {
 	void HandlePlayerMovement(f32 elapsed_time);
 	void HandlePlayerGravity(f32 elapsed_time);
+	void ProcessPlayerAxisMovement(f32 elapsed_time);
 }

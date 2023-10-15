@@ -84,6 +84,8 @@ void Application::OnUserRun()
             if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
+
+
             world_instance.UpdateScene(game_inventory, elapsed_time);
             game_inventory.HandleInventorySelection();
             state.game_window->UpdateKeys();
@@ -151,10 +153,9 @@ void Application::OnUserRun()
                 state.game_window->DisableCursor();
                 state_switch = false;
             }
-
+            
             Physics::HandlePlayerMovement(elapsed_time);
-
-            if(Defs::g_MovementType != Defs::MovementType::Creative)
+            if (Defs::g_MovementType != Defs::MovementType::Creative)
                 Physics::HandlePlayerGravity(elapsed_time);
         }
         elapsed_time = elapsed_timer.GetElapsedSeconds();

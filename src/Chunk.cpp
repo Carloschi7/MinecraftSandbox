@@ -504,23 +504,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 	if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(m_ChunkCenter.x, m_ChunkCenter.z)) > 12.0f)
 		return;
 
-	f32 initial_treshold = 0.01f;
-	//TODO play with the values to fix clipping problems
-	for (u32 i = 0; i < 3; i++) {
-		f32& cd = Defs::g_PlayerAxisMapping[i];
-		//accelerated increase in this axis speed
-		if (cd > 1.0f) {
-			cd = 1.0f;
-		}
-		else if (cd > initial_treshold && cd < 1.0f) {
-			cd += 0.475f;
-		}
-		else {
-			//Four frames to get there
-			cd += initial_treshold / 4.0f;
-		}
-	}
-
+	f32 clip_threshold = 0.9f;
 	for (u32 i = 0; i < m_LocalBlocks.size(); i++) {
 		if (!m_LocalBlocks[i].HasNormals())
 			continue;
@@ -528,25 +512,26 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 		const glm::vec3& block_pos = m_LocalBlocks[i].Position();
 		glm::vec3 diff = position - block_pos;
 		glm::vec3 abs_diff = glm::abs(diff);
-		if (abs_diff.x < 1.0f && abs_diff.y < 1.0f && abs_diff.z < 1.0f) {
+		if (abs_diff.x < clip_threshold && abs_diff.y < clip_threshold && abs_diff.z < clip_threshold) {
 			//Simple collision solver
 			if (abs_diff.z > abs_diff.x && abs_diff.z > abs_diff.y) {
-				position.z = position.z < block_pos.z ? block_pos.z - 1.0f : block_pos.z + 1.0f;
+				position.z = position.z < block_pos.z ? block_pos.z - clip_threshold : block_pos.z + clip_threshold;
 				Defs::g_PlayerAxisMapping.z = 0.0f;
 			}
 
 			if (abs_diff.x > abs_diff.y && abs_diff.x > abs_diff.z) {
-				position.x = position.x < block_pos.x ? block_pos.x - 1.0f : block_pos.x + 1.0f;
+				position.x = position.x < block_pos.x ? block_pos.x - clip_threshold : block_pos.x + clip_threshold;
 				Defs::g_PlayerAxisMapping.x = 0.0f;
 			}
 
 			if (abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
 				Defs::g_PlayerAxisMapping.y = 0.0f;
 				if (position.y < block_pos.y) {
-					position.y = block_pos.y - 1.0f;
+					position.y = block_pos.y - clip_threshold;
+					Defs::jump_data = { 0.0f, false };
 				}
 				else {
-					position.y = block_pos.y + 1.0f;
+					position.y = block_pos.y + clip_threshold;
 					Defs::jump_data = { 0.0f, true };
 				}
 			}

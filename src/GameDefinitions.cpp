@@ -504,4 +504,23 @@ namespace Physics {
         //more linear as the rendering gets heavier, the exponent is arbitrary for now
         camera.position.y += Defs::jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);
     }
+    void ProcessPlayerAxisMovement(f32 elapsed_time)
+    {
+        f32 initial_treshold = 0.01f;
+        //TODO play with the values to fix clipping problems
+        for (u32 i = 0; i < 3; i++) {
+            f32& cd = Defs::g_PlayerAxisMapping[i];
+            //accelerated increase in this axis speed
+            if (cd > 1.0f) {
+                cd = 1.0f;
+            }
+            else if (cd > initial_treshold && cd < 1.0f) {
+                cd += 0.475f;
+            }
+            else {
+                //Four frames to get there
+                cd += initial_treshold / 4.0f;
+            }
+        }
+    }
 }

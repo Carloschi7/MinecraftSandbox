@@ -247,6 +247,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 	//Determine selection
 	HandleSelection(inventory);
+	Physics::ProcessPlayerAxisMovement(elapsed_time);
 
 	//normal updating & player collision
 	for (u32 i = 0; i < m_Chunks.size(); i++)
