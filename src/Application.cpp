@@ -15,6 +15,8 @@
 Application::Application() :
     m_Window(InitContext(1920, 1080, "MinecraftClone", true))
 {
+    Defs::g_ScreenWidth = 1920;
+    Defs::g_ScreenHeight = 1080;
     m_Window.AttachWndToCurrentContext();
 }
 
@@ -158,8 +160,8 @@ void Application::OnUserRun()
             }
 
             Physics::HandlePlayerMovement(elapsed_time);
-            if (Defs::g_MovementType != Defs::MovementType::Creative)
-                Physics::HandlePlayerGravity(elapsed_time);
+            /*if (Defs::g_MovementType != Defs::MovementType::Creative)
+                Physics::HandlePlayerGravity(elapsed_time);*/
         }
         elapsed_time = elapsed_timer.GetElapsedSeconds();
         if (thread1_record_timer.GetElapsedMilliseconds() > 500.0f) {

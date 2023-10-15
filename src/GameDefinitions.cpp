@@ -9,6 +9,8 @@ namespace Defs
     u16 g_InventoryKey = GLFW_KEY_T;
     MovementType g_MovementType = MovementType::Normal;
 
+    u32 g_ScreenWidth = 0; 
+    u32 g_ScreenHeight = 0;
     glm::vec3 g_PlayerAxisMapping = glm::vec3(1.0f);
     f32 g_PlayerSpeed = 0.0f;
 	const f32 g_ChunkSpawningDistance = 500.0f;

@@ -65,7 +65,6 @@ World::~World()
 void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
 	//Draw to depth framebuffer
-	auto& window = *m_State.game_window;
 	auto block_vm = m_State.block_vm;
 	auto depth_vm = m_State.depth_vm;
 
@@ -111,7 +110,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 		m_State.shadow_framebuffer->BindFrameTexture(depth_binding);
 		m_State.block_shader->Uniform1i(depth_binding, "texture_depth");
 
-		glViewport(0, 0, window.Width(), window.Height());
+		glViewport(0, 0, Defs::g_ScreenWidth, Defs::g_ScreenHeight);
 		FrameBuffer::BindDefault();
 	}
 

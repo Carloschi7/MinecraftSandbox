@@ -92,6 +92,7 @@ namespace Defs
 
 	//-----------------Variables
 	extern std::atomic<ViewMode> g_ViewMode;
+	extern u32 g_ScreenWidth, g_ScreenHeight;
 
 	//Game global variables
 	extern u16 g_InventoryKey;
