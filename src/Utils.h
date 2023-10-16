@@ -22,7 +22,8 @@
 #	define MC_UNLOCK(vec)
 #endif
 
-#define MC_ASSERT(x)\
+//msg for now its just a warning displayed in the same line of the assert, no practical usage
+#define MC_ASSERT(x, msg)\
 	if(!(x)){*(int*)0 = 0;}
 
 //Utilities

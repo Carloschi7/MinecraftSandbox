@@ -875,8 +875,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 
 bool Chunk::IsBlock(const glm::vec3& pos, s32 starting_index, bool search_towards_end, u32* block_index) const
 {
-	if (starting_index < 0 || starting_index >= m_LocalBlocks.size())
-		throw std::runtime_error("Starting index out of bounds");
+	MC_ASSERT(starting_index >= 0 && starting_index < m_LocalBlocks.size(), "provided index out of bounds");
 
 	if (search_towards_end)
 	{

@@ -434,8 +434,7 @@ Chunk& World::GetChunk(u32 index)
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
 		[index](std::shared_ptr<Chunk> c) {return c->Index() == index; });
 
-	if (iter == m_Chunks.end())
-		throw std::runtime_error("Chunk element with this index not found");
+	MC_ASSERT(iter != m_Chunks.end(), "the provided variable index should be valid");
 
 	return **iter;
 }
