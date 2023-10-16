@@ -53,7 +53,6 @@ public:
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
 
-	const glm::vec2& GetChunkOrigin() const;
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
 	const std::optional<u32>& GetLoadedChunk(const Defs::ChunkLocation& cl) const;
 	void SetLoadedChunk(const Defs::ChunkLocation& cl, u32 value);
@@ -62,6 +61,8 @@ public:
 	u32 SectorIndex() const;
 	u32 Index() const;
 
+	inline const glm::vec2& ChunkOrigin() const { return m_ChunkOrigin; }
+	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
 	inline const std::vector<Block>& Blocks() const { return m_LocalBlocks; }
 
 	//Sum this with the chunk origin to get chunk's center

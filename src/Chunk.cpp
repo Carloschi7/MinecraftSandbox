@@ -423,13 +423,16 @@ f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_c
 			continue;
 
 		f32 dist = 0.0f;
-		Defs::HitDirection local_selection = Defs::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
-		
-		if (local_selection != Defs::HitDirection::None && dist < closest_selected_block_dist)
-		{
-			closest_selected_block_dist = dist;
-			selection = local_selection;
-			m_SelectedBlock = i;
+		//Target only forward blocks
+		f32 block_dot_value = glm::dot(camera_direction, glm::normalize(block.Position() - camera_position));
+		if (block_dot_value >= 0.0f) {
+			Defs::HitDirection local_selection = Defs::ViewBlockCollision(camera_position, camera_direction, block.Position(), dist);
+			if (local_selection != Defs::HitDirection::None && dist < closest_selected_block_dist)
+			{
+				closest_selected_block_dist = dist;
+				selection = local_selection;
+				m_SelectedBlock = i;
+			}
 		}
 	}
 
@@ -500,10 +503,6 @@ f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_c
 
 void Chunk::BlockCollisionLogic(glm::vec3& position)
 {
-	//Player collision check with the environment
-	if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(m_ChunkCenter.x, m_ChunkCenter.z)) > 12.0f)
-		return;
-
 	f32 clip_threshold = 0.9f;
 	for (u32 i = 0; i < m_LocalBlocks.size(); i++) {
 		if (!m_LocalBlocks[i].HasNormals())
@@ -514,14 +513,17 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 		glm::vec3 abs_diff = glm::abs(diff);
 		if (abs_diff.x < clip_threshold && abs_diff.y < clip_threshold && abs_diff.z < clip_threshold) {
 			//Simple collision solver
-			if (abs_diff.z > abs_diff.x && abs_diff.z > abs_diff.y) {
-				position.z = position.z < block_pos.z ? block_pos.z - clip_threshold : block_pos.z + clip_threshold;
-				Defs::g_PlayerAxisMapping.z = 0.0f;
-			}
+			
+			if (Defs::g_PlayerSpeed != 0.0f) {
+				if (abs_diff.z > abs_diff.x && abs_diff.z > abs_diff.y) {
+					position.z = position.z < block_pos.z ? block_pos.z - clip_threshold : block_pos.z + clip_threshold;
+					Defs::g_PlayerAxisMapping.z = 0.0f;
+				}
 
-			if (abs_diff.x > abs_diff.y && abs_diff.x > abs_diff.z) {
-				position.x = position.x < block_pos.x ? block_pos.x - clip_threshold : block_pos.x + clip_threshold;
-				Defs::g_PlayerAxisMapping.x = 0.0f;
+				if (abs_diff.x > abs_diff.y && abs_diff.x > abs_diff.z) {
+					position.x = position.x < block_pos.x ? block_pos.x - clip_threshold : block_pos.x + clip_threshold;
+					Defs::g_PlayerAxisMapping.x = 0.0f;
+				}
 			}
 
 			if (abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
@@ -627,11 +629,6 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 				erase_flanked_normal(block, norm, Defs::ChunkLocation::MinusZ);
 	}
 
-}
-
-const glm::vec2& Chunk::GetChunkOrigin() const
-{
-	return m_ChunkOrigin;
 }
 
 const std::optional<u32>& Chunk::GetLoadedChunk(const Defs::ChunkLocation& cl) const

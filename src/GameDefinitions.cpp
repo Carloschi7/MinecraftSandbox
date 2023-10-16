@@ -488,7 +488,6 @@ namespace Physics {
         Window& window = *GlCore::State::GlobalInstance().game_window;
         camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
     }
-    //TODO code cleanup
     void HandlePlayerGravity(f32 elapsed_time) 
     {
         using Defs::jump_data;
@@ -509,16 +508,16 @@ namespace Physics {
     }
     void ProcessPlayerAxisMovement(f32 elapsed_time)
     {
-        f32 initial_treshold = 0.01f;
-        //TODO play with the values to fix clipping problems
+        f32 initial_treshold = 0.04f;
+        f32 final_threshold = 1.0f;
         for (u32 i = 0; i < 3; i++) {
             f32& cd = Defs::g_PlayerAxisMapping[i];
             //accelerated increase in this axis speed
-            if (cd > 1.0f) {
-                cd = 1.0f;
+            if (cd >= final_threshold) {
+                cd = final_threshold;
             }
-            else if (cd > initial_treshold && cd < 1.0f) {
-                cd += 0.475f;
+            else if (cd > initial_treshold && cd < final_threshold) {
+                cd += (final_threshold - initial_treshold) / 16.0f;
             }
             else {
                 //Four frames to get there

@@ -15,6 +15,7 @@ public:
     void Render(const glm::vec3& camera_position, const glm::vec3& camera_direction);
     void UpdateScene(Inventory& inventory, f32 elapsed_time);
     void HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
+    void CheckPlayerCollision(const glm::vec3& position);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
     void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);

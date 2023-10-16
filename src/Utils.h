@@ -22,6 +22,9 @@
 #	define MC_UNLOCK(vec)
 #endif
 
+#define MC_ASSERT(x)\
+	if(!(x)){*(int*)0 = 0;}
+
 //Utilities
 namespace Utils
 {

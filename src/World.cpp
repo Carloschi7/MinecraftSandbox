@@ -33,7 +33,7 @@ World::World()
 	for (auto& chunk_ptr : m_Chunks)
 	{
 		auto& chunk = *chunk_ptr;
-		const glm::vec2& chunk_pos = chunk.GetChunkOrigin();
+		const glm::vec2& chunk_pos = chunk.ChunkOrigin();
 
 		if (!IsChunk(chunk, ChunkLocation::PlusX).has_value())
 			add_spawnable_chunk(glm::vec3(g_SpawnerEnd, 0.0f, chunk_pos.y));
@@ -246,7 +246,6 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 	//Determine selection
 	HandleSelection(inventory, camera_position, camera_direction);
-	Physics::ProcessPlayerAxisMovement(elapsed_time);
 
 	//normal updating & player collision
 	for (u32 i = 0; i < m_Chunks.size(); i++)
@@ -260,9 +259,6 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 		//We update blocks drawing conditions only if we move or if we break blocks
 		chunk->UpdateBlocks(inventory, elapsed_time);
-		//Check if the player collides with blocks himself
-		Camera* cam = m_State.camera;
-		chunk->BlockCollisionLogic(cam->position);
 	}
 
 	if constexpr (GlCore::g_MultithreadedRendering)
@@ -337,7 +333,7 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 	auto window = m_State.game_window;
 
 	//One block at a time
-	bool left_click = window->IsMouseEvent({ GLFW_MOUSE_BUTTON_1, GLFW_PRESS });
+	bool left_click = window->IsKeyPressed(GLFW_MOUSE_BUTTON_1);
 	bool right_click = window->IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
 	for (u32 i = 0; i < m_Chunks.size(); i++)
@@ -366,6 +362,22 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 	}
 }
 
+void World::CheckPlayerCollision(const glm::vec3& position)
+{
+	std::vector<std::shared_ptr<Chunk>> near_chunks;
+	MC_LOCK(m_Chunks);
+	for (u32 i = 0; i < m_Chunks.size(); i++) {
+		auto chunk = m_Chunks[i];
+		if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(chunk->ChunkCenter().x, chunk->ChunkCenter().z)) < 12.0f)
+			near_chunks.push_back(chunk);
+	}
+	MC_UNLOCK(m_Chunks);
+
+	Camera* cam = m_State.camera;
+	for(auto& chunk : near_chunks)
+		chunk->BlockCollisionLogic(cam->position);
+}
+
 void World::HandleSectionData()
 {
 	//Load pushed sections
@@ -390,12 +402,12 @@ void World::PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec)
 
 std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl)
 {
-	const glm::vec2& origin = chunk.GetChunkOrigin();
+	const glm::vec2& origin = chunk.ChunkOrigin();
 	static auto find_alg = [&](const glm::vec2& pos) ->std::optional<u32>
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 		{
-			if (m_Chunks[i]->GetChunkOrigin() == pos)
+			if (m_Chunks[i]->ChunkOrigin() == pos)
 				return m_Chunks[i]->Index();
 		}
 

@@ -13,7 +13,7 @@
 
 //We create the window alongside with the whole OpenGL context
 Application::Application() :
-    m_Window(InitContext(1920, 1080, "MinecraftClone", true))
+    m_Window(InitContext(1920, 1080, "MinecraftClone", false))
 {
     Defs::g_ScreenWidth = 1920;
     Defs::g_ScreenHeight = 1080;
@@ -86,8 +86,6 @@ void Application::OnUserRun()
             if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                 switch_game_state();
 
-
-
             world_instance.UpdateScene(game_inventory, elapsed_time);
             game_inventory.HandleInventorySelection();
             state.game_window->UpdateKeys();
@@ -159,16 +157,22 @@ void Application::OnUserRun()
                 state_switch = false;
             }
 
+            Physics::ProcessPlayerAxisMovement(elapsed_time);
             Physics::HandlePlayerMovement(elapsed_time);
-            /*if (Defs::g_MovementType != Defs::MovementType::Creative)
-                Physics::HandlePlayerGravity(elapsed_time);*/
+            if (Defs::g_MovementType != Defs::MovementType::Creative)
+                Physics::HandlePlayerGravity(elapsed_time);
+
+            world_instance.CheckPlayerCollision(camera_position);
         }
+
+
+
+        //Timing & logging
         elapsed_time = elapsed_timer.GetElapsedSeconds();
         if (thread1_record_timer.GetElapsedMilliseconds() > 500.0f) {
             thread1_record = elapsed_time;
             thread1_record_timer.StartTimer();
         }
-
         info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", {0,0});
         info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0,40 });
         m_Window.Update();
