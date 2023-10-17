@@ -1,4 +1,7 @@
 .vs/
 build/
+debug/
+release/
+dependencies/
 .idea/
 cmake-build-debug/
