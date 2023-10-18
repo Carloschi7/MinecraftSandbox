@@ -1,7 +1,6 @@
 #/bin/bash
 
-git submodule init
-git submodule update
+git submodule update --init
 cd dependencies/C7Engine
 sudo chmod +x build.sh
 ./build.sh
