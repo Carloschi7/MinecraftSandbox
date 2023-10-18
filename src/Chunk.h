@@ -39,7 +39,7 @@ public:
 	//Check if the player collides with the scene
 
 	//Collision functions
-	[[nodiscard]] f32 RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click);
+	[[nodiscard]] std::pair<f32, Defs::HitDirection> RayCollisionLogic(const glm::vec3& camera_position, const glm::vec3& camera_direction);
 	void BlockCollisionLogic(glm::vec3& position);
 
 
@@ -63,7 +63,8 @@ public:
 
 	inline const glm::vec2& ChunkOrigin() const { return m_ChunkOrigin; }
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
-	inline const std::vector<Block>& Blocks() const { return m_LocalBlocks; }
+	inline std::vector<Block>& Blocks() { return m_LocalBlocks; }
+	inline void PushDrop(const glm::vec3& position, Defs::BlockType type) { m_LocalDrops.emplace_back(position, type); }
 
 	//Sum this with the chunk origin to get chunk's center
 	static glm::vec3 GetHalfWayVector();

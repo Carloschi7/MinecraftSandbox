@@ -327,7 +327,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
-	f32 nearest_selection = INFINITY;
+	std::pair<f32, Defs::HitDirection> nearest_selection = { INFINITY, Defs::HitDirection::None };
 	s32 involved_chunk = static_cast<u32>(-1);
 
 	auto window = m_State.game_window;
@@ -345,9 +345,8 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
-		f32 current_selection = chunk->RayCollisionLogic(inventory, left_click, right_click);
-
-		if (current_selection < nearest_selection)
+		auto current_selection = chunk->RayCollisionLogic(camera_position, camera_direction);
+		if (current_selection.first < nearest_selection.first)
 		{
 			nearest_selection = current_selection;
 			involved_chunk = i;
@@ -359,6 +358,70 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 	if (involved_chunk != static_cast<u32>(-1))
 	{
 		Defs::g_SelectedBlock = m_Chunks[involved_chunk]->LastSelectedBlock();
+		if (Defs::g_ViewMode != Defs::ViewMode::Inventory && (left_click || right_click)) 
+		{
+			u32 selected_block = Defs::g_SelectedBlock;
+			std::shared_ptr<Chunk> local_chunk = m_Chunks[involved_chunk];
+			auto& blocks = local_chunk->Blocks();
+			if (left_click && selected_block != static_cast<u32>(-1))
+			{
+				const glm::vec3 position = blocks[selected_block].Position();
+				const Defs::BlockType type = blocks[selected_block].Type();
+
+				local_chunk->AddNewExposedNormals(position);
+				blocks.erase(blocks.begin() + selected_block);
+
+				//Push drop
+				local_chunk->PushDrop(position, type);
+			}
+
+			//Push a new block
+			if (right_click && selected_block != static_cast<u32>(-1))
+			{
+				//if the selected block isn't -1 that means selection is not NONE
+				Defs::BlockType bt = Defs::g_InventorySelectedBlock;
+				auto& block = blocks[selected_block];
+
+				//Remove one unit from the selection
+				std::optional<InventoryEntry>& entry = inventory.HoveredFromSelector();
+
+				//No block selected, no block inserted
+				if (!entry.has_value())
+					return;
+
+				entry.value().block_count--;
+				inventory.ClearUsedSlots();
+				switch (nearest_selection.second)
+				{
+				case Defs::HitDirection::PosX:
+					blocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
+					break;
+				case Defs::HitDirection::NegX:
+					blocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
+					break;
+				case Defs::HitDirection::PosY:
+					blocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
+					break;
+				case Defs::HitDirection::NegY:
+					blocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
+					break;
+				case Defs::HitDirection::PosZ:
+					blocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
+					break;
+				case Defs::HitDirection::NegZ:
+					blocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
+					break;
+
+				case Defs::HitDirection::None:
+					//UNREACHABLE
+					break;
+				}
+
+				local_chunk->AddFreshNormals(blocks.back());
+			}
+			//Signal block has been destroyed
+			Defs::g_EnvironmentChange = true;
+		}
 	}
 }
 

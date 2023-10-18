@@ -78,13 +78,6 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 	//Set chunk sector
 	m_SectorIndex = Defs::ChunkSectorIndex(m_ChunkOrigin);
 	Defs::g_PushedSections.insert(m_SectorIndex);
-
-	/*static bool b = false;
-	if (!b) {
-		m_LocalDrops.emplace_back(glm::vec3(-80.0f, 100.0f, -80.0f), Defs::BlockType::Dirt);
-		m_LocalDrops.clear();
-		b = true;
-	}*/
 }
 
 Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
@@ -401,20 +394,17 @@ void Chunk::AddFreshNormals(Block& b)
 	local_lambda(conf_rlfb[3], Defs::ChunkLocation::MinusZ, GlCore::g_NegZ);
 }
 
-f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_click)
+std::pair<f32, Defs::HitDirection> Chunk::RayCollisionLogic(const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
 	f32 closest_selected_block_dist = INFINITY;
 	//Reset the selection each time
-	std::size_t vec_size = m_LocalBlocks.size();
+	u64 vec_size = m_LocalBlocks.size();
 	m_SelectedBlock = static_cast<u32>(-1);
-
-	auto& camera_position = m_State.camera->GetPosition();
-	auto& camera_direction = m_State.camera->GetFront();
 
 	Defs::HitDirection selection = Defs::HitDirection::None;
 
 	//Checking selection
-	for (std::size_t i = 0; i < vec_size; ++i)
+	for (u64 i = 0; i < vec_size; ++i)
 	{
 		//Player view ray block collision
 		auto& block = m_LocalBlocks[i];
@@ -436,69 +426,7 @@ f32 Chunk::RayCollisionLogic(Inventory& inventory, bool left_click, bool right_c
 		}
 	}
 
-	if (Defs::g_ViewMode != Defs::ViewMode::Inventory) {
-		//Logic which removes a block
-		if (left_click && m_SelectedBlock != static_cast<u32>(-1))
-		{
-			const glm::vec3 position = m_LocalBlocks[m_SelectedBlock].Position();
-			const Defs::BlockType type = m_LocalBlocks[m_SelectedBlock].Type();
-
-			AddNewExposedNormals(m_LocalBlocks[m_SelectedBlock].Position());
-			m_LocalBlocks.erase(m_LocalBlocks.begin() + m_SelectedBlock);
-			m_SelectedBlock = static_cast<u32>(-1);
-
-			//Push drop
-			m_LocalDrops.emplace_back(position, type);
-			//Signal block has been destroyed
-			Defs::g_EnvironmentChange = true;
-		}
-
-		//Push a new block
-		if (right_click && m_SelectedBlock != static_cast<u32>(-1))
-		{
-			//if the selected block isn't -1 that means selection is not NONE
-			Defs::BlockType bt = Defs::g_InventorySelectedBlock;
-			auto& block = m_LocalBlocks[m_SelectedBlock];
-
-			//Remove one unit from the selection
-			std::optional<InventoryEntry>& entry = inventory.HoveredFromSelector();
-			if (entry.has_value()) {
-				entry.value().block_count--;
-				inventory.ClearUsedSlots();
-			}
-
-			switch (selection)
-			{
-			case Defs::HitDirection::PosX:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
-				break;
-			case Defs::HitDirection::NegX:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
-				break;
-			case Defs::HitDirection::PosY:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
-				break;
-			case Defs::HitDirection::NegY:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
-				break;
-			case Defs::HitDirection::PosZ:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
-				break;
-			case Defs::HitDirection::NegZ:
-				m_LocalBlocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
-				break;
-
-			case Defs::HitDirection::None:
-				//UNREACHABLE
-				break;
-			}
-
-			AddFreshNormals(m_LocalBlocks.back());
-			Defs::g_EnvironmentChange = true;
-		}
-	}
-
-	return closest_selected_block_dist;
+	return { closest_selected_block_dist, selection };
 }
 
 void Chunk::BlockCollisionLogic(glm::vec3& position)
@@ -670,7 +598,7 @@ void Chunk::SetLoadedChunk(const Defs::ChunkLocation& cl, u32 value)
 void Chunk::ForwardRenderableData(glm::vec3*& position_buf, u32*& texindex_buf, u32& count, bool depth_buf_draw, bool selected) const
 {
 	//We let this algorithm fill the buffers of the instanced shader attributes
-	for (std::size_t i = 0; i < m_LocalBlocks.size(); ++i)
+	for (u64 i = 0; i < m_LocalBlocks.size(); ++i)
 	{
 		auto& block = m_LocalBlocks[i];
 		if (!depth_buf_draw)
@@ -813,8 +741,8 @@ const Utils::Serializer& Chunk::Serialize(const Utils::Serializer& sz)
 
 const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 {
-	std::size_t blk_vec_size;
-	std::size_t water_layer_size;
+	u64 blk_vec_size;
+	u64 water_layer_size;
 	glm::vec3 base_vec;
 	u32 adj_chunks[4];
 

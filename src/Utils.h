@@ -83,7 +83,7 @@ namespace Utils
 			WaitUnlocked();
 			return m_Container.emplace_back(std::make_shared<T>(std::forward<Args>(args)...));
 		}
-		std::shared_ptr<T> operator[](std::size_t index)
+		std::shared_ptr<T> operator[](u64 index)
 		{
 			WaitUnlocked();
 			//If this thread waits on a resource that has index 1000
@@ -92,7 +92,7 @@ namespace Utils
 			//tell that the desired data is no longer existing in memory
 			return index < m_Container.size() ? m_Container[index] : nullptr;
 		}
-		std::shared_ptr<T> operator[](std::size_t index) const
+		std::shared_ptr<T> operator[](u64 index) const
 		{
 			WaitUnlocked();
 			return index < m_Container.size() ? m_Container[index] : nullptr;
@@ -153,12 +153,12 @@ namespace Utils
 			return !m_Container.empty() ? m_Container[m_Container.size() - 1] : nullptr;
 		}
 
-		std::size_t size() const
+		u64 size() const
 		{
 			WaitUnlocked();
 			return m_Container.size();
 		}
-		std::size_t capacity() const
+		u64 capacity() const
 		{
 			WaitUnlocked();
 			return m_Container.capacity();
@@ -169,12 +169,12 @@ namespace Utils
 			return m_Container.empty();
 		}
 
-		void resize(std::size_t size)
+		void resize(u64 size)
 		{
 			WaitUnlocked();
 			m_Container.resize(size);
 		}
-		void reserve(std::size_t size)
+		void reserve(u64 size)
 		{
 			WaitUnlocked();
 			m_Container.reserve(size);
@@ -430,15 +430,15 @@ namespace Utils
 			return is_eof;
 		}
 
-		std::size_t Tell() const
+		u64 Tell() const
 		{
 			return std::ftell(m_File);
 		}
-		std::size_t FileSize() const
+		u64 FileSize() const
 		{
-			auto pos = Tell();
+			u64 pos = Tell();
 			std::fseek(m_File, 0, SEEK_END);
-			auto ret_val = Tell();
+			u64 ret_val = Tell();
 			Seek(pos);
 			return ret_val;
 		}
@@ -510,7 +510,7 @@ namespace Utils
 				return false;
 			}
 
-			const u8& cur_byte = m_Data[pos / 8];
+			const u8 cur_byte = m_Data[pos / 8];
 			u32 wrapped_pos = 7 - (pos % 8);
 
 			auto val = static_cast<u8>((cur_byte & (1 << wrapped_pos)) >> wrapped_pos);
@@ -529,7 +529,7 @@ namespace Utils
 
 		bool AllOf(bool state) const
 		{
-			for (const u8& byte : m_Data)
+			for (const u8 byte : m_Data)
 				if (byte != static_cast<u8>(-state))
 					return false;
 
