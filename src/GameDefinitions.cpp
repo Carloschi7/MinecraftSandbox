@@ -92,13 +92,13 @@ namespace Defs
 #endif
     }
 
-    void MouseFunction(const Window &window, Camera *camera, double x, double y, double dpi, double time)
+    void MouseFunction(const Window &window, Camera *camera, f64 x, f64 y, f64 dpi, f64 time)
     {
         double localx, localy;
         window.GetCursorCoord(localx, localy);
 
-        camera->RotateX((localx - x) * dpi * time);
-        camera->RotateY((y - localy) * dpi * time);
+        camera->RotateX(static_cast<f32>((localx - x) * dpi * time));
+        camera->RotateY(static_cast<f32>((y - localy) * dpi * time));
     }
 
     HitDirection ViewBlockCollision(const glm::vec3 &camera_pos, const glm::vec3 &camera_dir, const glm::vec3 &block_pos,

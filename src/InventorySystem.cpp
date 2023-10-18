@@ -245,7 +245,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(u32 slot_index, bool tw
     vec2 num_ret(1.0f);
     
     //Eventual offset for two digit numbers
-    u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
+    s32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
     //Handle separately the inventory slots and the hand slots
     if (slot_index < Defs::g_InventoryInternalSlotsCount) {

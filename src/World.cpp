@@ -431,6 +431,9 @@ void World::CheckPlayerCollision(const glm::vec3& position)
 	MC_LOCK(m_Chunks);
 	for (u32 i = 0; i < m_Chunks.size(); i++) {
 		auto chunk = m_Chunks[i];
+		if (chunk == nullptr)
+			continue;
+
 		if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(chunk->ChunkCenter().x, chunk->ChunkCenter().z)) < 12.0f)
 			near_chunks.push_back(chunk);
 	}

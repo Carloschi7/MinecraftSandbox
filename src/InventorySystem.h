@@ -73,10 +73,10 @@ private:
 	glm::mat4 m_ScreenAbsTransf;
 	s32 m_CursorIndex;
 
-	static constexpr f32 single_digit_offset = 0.0f;
-	static constexpr f32 double_digit_offset = 36.0f;
-	static constexpr f32 pending_single_digit_offset = 10.0f;
-	static constexpr f32 pending_double_digit_offset = -25.0f;
+	static constexpr s32 single_digit_offset = 0;
+	static constexpr s32 double_digit_offset = 36;
+	static constexpr s32 pending_single_digit_offset = 10;
+	static constexpr s32 pending_double_digit_offset = -25;
 
 	//Tree main grids,
 	//	internal

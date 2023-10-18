@@ -134,7 +134,7 @@ namespace Defs
 	
 
 	void KeyboardFunction(const Window& window, Camera* camera, double time);
-    void MouseFunction(const Window& window, Camera* camera, double x, double y, double dpi, double time);
+    void MouseFunction(const Window& window, Camera* camera, f64 x, f64 y, f64 dpi, f64 time);
 	HitDirection ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, f32& dist);
 	//Chunks will also be assigned a value in order to be grouped
 	//with other chunks. This is done in order to save RAM, so not

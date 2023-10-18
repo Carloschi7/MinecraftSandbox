@@ -299,8 +299,7 @@ namespace Utils
 	private:
 		void WaitUnlocked() 
 		{
-			//Unused, should not be called
-			MC_ASSERT(0, "This function is not yet implemented and should not be called");
+			MC_ASSERT(false, "This function is not yet implemented and should not be called");
 		}
 	private:
 		std::list<T> m_Container;
@@ -387,7 +386,8 @@ namespace Utils
 	public:
 		Serializer(const std::string& filename, const char* mode)
 		{
-			m_File = std::fopen(filename.c_str(), mode);
+			s32 er = fopen_s(&m_File, filename.c_str(), mode);
+			MC_ASSERT(er == 0, "file buffer could not be opened");
 		}
 		~Serializer()
 		{
