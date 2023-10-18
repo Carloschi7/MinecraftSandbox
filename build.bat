@@ -1,6 +1,7 @@
 @echo off
 
 git submodule init
+git submodule add https://github.com/Carloschi7/C7Engine.git dependencies/C7Engine
 git submodule update
 cd dependencies\C7Engine
 call "build.bat"
