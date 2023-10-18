@@ -1,3 +1,6 @@
 [submodule "C7Engine"]
 	path = dependencies/C7Engine
 	url = https://www.github.com/Carloschi7/C7Engine
+[submodule "dependencies/C7Engine"]
+	path = dependencies/C7Engine
+	url = https://github.com/Carloschi7/C7Engine.git
