@@ -295,6 +295,13 @@ namespace Utils
 			m_Container.resize(size);
 		}
 
+
+	private:
+		void WaitUnlocked() 
+		{
+			//Unused, should not be called
+			MC_ASSERT(0);
+		}
 	private:
 		std::list<T> m_Container;
 		mutable std::atomic<std::thread::id> m_OwningThreadID;
