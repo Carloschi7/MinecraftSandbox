@@ -300,7 +300,7 @@ namespace Utils
 		void WaitUnlocked() 
 		{
 			//Unused, should not be called
-			MC_ASSERT(0);
+			MC_ASSERT(0, "This function is not yet implemented and should not be called");
 		}
 	private:
 		std::list<T> m_Container;
