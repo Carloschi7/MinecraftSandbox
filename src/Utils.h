@@ -546,4 +546,98 @@ namespace Utils
 	private:
 		std::array<u8, BYTE_INDEX_FOR_BITS(Bits)> m_Data{};
 	};
+
+}
+
+//Used to refer to the virtual space address created by the memory arena
+//no direct access to the physycal memory space is granted because of 
+//memory locking
+typedef u64 VAddr;
+
+namespace Memory 
+{
+	struct Region
+	{
+		VAddr pointer;
+		u64 size;
+		std::thread::id owner;
+	};
+
+	struct Arena
+	{
+		void* memory = nullptr;
+		u64 memory_size = 0;
+		std::vector<Region> mapped_regions;
+		std::vector<Region> locked_regions;
+	};
+
+	static Arena g_Arena;
+	static bool g_ArenaInitialized = false;
+
+	static void InitializeArena(u64 size)
+	{
+		if (g_Arena.memory != nullptr)
+			return;
+
+		g_Arena.memory = std::malloc(size);
+		MC_ASSERT(g_Arena.memory != nullptr, "not enough memory can be requested");
+		g_Arena.memory_size = size;
+		g_ArenaInitialized = true;
+	}
+
+	static void DestroyArena()
+	{
+		if (g_Arena.memory) {
+			std::free(g_Arena.memory);
+			g_Arena.memory_size = 0;
+			g_Arena.locked_regions.clear();
+			g_Arena.mapped_regions.clear();
+
+			g_ArenaInitialized = false;
+		}
+	}
+
+	static VAddr Allocate(u64 size)
+	{
+		//TODO implement
+		return 0;
+	}
+
+	static void Free(VAddr ptr)
+	{
+		//TODO implement
+	}
+
+	static void Read(VAddr ptr, u64 size)
+	{
+
+	}
+
+	static void Write(VAddr ptr, u64 size)
+	{
+
+	}
+
+	template <class T, class... Args>
+	static void New(Args&&... arguments)
+	{
+		VAddr addr = Allocate(sizeof(T));
+		void* paddr = static_cast<u8*>(g_Arena.memory) + addr;
+		auto p = new (paddr) T { std::forward<Args>(arguments) };
+	}
+
+	static void Delete(VAddr addr)
+	{
+
+	}
+
+	static void LockRegion(VAddr ptr, u64 size)
+	{
+		//TODO implement
+	}
+
+	static void UnlockRegion(VAddr ptr)
+	{
+		//TODO implement
+	}
 }
