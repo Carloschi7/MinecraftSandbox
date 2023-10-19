@@ -386,8 +386,13 @@ namespace Utils
 	public:
 		Serializer(const std::string& filename, const char* mode)
 		{
+#ifdef _MSC_VER
 			s32 er = fopen_s(&m_File, filename.c_str(), mode);
 			MC_ASSERT(er == 0, "file buffer could not be opened");
+#else
+			m_File = fopen(filename.c_str(), mode);
+			MC_ASSERT(m_File != nullptr, "file buffer could not be opened");
+#endif
 		}
 		~Serializer()
 		{
@@ -558,8 +563,8 @@ namespace Memory
 {
 	struct Region
 	{
-		VAddr pointer;
-		u64 size;
+		VAddr begin;
+		VAddr end;
 		std::thread::id owner;
 	};
 
@@ -567,12 +572,14 @@ namespace Memory
 	{
 		void* memory = nullptr;
 		u64 memory_size = 0;
+		u64 memory_used = 0;
 		std::vector<Region> mapped_regions;
-		std::vector<Region> locked_regions;
 	};
 
 	static Arena g_Arena;
 	static bool g_ArenaInitialized = false;
+	static std::mutex g_ArenaMutex;
+	static std::mutex g_ArenaConditionVariable;
 
 	static void InitializeArena(u64 size)
 	{
@@ -590,7 +597,6 @@ namespace Memory
 		if (g_Arena.memory) {
 			std::free(g_Arena.memory);
 			g_Arena.memory_size = 0;
-			g_Arena.locked_regions.clear();
 			g_Arena.mapped_regions.clear();
 
 			g_ArenaInitialized = false;
@@ -599,45 +605,112 @@ namespace Memory
 
 	static VAddr Allocate(u64 size)
 	{
-		//TODO implement
-		return 0;
+		MC_ASSERT(g_Arena.memory_used + size < g_Arena.memory_size, "there is no more space in the memory arena");
+		Region reg;
+		auto& mapped_regions = g_Arena.mapped_regions;
+
+		if(mapped_regions.empty()){	
+			reg.begin = 0;
+			reg.end = size;
+			mapped_regions.push_back(reg);
+			return 0;
+		}
+
+		VAddr addr = 0;
+		for(u32 i = 0; i < mapped_regions.size() - 1; i++){
+			if(mapped_regions[i + 1].begin - mapped_regions[i].end >= size){
+				addr = mapped_regions[i].end;
+				
+				reg.begin = addr;
+				reg.end = addr + size;
+				mapped_regions.push_back(reg);
+				std::sort(mapped_regions.begin(), mapped_regions.end(), [](const Region& a, const Region& b){return a.begin < b.begin;});
+				return addr;
+			}
+		}
+
+		MC_ASSERT(g_Arena.memory_size - mapped_regions.back().end >= size, "there is no more space in the arena");
+		addr = mapped_regions.back().end;
+		reg.begin = addr;
+		reg.end = addr + size;
+		mapped_regions.push_back(reg);
+		std::sort(mapped_regions.begin(), mapped_regions.end(), [](const Region& a, const Region& b){return a.begin < b.begin;});
+
+		return addr;
 	}
 
 	static void Free(VAddr ptr)
 	{
-		//TODO implement
+		auto& mapped_regions = g_Arena.mapped_regions;
+		for(auto iter = mapped_regions.begin(); iter != mapped_regions.end(); ++iter){
+			if(iter->begin == ptr){
+				mapped_regions.erase(iter);
+				return;
+			}
+		}
 	}
 
-	static void Read(VAddr ptr, u64 size)
+	static void* Get(VAddr addr)
 	{
+		Region* match = nullptr;
+		for(auto& region : g_Arena.mapped_regions){
+			if(region.begin == addr){
+				match = &region;
+				break;
+			}
+		}
 
-	}
+		void* address = static_cast<u8*>(g_Arena.memory) + addr;
+		if(match && (match->owner == std::thread::id{} || match->owner == std::this_thread::get_id()))
+			return address;
 
-	static void Write(VAddr ptr, u64 size)
-	{
-
+		std::scoped_lock<std::mutex> lock{g_ArenaMutex};
+		g_ArenaConditionVariable.wait(lock, [match](){return match->owner == std::thread::id{};});
+		return address;
 	}
 
 	template <class T, class... Args>
-	static void New(Args&&... arguments)
+	static VAddr New(Args&&... arguments)
 	{
 		VAddr addr = Allocate(sizeof(T));
-		void* paddr = static_cast<u8*>(g_Arena.memory) + addr;
-		auto p = new (paddr) T { std::forward<Args>(arguments) };
+		void* paddr = Get(addr);
+		//Placement new, to construct an object in a pre-allocated region of memory
+		new (paddr) T { std::forward<Args>(arguments)... };
+		return addr;
 	}
 
+	template<class T>
 	static void Delete(VAddr addr)
 	{
-
+		void* paddr = static_cast<u8*>(g_Arena.memory) + addr;
+		(static_cast<T*>(paddr))->~T();
+		Free(addr);
 	}
 
-	static void LockRegion(VAddr ptr, u64 size)
+	static void LockRegion(VAddr ptr)
 	{
-		//TODO implement
+		for(auto& region : g_Arena.mapped_regions){
+			if(region.begin == ptr){
+				if(region.owner == std::thread::id{})
+				{
+					region.owner = std::this_thread::get_id();
+					g_ArenaConditionVariable.notify_all();
+					return;
+				}
+				else{
+					std::scoped_lock<std::mutex> lock{g_ArenaMutex};
+					g_ArenaConditionVariable.wait(lock, [region](){return region.owner == std::thread::id();});
+				}
+			}
+		}
 	}
 
 	static void UnlockRegion(VAddr ptr)
 	{
-		//TODO implement
+		for(auto& region : g_Arena.mapped_regions)
+			if(region.begin == ptr && region.owner == std::this_thread::get_id()){
+				region.owner = std::thread::id{};
+				return;
+			}
 	}
 }
