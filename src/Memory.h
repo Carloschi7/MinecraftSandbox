@@ -11,11 +11,11 @@ typedef u64 VAddr;
 
 namespace mem 
 {
+	//Each region is composed by a signature u32, an u32 which tells if the memory is locked, and then the actual payload
 	struct Region
 	{
 		VAddr begin;
 		VAddr end;
-		std::thread::id owner;
 	};
 
 	struct Arena
