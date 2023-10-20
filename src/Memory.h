@@ -3,6 +3,7 @@
 #include <mutex>
 #include <vector>
 #include "utils/types.h"
+#include "Utils.h"
 
 //Used to refer to the virtual space address created by the memory arena
 //no direct access to the physycal memory space is granted because of 
@@ -26,10 +27,14 @@ namespace mem
 		std::vector<Region> mapped_regions;
 	};
 
-	static Arena g_Arena;
-	static bool g_ArenaInitialized;
-	static std::mutex g_ArenaMutex;
-	static std::condition_variable g_ArenaConditionVariable;
+	//Random signature to ensure validity, translate to ascii "regb" -> Region Begin
+	static constexpr u32 signature = 0x62676572;
+	static constexpr u32 padding = 2 * sizeof(u32);
+
+	extern Arena g_Arena;
+	extern bool g_ArenaInitialized;
+	extern std::mutex g_ArenaMutex;
+	extern std::condition_variable g_ArenaConditionVariable;
 
 	void InitializeArena(u64 size);
 	void DestroyArena();
@@ -40,8 +45,8 @@ namespace mem
 	template<class T>
 	inline T* Get(VAddr addr) { return static_cast<T*>(Get(addr)); }
 
-	void LockRegion(VAddr ptr);
-	void UnlockRegion(VAddr ptr);
+	void LockRegion(VAddr addr);
+	void UnlockRegion(VAddr addr);
 
 	template <class T>
 	struct RemoveArray {
@@ -58,7 +63,7 @@ namespace mem
 	VAddr New(Args&&... arguments) requires (!std::is_array_v<T>)
 	{
 		VAddr addr = Allocate(sizeof(T));
-		void* paddr = static_cast<u8*>(g_Arena.memory) + addr;
+		void* paddr = static_cast<u8*>(g_Arena.memory) + addr + padding;
 		//Placement new, to construct an object in a pre-allocated region of memory
 		new (paddr) T{ std::forward<Args>(arguments)... };
 		return addr;
@@ -75,8 +80,12 @@ namespace mem
 	template<class T>
 	void Delete(VAddr addr) requires (!std::is_array_v<T>)
 	{
-		void* paddr = static_cast<u8*>(g_Arena.memory) + addr;
-		(static_cast<T*>(paddr))->~T();
+		u8* paddr = static_cast<u8*>(g_Arena.memory) + addr;
+		u32* owner = std::bit_cast<u32*>(paddr) + 1;
+		MC_ASSERT(*owner == 0, "You cant free a locked region");
+
+		//Retrieve the actual object offset and calling the distructor
+		std::bit_cast<T*>(paddr + padding)->~T();
 		Free(addr);
 	}
 
