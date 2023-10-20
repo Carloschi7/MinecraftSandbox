@@ -50,6 +50,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/Renderer.h src/Renderer.cpp
 		src/InventorySystem.h src/InventorySystem.cpp
 		src/GameDefinitions.h src/GameDefinitions.cpp
+		src/Memory.h src/Memory.cpp
 		src/State.h src/State.cpp
 		src/Macros.h
 		src/Utils.h
@@ -75,4 +76,4 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/assets/shaders)
 file(COPY assets/textures DESTINATION assets)
 file(COPY assets/shaders DESTINATION assets)
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

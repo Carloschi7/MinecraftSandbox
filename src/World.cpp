@@ -327,7 +327,8 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
-	std::pair<f32, Defs::HitDirection> nearest_selection = { INFINITY, Defs::HitDirection::None };
+	f32 nearest_distance = INFINITY;
+	Defs::HitDirection hit = Defs::HitDirection::None;
 	s32 involved_chunk = static_cast<u32>(-1);
 
 	auto window = m_State.game_window;
@@ -345,10 +346,11 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
-		auto current_selection = chunk->RayCollisionLogic(camera_position, camera_direction);
-		if (current_selection.first < nearest_selection.first)
+		const auto [hit_distance, hit_direction] = chunk->RayCollisionLogic(camera_position, camera_direction);
+		if (hit_distance < nearest_distance)
 		{
-			nearest_selection = current_selection;
+			nearest_distance = hit_distance;
+			hit = hit_direction;
 			involved_chunk = i;
 		}
 	}
@@ -391,7 +393,7 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
-				switch (nearest_selection.second)
+				switch (hit)
 				{
 				case Defs::HitDirection::PosX:
 					blocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
