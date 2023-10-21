@@ -4,11 +4,12 @@
 
 int main()
 {
-	//mem::InitializeArena(1024 * 1024 * 1024);
+	//We will use 1Gib of ram for this program
+	mem::InitializeArena(1024 * 1024 * 1024);
 	Application MinecraftClone;
 	MinecraftClone.OnUserCreate();
 	MinecraftClone.OnUserRun();
-	//mem::DestroyArena();
+	mem::DestroyArena();
 
 	return 0;
 }

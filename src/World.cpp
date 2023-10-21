@@ -18,8 +18,8 @@ World::World()
 	PerlNoise::InitSeedMap(m_WorldSeed);
 
 	for (s32 i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
-		for (s32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement)
-			m_Chunks.emplace_back(*this, glm::vec2(f32(i), f32(j)));
+		for (s32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement) 
+			m_Chunks.push_back(mem::New<Chunk>(*this, glm::vec2(f32(i), f32(j))));
 
 	HandleSectionData();
 
@@ -32,8 +32,8 @@ World::World()
 	//Init spawnable chunks
 	for (auto& chunk_ptr : m_Chunks)
 	{
-		auto& chunk = *chunk_ptr;
-		const glm::vec2& chunk_pos = chunk.ChunkOrigin();
+		Chunk& chunk = *mem::Get<Chunk>(chunk_ptr);
+		const glm::vec2& chunk_pos = chunk.ChunkOrigin2D();
 
 		if (!IsChunk(chunk, ChunkLocation::PlusX).has_value())
 			add_spawnable_chunk(glm::vec3(g_SpawnerEnd, 0.0f, chunk_pos.y));
@@ -60,6 +60,8 @@ World::World()
 
 World::~World()
 {
+	for (auto chunk_addr : m_Chunks)
+		mem::Delete<Chunk>(chunk_addr);
 }
 
 void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
@@ -93,10 +95,9 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 		{
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
-			std::shared_ptr<Chunk> chunk = m_Chunks[i];
-			//When we do this, that means that the resource and the ones after this are no longer available
-			//and there is thus no need to iterate over them
-			if (chunk == nullptr)
+			Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+			//Chunk has probably been serialized (should mostly never happen)
+			if (!chunk)
 				break;
 
 			if (chunk->IsChunkRenderable(camera_position) && chunk->IsChunkVisibleByShadow(camera_position, camera_direction))
@@ -129,10 +130,10 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
 		//Wait if the vector is being modified
-		std::shared_ptr<Chunk> chunk = m_Chunks[i];
-		if (chunk == nullptr)
+		Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+		if (!chunk)
 			break;
-		
+
 		if (chunk->IsChunkRenderable(camera_position) && chunk->IsChunkVisible(camera_position, camera_direction)) {
 			chunk->ForwardRenderableData(block_positions, block_texindices, count, false, ch == i);
 			chunk->RenderDrops();
@@ -184,8 +185,10 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
 				//Generate new chunk
-				std::shared_ptr<Chunk> this_chunk = std::make_shared<Chunk>(*this, chunk_pos);
-				m_Chunks.push_back(this_chunk);
+				VAddr chunk_addr = mem::New<Chunk>(*this, chunk_pos);
+				m_Chunks.push_back(chunk_addr);
+				//mem::LockRegion(chunk_addr);
+				Chunk* this_chunk = mem::Get<Chunk>(chunk_addr);
 				HandleSectionData();
 
 				this_chunk->InitGlobalNorms();
@@ -238,6 +241,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 					m_SortingTimer.StartTimer();
 				}
 
+				//mem::UnlockRegion(chunk_addr);
 				break;
 			}
 		}
@@ -250,10 +254,9 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 	//normal updating & player collision
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
-		std::shared_ptr<Chunk> chunk = m_Chunks[i];
-		if (m_Chunks[i] == nullptr)
+		Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+		if (!chunk)
 			break;
-
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
@@ -339,10 +342,9 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
-		std::shared_ptr<Chunk> chunk = m_Chunks[i];
-		if (chunk == nullptr)
+		Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+		if (!chunk)
 			break;
-
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
 			continue;
 
@@ -359,15 +361,15 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 	Defs::g_SelectedChunk = involved_chunk;
 	if (involved_chunk != static_cast<u32>(-1))
 	{
-		Defs::g_SelectedBlock = m_Chunks[involved_chunk]->LastSelectedBlock();
+		Chunk* local_chunk = mem::Get<Chunk>(m_Chunks[involved_chunk]);
+		Defs::g_SelectedBlock = local_chunk->LastSelectedBlock();
 		if (Defs::g_ViewMode != Defs::ViewMode::Inventory && (left_click || right_click)) 
 		{
 			u32 selected_block = Defs::g_SelectedBlock;
-			std::shared_ptr<Chunk> local_chunk = m_Chunks[involved_chunk];
 			auto& blocks = local_chunk->Blocks();
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
-				const glm::vec3 position = blocks[selected_block].Position();
+				const glm::vec3 position = local_chunk->BlockPos(blocks[selected_block].position);
 				const Defs::BlockType type = blocks[selected_block].Type();
 
 				local_chunk->AddNewExposedNormals(position);
@@ -393,25 +395,26 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
+				//TODO fix this issue, are we able to add a block between chunks now? should we select another chunk for this?
 				switch (hit)
 				{
 				case Defs::HitDirection::PosX:
-					blocks.emplace_back(block.Position() + GlCore::g_PosX, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosX), bt);
 					break;
 				case Defs::HitDirection::NegX:
-					blocks.emplace_back(block.Position() + GlCore::g_NegX, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegX), bt);
 					break;
 				case Defs::HitDirection::PosY:
-					blocks.emplace_back(block.Position() + GlCore::g_PosY, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosY), bt);
 					break;
 				case Defs::HitDirection::NegY:
-					blocks.emplace_back(block.Position() + GlCore::g_NegY, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegY), bt);
 					break;
 				case Defs::HitDirection::PosZ:
-					blocks.emplace_back(block.Position() + GlCore::g_PosZ, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosZ), bt);
 					break;
 				case Defs::HitDirection::NegZ:
-					blocks.emplace_back(block.Position() + GlCore::g_NegZ, bt);
+					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegZ), bt);
 					break;
 
 				case Defs::HitDirection::None:
@@ -429,21 +432,25 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 void World::CheckPlayerCollision(const glm::vec3& position)
 {
-	std::vector<std::shared_ptr<Chunk>> near_chunks;
-	MC_LOCK(m_Chunks);
-	for (u32 i = 0; i < m_Chunks.size(); i++) {
-		auto chunk = m_Chunks[i];
-		if (chunk == nullptr)
-			continue;
+	std::vector<VAddr> near_chunks;
 
+	for (u32 i = 0; i < m_Chunks.size(); i++) {
+		Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+		if (!chunk)
+			break;
 		if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(chunk->ChunkCenter().x, chunk->ChunkCenter().z)) < 12.0f)
-			near_chunks.push_back(chunk);
+			near_chunks.push_back(m_Chunks[i]);
 	}
-	MC_UNLOCK(m_Chunks);
+
+	for (u32 i = 0; i < near_chunks.size(); i++)
+		mem::LockRegion(m_Chunks[i]);
 
 	Camera* cam = m_State.camera;
-	for(auto& chunk : near_chunks)
-		chunk->BlockCollisionLogic(cam->position);
+	for(auto addr : near_chunks)
+		mem::Get<Chunk>(addr)->BlockCollisionLogic(cam->position);
+
+	for (u32 i = 0; i < near_chunks.size(); i++)
+		mem::UnlockRegion(m_Chunks[i]);
 }
 
 void World::HandleSectionData()
@@ -470,13 +477,16 @@ void World::PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec)
 
 std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl)
 {
-	const glm::vec2& origin = chunk.ChunkOrigin();
+	const glm::vec2& origin = chunk.ChunkOrigin2D();
 	static auto find_alg = [&](const glm::vec2& pos) ->std::optional<u32>
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 		{
-			if (m_Chunks[i]->ChunkOrigin() == pos)
-				return m_Chunks[i]->Index();
+			Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
+			if (!chunk)
+				break;
+			if (chunk->ChunkOrigin2D() == pos)
+				return chunk->Index();
 		}
 
 		return std::nullopt;
@@ -500,11 +510,11 @@ std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation&
 Chunk& World::GetChunk(u32 index)
 {
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
-		[index](std::shared_ptr<Chunk> c) {return c->Index() == index; });
+		[index](VAddr addr) {return mem::Get<Chunk>(addr)->Index() == index; });
 
 	MC_ASSERT(iter != m_Chunks.end(), "the provided variable index should be valid");
 
-	return **iter;
+	return *mem::Get<Chunk>(*iter);
 }
 
 Defs::WorldSeed& World::Seed()
@@ -525,35 +535,35 @@ void World::SerializeSector(u32 index)
 
 	//(When multithreading) Advertise the render thread m_Chunks 
 	//is undergoing some heavy changes
-	std::vector<std::shared_ptr<Chunk>>::iterator iter{};
-	u32 safe_size = 0;
+	std::vector<VAddr> to_delete;
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		MC_LOCK(m_Chunks);
+		for (u32 i = 0; i < m_Chunks.size(); i++)
+			mem::LockRegion(m_Chunks[i]);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
-			[&](const std::shared_ptr<Chunk>& ch) {return ch->SectorIndex() != index; });
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
+			[&](VAddr addr) {return mem::Get<Chunk>(addr)->SectorIndex() != index; });
 		//Determine safe iteration range for the renderer thread
-		safe_size = static_cast<u32>(iter - m_Chunks.begin());
-		MC_UNLOCK(m_Chunks);
+		to_delete = std::vector<VAddr>(iter, m_Chunks.end());
+		m_Chunks.erase(iter, m_Chunks.end());
+		for (u32 i = 0; i < m_Chunks.size(); i++)
+			mem::UnlockRegion(m_Chunks[i]);
 	}
 
 	//Nothing to serialize
-	if (m_Chunks.size() == safe_size)
+	if (to_delete.empty())
 		return;
 
 	//Number of chunks at the beginning (leave blank for now)
 	sz.Serialize<u32>(0);
-	for(u32 i = 0; i < m_Chunks.size() - safe_size; i++)
+	for(u32 i = 0; i < to_delete.size(); i++)
 	{
-		Chunk& chunk = *m_Chunks[safe_size + i];
-		chunk.Serialize(sz);
+		Chunk* chunk = mem::Get<Chunk>(to_delete[i]);
+		chunk->Serialize(sz);
+		mem::UnlockRegion(to_delete[i]);
+		mem::Delete<Chunk>(to_delete[i]);
 		serialized_chunks++;
 	}
-	
-	MC_LOCK(m_Chunks);
-	m_Chunks.erase(iter, m_Chunks.end());
-	MC_UNLOCK(m_Chunks);
 
 	//Write the amount of chunks serialized
 	sz.Seek(0);
@@ -567,11 +577,13 @@ void World::DeserializeSector(u32 index)
 
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
-		MC_LOCK(m_Chunks);
+		for (u32 i = 0; i < m_Chunks.size(); i++)
+			mem::LockRegion(m_Chunks[i]);
 		u32 deser_size = 0;
 		sz% deser_size;
 		m_Chunks.reserve(m_Chunks.size() + deser_size);
-		MC_UNLOCK(m_Chunks);
+		for (u32 i = 0; i < m_Chunks.size(); i++)
+			mem::UnlockRegion(m_Chunks[i]);
 	}
 	else
 	{
@@ -581,7 +593,7 @@ void World::DeserializeSector(u32 index)
 	}
 
 	while (!sz.Eof())	
-		m_Chunks.emplace_back(*this, sz, index);	
+		m_Chunks.emplace_back(mem::New<Chunk>(*this, sz, index));	
 }
 
 bool World::IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec)

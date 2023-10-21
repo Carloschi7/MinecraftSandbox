@@ -3,12 +3,15 @@
 #include <mutex>
 #include <vector>
 #include "utils/types.h"
-#include "Utils.h"
 
 //Used to refer to the virtual space address created by the memory arena
 //no direct access to the physycal memory space is granted because of 
 //memory locking
 typedef u64 VAddr;
+
+//msg for now its just a warning displayed in the same line of the assert, no practical usage
+#define MC_ASSERT(x, msg)\
+	if(!(x)){*(int*)0 = 0;}
 
 namespace mem 
 {
@@ -40,6 +43,7 @@ namespace mem
 	void DestroyArena();
 	VAddr Allocate(u64 size);
 	void Free(VAddr ptr);
+	void Free(void* ptr);
 	void* Get(VAddr addr);
 
 	template<class T>
@@ -82,7 +86,7 @@ namespace mem
 	{
 		u8* paddr = static_cast<u8*>(g_Arena.memory) + addr;
 		u32* owner = std::bit_cast<u32*>(paddr) + 1;
-		MC_ASSERT(*owner == 0, "You cant free a locked region");
+      	MC_ASSERT(*owner == 0, "You cant free a locked region");
 
 		//Retrieve the actual object offset and calling the distructor
 		std::bit_cast<T*>(paddr + padding)->~T();
@@ -95,4 +99,29 @@ namespace mem
 		//Destructor not needed in this case
 		Free(addr);
 	}
+
+	//Custom allocator for dynamic arrays such as vectors so that they can use the memory arena
+	template <typename T>
+	class ArenaAllocator {
+	public:
+		using value_type = T;
+		
+		ArenaAllocator() = default;
+
+		template <typename U>
+		ArenaAllocator(const ArenaAllocator<U>&) {}
+
+		//Allow more ownership to some vectors
+		T* allocate(std::size_t n) {
+			return mem::Get<T>(mem::Allocate(n * sizeof(T)));
+		}
+
+		void deallocate(T* p, std::size_t n) {
+			return mem::Free(p);
+		}
+
+		std::size_t max_size() const {
+			return static_cast<std::size_t>(-1) / sizeof(T);
+		}
+	};
 }

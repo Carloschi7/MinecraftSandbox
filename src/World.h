@@ -43,14 +43,10 @@ private:
     //of stack allocated objects because when we are reallocating
     //the vector and the render thread is doing stuff with a chunk,
     //the chunk object is not invalidated
-#ifdef MC_MULTITHREADING
-    Utils::TSVector<Chunk> m_Chunks;
-#else
-    std::vector<std::shared_ptr<Chunk>> m_Chunks;
-#endif
+    Utils::AVector<VAddr> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
-    std::vector<glm::vec3> m_SpawnableChunks;
+    Utils::AVector<glm::vec3> m_SpawnableChunks;
     //Water layers pushed for current iteration
     std::vector<std::shared_ptr<std::vector<glm::vec3>>> m_DrawableWaterLayers;
 
@@ -59,7 +55,7 @@ private:
     //For terrain generation
     Defs::WorldSeed m_WorldSeed;
     //Handles section data
-    std::vector<Defs::SectionData> m_SectionsData;  
+    Utils::AVector<Defs::SectionData> m_SectionsData;  
     //Timer used to sort the spawnable chunks vector every now and then
     //(sorting every frame would be pointless)
     Utils::Timer m_SortingTimer;

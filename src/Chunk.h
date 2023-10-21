@@ -4,6 +4,7 @@
 
 #include "Block.h"
 #include "State.h"
+#include "Memory.h"
 
 class World;
 class Inventory;
@@ -61,9 +62,11 @@ public:
 	u32 SectorIndex() const;
 	u32 Index() const;
 
-	inline const glm::vec2& ChunkOrigin() const { return m_ChunkOrigin; }
+	inline const glm::vec3& ChunkOrigin3D() const { return m_ChunkOrigin; }
+	inline const glm::vec2 ChunkOrigin2D() const { return {m_ChunkOrigin.x, m_ChunkOrigin.z}; }
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
-	inline std::vector<Block>& Blocks() { return m_LocalBlocks; }
+	inline glm::vec3 BlockPos(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
+	inline Utils::AVector<Block>& Blocks() { return m_LocalBlocks; }
 	inline void PushDrop(const glm::vec3& position, Defs::BlockType type) { m_LocalDrops.emplace_back(position, type); }
 
 	//Sum this with the chunk origin to get chunk's center
@@ -87,6 +90,7 @@ private:
 
 	//Wrapper function that assigns normals to border blocks if there are no other blocks even in the confining chunk
 	bool BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 bot_index, bool search_dir);
+	//Converts from chunk space to real world space
 private:
 	//Global OpenGL environment state
 	GlCore::State& m_State;
@@ -95,15 +99,15 @@ private:
 
 	//Chunk progressive index
 	u32 m_ChunkIndex;
-	std::vector<Block> m_LocalBlocks;
+	Utils::AVector<Block> m_LocalBlocks;
 	//Drops of brokeen blocks, the chunk which originated them is the
 	//responsible for updating and drawing them
-	std::vector<Drop> m_LocalDrops;
+	Utils::AVector<Drop> m_LocalDrops;
 
 	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
 	std::shared_ptr<std::vector<glm::vec3>> m_WaterLayerPositions;
 	//front-bottom-left block position
-	glm::vec2 m_ChunkOrigin;
+	glm::vec3 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;
 	//Block aimed by the player
 	u32 m_SelectedBlock;

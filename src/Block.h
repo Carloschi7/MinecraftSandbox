@@ -9,10 +9,9 @@ class Chunk;
 class Block
 {
 public:
-    Block(const glm::vec3& position, const Defs::BlockType& bt);
-    void UpdateRenderableSides(const glm::vec3& camera_pos);
+    Block(glm::u8vec3 position, const Defs::BlockType& bt);
+    void UpdateRenderableSides(const Chunk* parent, const glm::vec3& camera_pos);
 
-    const glm::vec3& Position() const;
     const Defs::BlockType& Type() const;
 
     const GlCore::DrawableData& DrawableSides() const;
@@ -24,22 +23,25 @@ public:
     bool IsDrawable() const;
 
     //Serialization
-    void Serialize(const Utils::Serializer& sz, const glm::vec3& base_pos);
+    void Serialize(const Utils::Serializer& sz);
 public:
     static u8 IndexForNormal(const glm::vec3& vec);
     static glm::vec3 NormalForIndex(u32 index);
-private:
-    glm::vec3 m_Position;
+    //Position relative to the chunk
+    glm::u8vec3 position;
     //Used to determine which sides are exposed, thus
     //determining if the cube can be drawn
     //The normal is present if the matching index in
     //the array is one
-    u8 m_ExposedNormals;
+    u8 exposed_normals;
+private:
     //Drawable sides of a cube(max 3 in 3d space obv)
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
     Defs::BlockType m_BlockType;
 };
+
+constexpr int i = sizeof(Block);
 
 //Version of a block that can be picked up from a player, like in the original Minecraft game
 class Drop 
@@ -51,16 +53,13 @@ public:
 
     Drop& operator=(Drop&& right) noexcept;
 
-    inline const glm::vec3& Position() const { return m_Position; }
     inline Defs::BlockType Type() const { return m_Type; }
 
     void Render();
     void Update(Chunk* chunk, f32 elapsed_time);
     void UpdateModel(f32 elapsed_time);
+    glm::vec3 position;
 private:
-    GlCore::State& m_State;
-
-    glm::vec3 m_Position;
     glm::vec3 m_Velocity;
     glm::vec3 m_Acceleration;
 

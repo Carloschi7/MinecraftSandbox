@@ -9,8 +9,6 @@ namespace mem
 	std::mutex g_ArenaMutex;
 	std::condition_variable g_ArenaConditionVariable;
 
-
-
 	void InitializeArena(u64 size)
 	{
 		if (g_Arena.memory != nullptr)
@@ -89,6 +87,12 @@ namespace mem
 				return;
 			}
 		}
+	}
+
+	void Free(void* ptr)
+	{
+		u8* address = static_cast<u8*>(ptr) - padding;
+		return Free(std::bit_cast<VAddr>(address - g_Arena.memory));
 	}
 
 	void* Get(VAddr addr)

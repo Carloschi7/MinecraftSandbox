@@ -7,28 +7,19 @@
 #include <fstream>
 #include <utility>
 #include "Macros.h"
+#include "Memory.h"
 
 #ifndef BYTE_INDEX_FOR_BITS
 #define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
 #endif
 
-
-//Lock utilities useful for context switching
-#ifdef MC_MULTITHREADING
-#	define MC_LOCK(vec) vec.lock()
-#	define MC_UNLOCK(vec) vec.unlock()
-#else
-#	define MC_LOCK(vec)
-#	define MC_UNLOCK(vec)
-#endif
-
-//msg for now its just a warning displayed in the same line of the assert, no practical usage
-#define MC_ASSERT(x, msg)\
-	if(!(x)){*(int*)0 = 0;}
-
 //Utilities
 namespace Utils
 {
+	//Arena vector
+	template<class T>
+	using AVector = std::vector<T, mem::ArenaAllocator<T>>;
+
 	//Thread safe vector
 	//This class is pseudo-safe, locking a mutex each of the many accesses in the TSvector
 	//can be really expensive, expecially with more limited hardware.
