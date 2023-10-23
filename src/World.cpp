@@ -369,7 +369,7 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 			auto& blocks = local_chunk->Blocks();
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
-				const glm::vec3 position = local_chunk->BlockPos(blocks[selected_block].position);
+				const glm::vec3 position = local_chunk->ToWorld(blocks[selected_block].position);
 				const Defs::BlockType type = blocks[selected_block].Type();
 
 				local_chunk->AddNewExposedNormals(position);
@@ -396,33 +396,83 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
 				//TODO fix this issue, are we able to add a block between chunks now? should we select another chunk for this?
+				bool block_added_to_side_chunk = false;
 				switch (hit)
 				{
-				case Defs::HitDirection::PosX:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosX), bt);
-					break;
-				case Defs::HitDirection::NegX:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegX), bt);
-					break;
+				case Defs::HitDirection::PosX: {
+
+					if (block.position.x == Chunk::s_ChunkWidthAndHeight - 1) {
+						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusX);
+						MC_ASSERT(adjacent_chunk_index.has_value());
+						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ 0, block.position.y, block.position.z }, bt);
+						adjacent_chunk.AddFreshNormals(emplaced_block);
+						block_added_to_side_chunk = true;
+					}
+					else {
+						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosX), bt);
+					}
+
+				} break;
+				case Defs::HitDirection::NegX: {
+
+					if (block.position.x == 0) {
+						//The chunk is adjacent to the chunk we are in, should definitely be loaded
+						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusX);
+						MC_ASSERT(adjacent_chunk_index.has_value());
+						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ Chunk::s_ChunkWidthAndHeight - 1, block.position.y, block.position.z}, bt);
+						adjacent_chunk.AddFreshNormals(emplaced_block);
+						block_added_to_side_chunk = true;
+					}
+					else {
+						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegX), bt);
+					}
+				} break;
 				case Defs::HitDirection::PosY:
 					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosY), bt);
 					break;
 				case Defs::HitDirection::NegY:
 					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegY), bt);
 					break;
-				case Defs::HitDirection::PosZ:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosZ), bt);
-					break;
-				case Defs::HitDirection::NegZ:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegZ), bt);
-					break;
+				case Defs::HitDirection::PosZ: {
+					
+					if (block.position.z == Chunk::s_ChunkWidthAndHeight - 1) {
+						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusZ);
+						MC_ASSERT(adjacent_chunk_index.has_value());
+						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, 0 }, bt);
+						adjacent_chunk.AddFreshNormals(emplaced_block);
+						block_added_to_side_chunk = true;
+					}
+					else {
+						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosZ), bt);
+					}
+					
+				} break;
+				case Defs::HitDirection::NegZ: {
+
+					if (block.position.z == 0) {
+						//The chunk is adjacent to the chunk we are in, should definitely be loaded
+						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusZ);
+						MC_ASSERT(adjacent_chunk_index.has_value());
+						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, Chunk::s_ChunkWidthAndHeight - 1 }, bt);
+						adjacent_chunk.AddFreshNormals(emplaced_block);
+						block_added_to_side_chunk = true;
+					}
+					else {
+						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegZ), bt);
+					}
+				} break;
 
 				case Defs::HitDirection::None:
-					//UNREACHABLE
+					MC_ASSERT(false);
 					break;
 				}
 
-				local_chunk->AddFreshNormals(blocks.back());
+				if(!block_added_to_side_chunk)
+					local_chunk->AddFreshNormals(blocks.back());
 			}
 			//Signal block has been destroyed
 			Defs::g_EnvironmentChange = true;

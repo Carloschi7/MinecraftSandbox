@@ -146,7 +146,7 @@ void Chunk::InitGlobalNorms()
 	//+1 because we need to parse the last column
 	for (s32 i = 0; i < m_LocalBlocks.size(); i++)
 	{
-		glm::vec3 loc_pos = BlockPos(m_LocalBlocks[i].position);
+		glm::vec3 loc_pos = ToWorld(m_LocalBlocks[i].position);
 
 		//Always include the last block
 		if (i != m_LocalBlocks.size() - 1 &&
@@ -167,7 +167,7 @@ void Chunk::InitGlobalNorms()
 		auto& top_block = m_LocalBlocks[top_column_index];
 		auto& bot_block = m_LocalBlocks[starting_index];
 
-		const glm::vec3 block_pos = BlockPos(top_block.position);
+		const glm::vec3 block_pos = ToWorld(top_block.position);
 
 		//if the blocks confines with another chunk right left front or back
 		bool conf_rlfb[4];
@@ -243,7 +243,7 @@ void Chunk::InitGlobalNorms()
 			u32 blk_index;
 			while (p >= starting_index)
 			{
-				auto pos = BlockPos(m_LocalBlocks[p].position) + pos_x;
+				auto pos = ToWorld(m_LocalBlocks[p].position) + pos_x;
 				if (!IsBlock(pos, starting_index, true, &blk_index)) {
 					m_LocalBlocks[p].AddNormal(pos_x);
 				}
@@ -260,7 +260,7 @@ void Chunk::InitGlobalNorms()
 			//Left
 			while (p >= starting_index)
 			{
-				auto pos = BlockPos(m_LocalBlocks[p].position) + neg_x;
+				auto pos = ToWorld(m_LocalBlocks[p].position) + neg_x;
 				if (!IsBlock(pos, starting_index, false, &blk_index)) {
 					m_LocalBlocks[p].AddNormal(neg_x);
 				}
@@ -274,7 +274,7 @@ void Chunk::InitGlobalNorms()
 			//Back
 			while (p >= starting_index)
 			{
-				auto pos = BlockPos(m_LocalBlocks[p].position) + pos_z;
+				auto pos = ToWorld(m_LocalBlocks[p].position) + pos_z;
 				if (!IsBlock(pos, starting_index, true, &blk_index)) {
 					m_LocalBlocks[p].AddNormal(pos_z);
 				}
@@ -289,7 +289,7 @@ void Chunk::InitGlobalNorms()
 			//Front
 			while (p >= starting_index)
 			{
-				auto pos = BlockPos(m_LocalBlocks[p].position) + neg_z;
+				auto pos = ToWorld(m_LocalBlocks[p].position) + neg_z;
 				if (!IsBlock(pos, starting_index, false, &blk_index)) {
 					m_LocalBlocks[p].AddNormal(neg_z);
 				}
@@ -313,7 +313,7 @@ void Chunk::InitGlobalNorms()
 			u32 block_index;
 			//Emplacing back normals from the first block higher than the current one 
 			glm::vec3 begin_check = GlCore::g_PosY;
-			while (chunk_plus_x->IsBlock(BlockPos(top_block.position) + pos_x + begin_check, 0, true, &block_index))
+			while (chunk_plus_x->IsBlock(ToWorld(top_block.position) + pos_x + begin_check, 0, true, &block_index))
 			{
 				chunk_plus_x->GetBlock(block_index).AddNormal(-1.0f, 0.0f, 0.0f);
 				begin_check.y += 1.0f;
@@ -324,7 +324,7 @@ void Chunk::InitGlobalNorms()
 		{
 			u32 block_index;
 			glm::vec3 begin_check = GlCore::g_PosY;
-			while (chunk_minus_x->IsBlock(BlockPos(top_block.position) + neg_x + begin_check, 0, true, &block_index))
+			while (chunk_minus_x->IsBlock(ToWorld(top_block.position) + neg_x + begin_check, 0, true, &block_index))
 			{
 				chunk_minus_x->GetBlock(block_index).AddNormal(1.0f, 0.0f, 0.0f);
 				begin_check.y += 1.0f;
@@ -335,7 +335,7 @@ void Chunk::InitGlobalNorms()
 		{
 			u32 block_index;
 			glm::vec3 local_pos = GlCore::g_PosY;
-			while (chunk_minus_z->IsBlock(BlockPos(top_block.position) + neg_z + local_pos, 0, true, &block_index))
+			while (chunk_minus_z->IsBlock(ToWorld(top_block.position) + neg_z + local_pos, 0, true, &block_index))
 			{
 				chunk_minus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, 1.0f);
 				local_pos.y += 1.0f;
@@ -346,7 +346,7 @@ void Chunk::InitGlobalNorms()
 		{
 			u32 block_index;
 			glm::vec3 local_pos = GlCore::g_PosY;
-			while (chunk_plus_z->IsBlock(BlockPos(top_block.position) + pos_z + local_pos, 0, true, &block_index))
+			while (chunk_plus_z->IsBlock(ToWorld(top_block.position) + pos_z + local_pos, 0, true, &block_index))
 			{
 				chunk_plus_z->GetBlock(block_index).AddNormal(0.0f, 0.0f, -1.0f);
 				local_pos.y += 1.0f;
@@ -359,7 +359,7 @@ void Chunk::InitGlobalNorms()
 
 void Chunk::AddFreshNormals(Block& b)
 {
-	const glm::vec3 block_pos = BlockPos(b.position);
+	const glm::vec3 block_pos = ToWorld(b.position);
 
 	bool conf_rlfb[4];
 	conf_rlfb[0] = block_pos.x == m_ChunkOrigin.x + s_ChunkWidthAndHeight - 1;
@@ -416,7 +416,7 @@ std::pair<f32, Defs::HitDirection> Chunk::RayCollisionLogic(const glm::vec3& cam
 
 		f32 dist = 0.0f;
 		//Target only forward blocks
-		glm::vec3 position = BlockPos(block.position);
+		glm::vec3 position = ToWorld(block.position);
 		f32 block_dot_value = glm::dot(camera_direction, glm::normalize(position - camera_position));
 		if (block_dot_value >= 0.0f) {
 			Defs::HitDirection local_selection = Defs::ViewBlockCollision(camera_position, camera_direction, position, dist);
@@ -439,7 +439,7 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 		if (!m_LocalBlocks[i].HasNormals())
 			continue;
 
-		const glm::vec3 block_pos = BlockPos(m_LocalBlocks[i].position);
+		const glm::vec3 block_pos = ToWorld(m_LocalBlocks[i].position);
 		glm::vec3 diff = position - block_pos;
 		glm::vec3 abs_diff = glm::abs(diff);
 		if (abs_diff.x < clip_threshold && abs_diff.y < clip_threshold && abs_diff.z < clip_threshold) {
@@ -527,7 +527,7 @@ void Chunk::RemoveBorderNorm(const glm::vec3& norm)
 	auto erase_flanked_normal = [&](Block& block, const glm::vec3& vec, const Defs::ChunkLocation& loc)
 	{
 		u32 index = GetLoadedChunk(loc).value_or(0);
-		glm::vec3 block_pos = BlockPos(block.position) + vec;
+		glm::vec3 block_pos = ToWorld(block.position) + vec;
 		bool is_block = m_RelativeWorld.GetChunk(index).IsBlock(block_pos);
 
 		if (is_block)
@@ -576,6 +576,7 @@ const std::optional<u32>& Chunk::GetLoadedChunk(const Defs::ChunkLocation& cl) c
 		return m_MinusZ;
 	}
 
+	MC_ASSERT(false);
 	return std::nullopt;
 }
 
@@ -611,7 +612,7 @@ void Chunk::ForwardRenderableData(glm::vec3*& position_buf, u32*& texindex_buf, 
 				continue;
 
 			texindex_buf[count] = static_cast<u32>(block.Type());
-			position_buf[count++] = BlockPos(block.position);
+			position_buf[count++] = ToWorld(block.position);
 
 			//Handle selection by pushing another matrix and a null index
 			if (selected && i == s_InternalSelectedBlock)
@@ -630,7 +631,7 @@ void Chunk::ForwardRenderableData(glm::vec3*& position_buf, u32*& texindex_buf, 
 			if (!block.HasNormals())
 				continue;
 
-			position_buf[count++] = BlockPos(block.position);
+			position_buf[count++] = ToWorld(block.position);
 
 			if (count == GlCore::g_MaxRenderedObjCount)
 				GlCore::DispatchDepthRendering(position_buf, count);
@@ -654,7 +655,7 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 	{
 		glm::vec3 neighbor_pos = pos + norm;
 		auto local_iter = std::find_if(m_LocalBlocks.begin(), m_LocalBlocks.end(),
-			[neighbor_pos, this](const Block& b) {return BlockPos(b.position) == neighbor_pos; });
+			[neighbor_pos, this](const Block& b) {return ToWorld(b.position) == neighbor_pos; });
 
 		//Behaviour between chunks
 		if (local_iter == m_LocalBlocks.end())
@@ -808,7 +809,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, s32 starting_index, bool search_toward
 		//Searching before in the defined batch
 		for (s32 i = starting_index; i < m_LocalBlocks.size(); i++)
 		{
-			if (BlockPos(m_LocalBlocks[i].position) == pos)
+			if (ToWorld(m_LocalBlocks[i].position) == pos)
 			{
 				if (block_index)
 					*block_index = i;
@@ -822,7 +823,7 @@ bool Chunk::IsBlock(const glm::vec3& pos, s32 starting_index, bool search_toward
 	{
 		for (s32 i = starting_index; i >= 0; i--)
 		{
-			if (BlockPos(m_LocalBlocks[i].position) == pos)
+			if (ToWorld(m_LocalBlocks[i].position) == pos)
 			{
 				if (block_index)
 					*block_index = i;
@@ -849,9 +850,9 @@ bool Chunk::BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 b
 {
 	bool local_found = false, adjacent_found = false;
 	u32 blk_index;
-	local_found = IsBlock(BlockPos(m_LocalBlocks[top_index].position) + pos, bot_index, search_dir, &blk_index);
+	local_found = IsBlock(ToWorld(m_LocalBlocks[top_index].position) + pos, bot_index, search_dir, &blk_index);
 	if (!local_found)
-			adjacent_found = chunk && chunk->IsBlock(BlockPos(m_LocalBlocks[top_index].position) + pos, 0, true, &blk_index);
+			adjacent_found = chunk && chunk->IsBlock(ToWorld(m_LocalBlocks[top_index].position) + pos, 0, true, &blk_index);
 
 	if (local_found) {
 		if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)

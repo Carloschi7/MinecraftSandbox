@@ -12,6 +12,7 @@ typedef u64 VAddr;
 //msg for now its just a warning displayed in the same line of the assert, no practical usage
 #define MC_ASSERT(x, msg)\
 	if(!(x)){*(int*)0 = 0;}
+#define MC_LOG(msg, ...) std::printf(msg, __VA_ARGS__);
 
 namespace mem 
 {

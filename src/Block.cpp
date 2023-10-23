@@ -23,7 +23,7 @@ void Block::UpdateRenderableSides(const Chunk* parent, const glm::vec3& camera_p
     counter = 0;
 
     //Should never go above 3 elements
-    glm::vec3 dir = parent->BlockPos(position) - camera_pos;
+    glm::vec3 dir = parent->ToWorld(position) - camera_pos;
     for (u32 i = 0; i < bitshifts.size(); i++)
     {
         const bool is_norm = exposed_normals & bitshifts[i];
@@ -174,7 +174,7 @@ void Drop::Update(Chunk* chunk, f32 elapsed_time)
     glm::vec3 to_find = glm::vec3(std::roundf(position.x), static_cast<s32>(position.y), std::roundf(position.z));
 
     const auto& vec = chunk->Blocks();
-    auto iter = std::find_if(vec.begin(), vec.end(), [chunk, to_find](const Block& b) {return chunk->BlockPos(b.position) == to_find; });
+    auto iter = std::find_if(vec.begin(), vec.end(), [chunk, to_find](const Block& b) {return chunk->ToWorld(b.position) == to_find; });
     if (iter != vec.end()) {
         position = { position.x, iter->position.y + 0.8f, position.z};
         m_Velocity = glm::vec3(0.0f);

@@ -65,7 +65,7 @@ public:
 	inline const glm::vec3& ChunkOrigin3D() const { return m_ChunkOrigin; }
 	inline const glm::vec2 ChunkOrigin2D() const { return {m_ChunkOrigin.x, m_ChunkOrigin.z}; }
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
-	inline glm::vec3 BlockPos(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
+	inline glm::vec3 ToWorld(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
 	inline Utils::AVector<Block>& Blocks() { return m_LocalBlocks; }
 	inline void PushDrop(const glm::vec3& position, Defs::BlockType type) { m_LocalDrops.emplace_back(position, type); }
 
@@ -116,7 +116,7 @@ private:
 	//Sector index
 	u32 m_SectorIndex;
 
-
+public:
 	static f32 s_DiagonalLenght;
 	static constexpr u32 s_ChunkWidthAndHeight = 16;
 	static constexpr u32 s_ChunkDepth = 50;
