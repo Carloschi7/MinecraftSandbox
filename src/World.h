@@ -39,10 +39,11 @@ private:
 private:
     //Global OpenGL environment state
     GlCore::State& m_State;
-    //We prefer a vector of shared pointers instead of a vector
-    //of stack allocated objects because when we are reallocating
-    //the vector and the render thread is doing stuff with a chunk,
-    //the chunk object is not invalidated
+    //The AVector is a vector type that uses our allocated memory
+    //arena, in this case we do not directly allocate a heap section
+    //of contiguous chunks like in AVector<Chunk> because we want to be
+    //able to be flexible in multithreading. We just store a vistual address
+    //in our virtual memory space
     Utils::AVector<VAddr> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
