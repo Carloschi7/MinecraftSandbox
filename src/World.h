@@ -50,7 +50,6 @@ private:
     Utils::AVector<glm::vec3> m_SpawnableChunks;
     //Water layers pushed for current iteration
     std::vector<std::shared_ptr<std::vector<glm::vec3>>> m_DrawableWaterLayers;
-
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;
     //For terrain generation
@@ -60,6 +59,13 @@ private:
     //Timer used to sort the spawnable chunks vector every now and then
     //(sorting every frame would be pointless)
     Utils::Timer m_SortingTimer;
+
+    //Buffer which holds an address to a small chunk buffer that contains the chunk
+    //which the player can collide with
+    //Also by declaring this we minimize the amount of allocation per frame
+    //in the renderer thread
+    VAddr m_CollisionChunkBuffer;
+    VAddr m_RemovableChunkBuffer;
 
     //Serialization threads
     std::future<void> m_SerializingFut;

@@ -13,6 +13,12 @@ World::World()
 	//Init opengl resources
 	GlCore::LoadResources();
 
+	//16 slots is probably too much space but because it is already pretty small
+	//there is no reason to allocate any less
+	m_CollisionChunkBuffer = mem::Allocate(sizeof(Chunk*) * 16);
+	const u16 max_removable_buffers = glm::pow(static_cast<u16>(Defs::g_SectionDimension) / Chunk::s_ChunkWidthAndHeight, 2);
+	m_RemovableChunkBuffer = mem::Allocate(sizeof(VAddr) * max_removable_buffers);
+
 	//Init world seed
 	m_WorldSeed.seed_value = 1;
 	PerlNoise::InitSeedMap(m_WorldSeed);
@@ -60,8 +66,14 @@ World::World()
 
 World::~World()
 {
+	//Free indipendent memory patches
+	mem::Free(m_RemovableChunkBuffer);
+	mem::Free(m_CollisionChunkBuffer);
+
 	for (auto chunk_addr : m_Chunks)
 		mem::Delete<Chunk>(chunk_addr);
+
+	int k = 0;
 }
 
 void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
@@ -482,25 +494,20 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 void World::CheckPlayerCollision(const glm::vec3& position)
 {
-	std::vector<VAddr> near_chunks;
+	u16 count = 0;
+	Chunk** chunk_buffer = mem::Get<Chunk*>(m_CollisionChunkBuffer);
 
 	for (u32 i = 0; i < m_Chunks.size(); i++) {
 		Chunk* chunk = mem::Get<Chunk>(m_Chunks[i]);
 		if (!chunk)
 			break;
 		if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(chunk->ChunkCenter().x, chunk->ChunkCenter().z)) < 12.0f)
-			near_chunks.push_back(m_Chunks[i]);
+			chunk_buffer[count++] = chunk;
 	}
 
-	for (u32 i = 0; i < near_chunks.size(); i++)
-		mem::LockRegion(m_Chunks[i]);
-
 	Camera* cam = m_State.camera;
-	for(auto addr : near_chunks)
-		mem::Get<Chunk>(addr)->BlockCollisionLogic(cam->position);
-
-	for (u32 i = 0; i < near_chunks.size(); i++)
-		mem::UnlockRegion(m_Chunks[i]);
+	for(u16 i = 0; i < count; i++)
+		chunk_buffer[i]->BlockCollisionLogic(cam->position);
 }
 
 void World::HandleSectionData()
@@ -585,33 +592,40 @@ void World::SerializeSector(u32 index)
 
 	//(When multithreading) Advertise the render thread m_Chunks 
 	//is undergoing some heavy changes
-	std::vector<VAddr> to_delete;
+	u16 count = 0;
+	VAddr* removable_chunks = mem::Get<VAddr>(m_RemovableChunkBuffer);
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 			mem::LockRegion(m_Chunks[i]);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), 
-			[&](VAddr addr) {return mem::Get<Chunk>(addr)->SectorIndex() != index; });
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [index](VAddr addr) 
+			{
+				Chunk* chunk = mem::Get<Chunk>(addr); 
+				return chunk->SectorIndex() != index; 
+			});
 		//Determine safe iteration range for the renderer thread
-		to_delete = std::vector<VAddr>(iter, m_Chunks.end());
+		for (auto sub_iter = iter; sub_iter != m_Chunks.end(); ++sub_iter) {
+			removable_chunks[count++] = *sub_iter;
+		}
+		
 		m_Chunks.erase(iter, m_Chunks.end());
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 			mem::UnlockRegion(m_Chunks[i]);
 	}
 
 	//Nothing to serialize
-	if (to_delete.empty())
+	if (count == 0)
 		return;
 
 	//Number of chunks at the beginning (leave blank for now)
 	sz.Serialize<u32>(0);
-	for(u32 i = 0; i < to_delete.size(); i++)
+	for(u16 i = 0; i < count; i++)
 	{
-		Chunk* chunk = mem::Get<Chunk>(to_delete[i]);
+		Chunk* chunk = mem::Get<Chunk>(removable_chunks[i]);
 		chunk->Serialize(sz);
-		mem::UnlockRegion(to_delete[i]);
-		mem::Delete<Chunk>(to_delete[i]);
+		mem::UnlockRegion(removable_chunks[i]);
+		mem::Delete<Chunk>(removable_chunks[i]);
 		serialized_chunks++;
 	}
 
