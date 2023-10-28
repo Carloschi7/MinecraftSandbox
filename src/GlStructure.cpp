@@ -16,7 +16,7 @@ namespace GlCore
         cam.SetKeyboardFunction(Defs::KeyboardFunction);
         cam.SetMouseFunction(Defs::MouseFunction);
         
-        //Loading cubemap data
+        //Loading cubemap data (needs to be a std::vector)
         std::vector<std::string> skybox_files =
         {
             "assets/textures/ShadedBackground.png",
@@ -81,7 +81,7 @@ namespace GlCore
 
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
-        std::vector<TextureLoaderType> textures
+        Utils::AVector<TextureLoaderType> textures
         {
             {"texture_dirt",     Defs::TextureBinding::TextureDirt},
             {"texture_grass",    Defs::TextureBinding::TextureGrass},
@@ -91,11 +91,11 @@ namespace GlCore
         };
 
         //The binding matches the vector position
-        auto& game_textures = GameTextures();
+        InitGameTextures(state.game_textures);
         for (auto& elem : textures)
         {
             u32 tex_index = static_cast<u32>(elem.second);
-            game_textures[tex_index].Bind(tex_index);
+            state.game_textures[tex_index].Bind(tex_index);
             state.block_shader->Uniform1i(tex_index, elem.first);
             state.drop_shader->Uniform1i(tex_index, elem.first);
         }
@@ -132,8 +132,6 @@ namespace GlCore
         Renderer::Render(state.crossaim_shader, *state.crossaim_vm, nullptr, {});
     }
 
-    
-
     void UpdateShadowFramebuffer()
     {
         State& state = State::GlobalInstance();
@@ -164,23 +162,16 @@ namespace GlCore
         state.water_shader->UniformMat4f(state.camera->GetViewMatrix(), "view");
     }
 
-    const std::vector<Texture>& GameTextures()
+    void InitGameTextures(std::vector<Texture>& textures)
     {
-        static std::vector<Texture> textures;
-
-        if (textures.empty())
-        {
-            textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/Inventory.png", false, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
-            textures.emplace_back("assets/textures/ScreenInventorySelector.png", true, TextureFilter::Nearest);
-        }
-
-        return textures;
+        textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/Inventory.png", false, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
+        textures.emplace_back("assets/textures/ScreenInventorySelector.png", true, TextureFilter::Nearest);
     }
 }

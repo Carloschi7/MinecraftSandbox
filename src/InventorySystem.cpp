@@ -106,7 +106,7 @@ void Inventory::InternalSideRender()
 
     //Actual inventory rendering
     u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureInventory);
-    GlCore::GameTextures()[inventory_binding].Bind(inventory_binding);
+    m_State.game_textures[inventory_binding].Bind(inventory_binding);
     m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
 
@@ -148,7 +148,7 @@ void Inventory::ScreenSideRender()
     
 
     u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
-    GlCore::GameTextures()[scr_inventory_binding].Bind(scr_inventory_binding);
+    m_State.game_textures[scr_inventory_binding].Bind(scr_inventory_binding);
     m_State.inventory_shader->Uniform1i(scr_inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_ScreenAbsTransf);
 
@@ -166,7 +166,7 @@ void Inventory::ScreenSideRender()
 
     //Render selector
     u32 selector_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventorySelector);
-    GlCore::GameTextures()[selector_binding].Bind(selector_binding);
+    m_State.game_textures[selector_binding].Bind(selector_binding);
     m_State.inventory_shader->Uniform1i(selector_binding, "texture_inventory");
     auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex, true);
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, screen_slot_transform);

@@ -26,7 +26,9 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 	//Init water layer position vector
 	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
 	//Chunk tree leaves if present
-	std::vector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage();
+	Utils::AVector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage(
+		m_RelativeWorld.relative_leaves_positions,
+		m_RelativeWorld.random_engine);
 
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
@@ -54,7 +56,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 
 			if (perlin_data.in_water)
 			{
-				f32 water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed());
+				f32 water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed(), m_RelativeWorld.pushed_areas);
 				u32 water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)

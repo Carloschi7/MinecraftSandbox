@@ -1,6 +1,6 @@
 #include "GameDefinitions.h"
 #include "State.h"
-#include <random>
+#include "Utils.h"
 
 namespace Defs
 {
@@ -185,27 +185,50 @@ namespace Defs
         return ret;
     }
 
-    f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed)
+    //Addresses that map to some specific arrays used in WaterRegionLevel
+    //do not need to be freed specifically
+    glm::vec2* directions = nullptr;
+    glm::vec2* compass_directions = nullptr;
+
+    f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::AVector<WaterArea>& pushed_areas)
     {
-        static std::vector<WaterArea> pushed_areas;
+        //TODO remove in the codebase all of the other internal static stuff which is no longer intended
+        //to remain in that state and substitute other small std::vector with Utils::AVector or directly
+        //with some more arena allocated memory depending on the context, for example starting with 
+        //the vector directions just here below
+        //also, figure out a way to make sure the texture vector is inserted in the unfreed memory section
         static f32 watermap_unit = 1.0f / watermap_density;
         
         for (auto& area : pushed_areas)
             if (area.Contains(sx, sy))
                 return area.water_height;
 
-        static std::vector<glm::vec2> directions =
-        {
-            glm::vec2(1.0f, -1.0f),glm::vec2(1.0f, 0.0f),glm::vec2(1.0f, 1.0f),glm::vec2(0.0f, 1.0f),
-            glm::vec2(-1.0f, 1.0f),glm::vec2(-1.0f, 0.0f),glm::vec2(-1.0f, -1.0f),glm::vec2(0.0f, -1.0f), glm::vec2(1.0f, -1.0f)
-        };
+
+        const u32 directions_count = 9, compass_directions_count = 4;
+        if (directions == nullptr || compass_directions == nullptr) {
+            //u32* dest;
+            //std::memcpy(dest, &directions_count, 4);
+            //*dest = 2;
+            glm::vec2 directions_data[directions_count] =
+            {
+                glm::vec2(1.0f, -1.0f),glm::vec2(1.0f, 0.0f),glm::vec2(1.0f, 1.0f),glm::vec2(0.0f, 1.0f),
+                glm::vec2(-1.0f, 1.0f),glm::vec2(-1.0f, 0.0f),glm::vec2(-1.0f, -1.0f),glm::vec2(0.0f, -1.0f), glm::vec2(1.0f, -1.0f)
+            };
+            glm::vec2 compass_direction_data[compass_directions_count] = { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) };
+
+            directions = mem::Get<glm::vec2>(mem::Allocate(directions_count * sizeof(glm::vec2)));
+            std::memcpy(directions, directions_data, sizeof(glm::vec2) * directions_count);
+            compass_directions = mem::Get<glm::vec2>(mem::Allocate(compass_directions_count * sizeof(glm::vec2)));
+            std::memcpy(compass_directions, compass_direction_data, sizeof(glm::vec2) * compass_directions_count);
+            mem::unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + mem::padding * 2;
+        }
 
         //check for extra borders(should be rarely called)
         auto check_extra = [&](const glm::vec2& vec)
         {
-            for (auto v : { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) })
+            for (u32 i = 0; i < compass_directions_count; i++)
             {
-                glm::vec2 pos = vec + v * watermap_unit;
+                glm::vec2 pos = vec + compass_directions[i] * watermap_unit;
                 f32 map_val = PerlNoise::GenerateSingleNoise(pos.x / watermap_density, pos.y / watermap_density, seed.secundary_seeds[0]);
 
                 if (map_val > water_limit)
@@ -261,9 +284,9 @@ namespace Defs
             bool found = false;
             bool good_border = false;
             //Start search from region 0
-            for (auto vec : directions)
+            for (u32 i = 0; i < directions_count; i++)
             {
-                glm::vec2 pos = curr_selection + vec;
+                glm::vec2 pos = curr_selection + directions[i];
                 if (pos == prev_selection)
                     continue;
 
@@ -321,30 +344,10 @@ namespace Defs
         return wa.water_height;
     }
 
-    std::vector<glm::vec3> GenerateRandomFoliage()
+    Utils::AVector<glm::vec3> GenerateRandomFoliage(Utils::AVector<glm::vec3>& possible_positions, std::mt19937& rand_engine)
     {
-        static std::vector<glm::vec3> possible_positions;
-        static std::mt19937 rand_engine;
-
-        if (possible_positions.empty()) {
-            for (s32 x = -2.0f; x <= 2.0f; x++) {
-                for (s32 y = -1.0f; y <= 3.0f; y++) {
-                    for (s32 z = -2.0f; z <= 2.0f; z++) {
-                        possible_positions.emplace_back((f32)x, (f32)y, (f32)z);
-                    }
-                }
-            }
-
-            //Pop the ones in the trunk's way
-            for (f32 y = -1.0f; y <= 1.0f; y++) {
-                possible_positions.erase(std::find(possible_positions.begin(), possible_positions.end(), glm::vec3(0.0f, (f32)y, 0.0f)));
-            }
-        }
-
-        
-
-        std::vector<u32> selected_indices;
-        std::vector<glm::vec3> ret;
+        Utils::AVector<u32> selected_indices;
+        Utils::AVector<glm::vec3> ret;
         for (u32 i = 0; i < 14; i++) {
             u32 index;
             do {

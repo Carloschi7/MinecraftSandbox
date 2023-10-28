@@ -8,6 +8,7 @@ namespace mem
 	bool g_ArenaInitialized = false;
 	std::mutex g_ArenaMutex;
 	std::condition_variable g_ArenaConditionVariable;
+	u32 unfreed_mem = 0;
 
 	void InitializeArena(u64 size)
 	{

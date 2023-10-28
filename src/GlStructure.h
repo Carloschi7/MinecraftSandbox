@@ -6,6 +6,7 @@
 #include "Vertices.h"
 #include "Renderer.h"
 #include "State.h"
+#include "Utils.h"
 
 class Block;
 class World;
@@ -21,5 +22,5 @@ namespace GlCore
 
     void UniformProjMatrix();
     void UniformViewMatrix();
-    const std::vector<Texture>& GameTextures();
+    void InitGameTextures(std::vector<Texture>& textures);
 }

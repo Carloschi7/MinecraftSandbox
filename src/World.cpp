@@ -19,6 +19,21 @@ World::World()
 	const u16 max_removable_buffers = glm::pow(static_cast<u16>(Defs::g_SectionDimension) / Chunk::s_ChunkWidthAndHeight, 2);
 	m_RemovableChunkBuffer = mem::Allocate(sizeof(VAddr) * max_removable_buffers);
 
+	//Determine the relative space in which chunks are going to generate their foliage
+	for (s32 x = -2.0f; x <= 2.0f; x++) {
+		for (s32 y = -1.0f; y <= 3.0f; y++) {
+			for (s32 z = -2.0f; z <= 2.0f; z++) {
+				relative_leaves_positions.emplace_back((f32)x, (f32)y, (f32)z);
+			}
+		}
+	}
+
+	//Pop the ones in the trunk's way
+	for (f32 y = -1.0f; y <= 1.0f; y++) {
+		relative_leaves_positions.erase(std::find(relative_leaves_positions.begin(), relative_leaves_positions.end(),
+			glm::vec3(0.0f, (f32)y, 0.0f)));
+	}
+
 	//Init world seed
 	m_WorldSeed.seed_value = 1;
 	PerlNoise::InitSeedMap(m_WorldSeed);
@@ -57,10 +72,8 @@ World::World()
 	GlCore::UniformProjMatrix();
 
 	//Load water texture
-	auto& textures = GlCore::GameTextures();
-
 	u32 water_binding = static_cast<u32>(Defs::TextureBinding::TextureWater);
-	textures[water_binding].Bind(water_binding);
+	m_State.game_textures[water_binding].Bind(water_binding);
 	m_State.water_shader->Uniform1i(water_binding, "texture_water");
 }
 
@@ -72,8 +85,6 @@ World::~World()
 
 	for (auto chunk_addr : m_Chunks)
 		mem::Delete<Chunk>(chunk_addr);
-
-	int k = 0;
 }
 
 void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
@@ -407,7 +418,6 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
-				//TODO fix this issue, are we able to add a block between chunks now? should we select another chunk for this?
 				bool block_added_to_side_chunk = false;
 				switch (hit)
 				{

@@ -34,11 +34,21 @@ namespace mem
 	//Random signature to ensure validity, translate to ascii "regb" -> Region Begin
 	static constexpr u32 signature = 0x62676572;
 	static constexpr u32 padding = 2 * sizeof(u32);
+	//Variable which tracks how much allocated memory won't be explicitly freed by
+	//destructors or some other equivalent methods. This is used to track small buffers
+	//of data that is trivially copiable, meaning that no explicit destructor must be called
+	//in order to free the memory we are concerned about.
+	//E.G this may track numbers, arrays of numbers, arrays of vectors and other stuff that
+	//can be deleted just with the arena destruction without ever having the posibility to
+	//produce any leak. Also objects with empty distructors or with distructors that free
+	//memory which is mapped in the arena are allowed to be referred here
+	//(In this current app implementation this is going to be used only for the first case)
 
 	extern Arena g_Arena;
 	extern bool g_ArenaInitialized;
 	extern std::mutex g_ArenaMutex;
 	extern std::condition_variable g_ArenaConditionVariable;
+	extern u32 unfreed_mem;
 
 	void InitializeArena(u64 size);
 	void DestroyArena();

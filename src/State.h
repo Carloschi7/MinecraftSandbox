@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "Texture.h"
+#include "Utils.h"
 
 class Window;
 class Camera;
@@ -24,6 +25,8 @@ namespace GlCore
 
 		Window* game_window;
 		Camera* camera;
+		std::vector<Texture> game_textures;
+		
 		std::shared_ptr<Shader> cubemap_shader;
 		std::shared_ptr<Shader> block_shader;
 		std::shared_ptr<Shader> depth_shader;

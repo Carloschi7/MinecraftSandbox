@@ -3,6 +3,7 @@
 #include <optional>
 #include <thread>
 #include <future>
+#include <random>
 #include "Chunk.h"
 
 class Inventory;
@@ -36,6 +37,12 @@ private:
     bool IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec);
     glm::vec2 SectionCentralPosFrom(u32 index);
     
+public:
+    //Vector which stores a the general area of all watermaps found up to that moment
+    Utils::AVector<Defs::WaterArea> pushed_areas;
+    Utils::AVector<glm::vec3> relative_leaves_positions;
+    std::mt19937 random_engine;
+
 private:
     //Global OpenGL environment state
     GlCore::State& m_State;
