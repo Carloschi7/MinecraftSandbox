@@ -1,6 +1,7 @@
 #include "GlStructure.h"
 #include "Vertices.h"
 #include "Block.h"
+#include "State.h"
 
 namespace GlCore
 {
@@ -10,6 +11,7 @@ namespace GlCore
         State& state = *pstate;
         Window& wnd = *state.game_window;
         Camera& cam = *state.camera;
+        Memory::Arena* allocator = state.memory_arena;
 
         cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
         cam.SetPerspectiveValues(glm::radians(45.0f), f32(wnd.Width()) / f32(wnd.Height()), 0.1f, Defs::g_RenderDistance);
@@ -26,22 +28,22 @@ namespace GlCore
             "assets/textures/ShadedBackground.png",
             "assets/textures/ShadedBackground.png",
         };
-        state.cubemap = std::make_shared<CubeMap>(skybox_files, Defs::g_RenderDistance / 2.0f);
-        state.cubemap_shader = std::make_shared<Shader>("assets/shaders/cubemap.shader");
+        state.cubemap = Memory::NewUnchecked<CubeMap>(allocator, skybox_files, Defs::g_RenderDistance / 2.0f);
+        state.cubemap_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/cubemap.shader");
         state.cubemap_shader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         //Loading crossaim data
         //We set the crossaim model matrix here, for now this shader is used only 
         //for drawing this
         VertexData rd = CrossAim();
-        state.crossaim_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.crossaim_shader = std::make_shared<Shader>("assets/shaders/basic_overlay.shader");
+        state.crossaim_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.crossaim_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_overlay.shader");
         state.crossaim_shader->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
 
         //Load water stuff
         rd = WaterLayer();
-        state.water_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.water_shader = std::make_shared<Shader>("assets/shaders/water.shader");
+        state.water_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.water_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/water.shader");
         state.water_shader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
@@ -50,9 +52,9 @@ namespace GlCore
 
         //Init framebuffer
         rd = CubeForDepth();
-        state.depth_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.shadow_framebuffer = std::make_shared<FrameBuffer>(g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
-        state.depth_shader = std::make_shared<Shader>("assets/shaders/basic_shadow.shader");
+        state.depth_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.shadow_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
+        state.depth_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_shadow.shader");
 
         //Instanced attribute for block positions in the depth shader
         el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
@@ -61,8 +63,8 @@ namespace GlCore
 
         //Init inventory stuff
         rd = Inventory();
-        state.inventory_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.inventory_shader = std::make_shared<Shader>("assets/shaders/inventory.shader");
+        state.inventory_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.inventory_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/inventory.shader");
 
 
         glm::mat4 inventory_proj = glm::ortho(0.0f, (f32)wnd.Width(), (f32)wnd.Height(), 0.0f);
@@ -70,14 +72,14 @@ namespace GlCore
 
         //and also the inventory entry VM
         rd = InventoryEntryData();
-        state.inventory_entry_vm = std::make_shared<VertexManager>(rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.inventory_entry_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
 
         //Load block and drop resources
         VertexData cd = Cube();
-        state.block_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
-        state.block_shader = std::make_shared<Shader>("assets/shaders/basic_cube.shader");
-        state.drop_vm = std::make_shared<VertexManager>(cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
-        state.drop_shader = std::make_shared<Shader>("assets/shaders/basic_collectable.shader");
+        state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
+        state.block_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_cube.shader");
+        state.drop_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
+        state.drop_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_collectable.shader");
 
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;

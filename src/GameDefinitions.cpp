@@ -212,12 +212,12 @@ namespace Defs
             };
             glm::vec2 compass_direction_data[compass_directions_count] = { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) };
 
-            mem::MemoryArena* ma = GlCore::pstate->memory_arena;
-            directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, directions_count * sizeof(glm::vec2)));
+            Memory::Arena* ma = GlCore::pstate->memory_arena;
+            directions = Memory::Get<glm::vec2>(ma, Memory::Allocate(ma, directions_count * sizeof(glm::vec2)));
             std::memcpy(directions, directions_data, sizeof(glm::vec2) * directions_count);
-            compass_directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, compass_directions_count * sizeof(glm::vec2)));
+            compass_directions = Memory::Get<glm::vec2>(ma, Memory::Allocate(ma, compass_directions_count * sizeof(glm::vec2)));
             std::memcpy(compass_directions, compass_direction_data, sizeof(glm::vec2) * compass_directions_count);
-            ma->unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + mem::padding * 2;
+            ma->unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + Memory::padding * 2;
         }
 
         //check for extra borders(should be rarely called)

@@ -15,9 +15,9 @@ World::World()
 
 	//16 slots is probably too much space but because it is already pretty small
 	//there is no reason to allocate any less
-	m_CollisionChunkBuffer = mem::Allocate(m_State.memory_arena, sizeof(Chunk*) * 16);
+	m_CollisionChunkBuffer = Memory::Allocate(m_State.memory_arena, sizeof(Chunk*) * 16);
 	const u16 max_removable_buffers = glm::pow(static_cast<u16>(Defs::g_SectionDimension) / Chunk::s_ChunkWidthAndHeight, 2);
-	m_RemovableChunkBuffer = mem::Allocate(m_State.memory_arena, sizeof(VAddr) * max_removable_buffers);
+	m_RemovableChunkBuffer = Memory::Allocate(m_State.memory_arena, sizeof(VAddr) * max_removable_buffers);
 
 	//Determine the relative space in which chunks are going to generate their foliage
 	for (s32 x = -2.0f; x <= 2.0f; x++) {
@@ -40,7 +40,7 @@ World::World()
 
 	for (s32 i = g_SpawnerBegin; i < g_SpawnerEnd; i += g_SpawnerIncrement)
 		for (s32 j = g_SpawnerBegin; j < g_SpawnerEnd; j += g_SpawnerIncrement) 
-			m_Chunks.push_back(mem::New<Chunk>(m_State.memory_arena, *this, glm::vec2(f32(i), f32(j))));
+			m_Chunks.push_back(Memory::New<Chunk>(m_State.memory_arena, *this, glm::vec2(f32(i), f32(j))));
 
 	HandleSectionData();
 
@@ -53,7 +53,7 @@ World::World()
 	//Init spawnable chunks
 	for (auto& chunk_ptr : m_Chunks)
 	{
-		Chunk& chunk = *mem::Get<Chunk>(m_State.memory_arena, chunk_ptr);
+		Chunk& chunk = *Memory::Get<Chunk>(m_State.memory_arena, chunk_ptr);
 		const glm::vec2& chunk_pos = chunk.ChunkOrigin2D();
 
 		if (!IsChunk(chunk, ChunkLocation::PlusX).has_value())
@@ -80,11 +80,11 @@ World::World()
 World::~World()
 {
 	//Free indipendent memory patches
-	mem::Free(m_State.memory_arena, m_RemovableChunkBuffer);
-	mem::Free(m_State.memory_arena, m_CollisionChunkBuffer);
+	Memory::Free(m_State.memory_arena, m_RemovableChunkBuffer);
+	Memory::Free(m_State.memory_arena, m_CollisionChunkBuffer);
 
 	for (auto chunk_addr : m_Chunks)
-		mem::Delete<Chunk>(m_State.memory_arena, chunk_addr);
+		Memory::Delete<Chunk>(m_State.memory_arena, chunk_addr);
 }
 
 void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
@@ -118,7 +118,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 		{
 			//Interrupt for a moment if m_Chunks is being resized by the logic thread
-			Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+			Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 			//Chunk has probably been serialized (should mostly never happen)
 			if (!chunk)
 				break;
@@ -153,7 +153,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
 		//Wait if the vector is being modified
-		Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+		Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 		if (!chunk)
 			break;
 
@@ -204,10 +204,10 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
 				//Generate new chunk
-				VAddr chunk_addr = mem::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
+				VAddr chunk_addr = Memory::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
 				m_Chunks.push_back(chunk_addr);
-				//mem::LockRegion(chunk_addr);
-				Chunk* this_chunk = mem::Get<Chunk>(m_State.memory_arena, chunk_addr);
+				//Memory::LockRegion(chunk_addr);
+				Chunk* this_chunk = Memory::Get<Chunk>(m_State.memory_arena, chunk_addr);
 				HandleSectionData();
 
 				this_chunk->InitGlobalNorms();
@@ -260,7 +260,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 					m_SortingTimer.StartTimer();
 				}
 
-				//mem::UnlockRegion(chunk_addr);
+				//Memory::UnlockRegion(chunk_addr);
 				break;
 			}
 		}
@@ -273,7 +273,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 	//normal updating & player collision
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
-		Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+		Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 		if (!chunk)
 			break;
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
@@ -287,8 +287,6 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 		if (GlCore::g_SerializationRunning)
 			return;
 
-	static int sercount = 0;
-
 	//Serialization (Working but still causing random crashes sometimes)
 	for (Defs::SectionData& data : m_SectionsData)
 	{
@@ -301,7 +299,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			{
 				auto parallel_serialization = [&]()
 					{
-						std::cout << sercount++ << "\nSerializing:" << m_Chunks.size() << std::endl;
+						std::cout << "\nSerializing:" << m_Chunks.size() << std::endl;
 						SerializeSector(data.index);
 						std::cout << "Serialized:" << m_Chunks.size() << std::endl;
 						GlCore::g_SerializationRunning = false;
@@ -328,7 +326,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			{
 				auto parallel_serialization = [&]()
 				{
-					std::cout << sercount++ << "\nDeserializing:" << m_Chunks.size() << std::endl;
+					std::cout << "\nDeserializing:" << m_Chunks.size() << std::endl;
 					DeserializeSector(data.index);
 					std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
 					GlCore::g_SerializationRunning = false;
@@ -361,7 +359,7 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 
 	for (u32 i = 0; i < m_Chunks.size(); i++)
 	{
-		Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+		Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 		if (!chunk)
 			break;
 		if (!chunk->IsChunkRenderable(camera_position) || !chunk->IsChunkVisible(camera_position, camera_direction))
@@ -380,7 +378,7 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 	Defs::g_SelectedChunk = involved_chunk;
 	if (involved_chunk != static_cast<u32>(-1))
 	{
-		Chunk* local_chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[involved_chunk]);
+		Chunk* local_chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[involved_chunk]);
 		Defs::g_SelectedBlock = local_chunk->LastSelectedBlock();
 		if (Defs::g_ViewMode != Defs::ViewMode::Inventory && (left_click || right_click)) 
 		{
@@ -501,10 +499,10 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 void World::CheckPlayerCollision(const glm::vec3& position)
 {
 	u16 count = 0;
-	Chunk** chunk_buffer = mem::Get<Chunk*>(m_State.memory_arena, m_CollisionChunkBuffer);
+	Chunk** chunk_buffer = Memory::Get<Chunk*>(m_State.memory_arena, m_CollisionChunkBuffer);
 
 	for (u32 i = 0; i < m_Chunks.size(); i++) {
-		Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+		Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 		if (!chunk)
 			break;
 		if (glm::length(glm::vec2(position.x, position.z) - glm::vec2(chunk->ChunkCenter().x, chunk->ChunkCenter().z)) < 12.0f)
@@ -540,7 +538,7 @@ std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation&
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 		{
-			Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
+			Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, m_Chunks[i]);
 			if (!chunk)
 				break;
 			if (chunk->ChunkOrigin2D() == pos)
@@ -568,11 +566,11 @@ std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation&
 Chunk& World::GetChunk(u32 index)
 {
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
-		[this, index](VAddr addr) {return mem::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
+		[this, index](VAddr addr) {return Memory::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
 
 	MC_ASSERT(iter != m_Chunks.end(), "the provided variable index should be valid");
 
-	return *mem::Get<Chunk>(m_State.memory_arena, *iter);
+	return *Memory::Get<Chunk>(m_State.memory_arena, *iter);
 }
 
 Defs::WorldSeed& World::Seed()
@@ -594,15 +592,15 @@ void World::SerializeSector(u32 index)
 	//(When multithreading) Advertise the render thread m_Chunks 
 	//is undergoing some heavy changes
 	u16 count = 0;
-	VAddr* removable_chunks = mem::Get<VAddr>(m_State.memory_arena, m_RemovableChunkBuffer);
+	VAddr* removable_chunks = Memory::Get<VAddr>(m_State.memory_arena, m_RemovableChunkBuffer);
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
-			mem::LockRegion(m_State.memory_arena, m_Chunks[i]);
+			Memory::LockRegion(m_State.memory_arena, m_Chunks[i]);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
 		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [this, index](VAddr addr) 
 			{
-				Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, addr);
+				Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, addr);
 				return chunk->SectorIndex() != index; 
 			});
 		//Determine safe iteration range for the renderer thread
@@ -612,7 +610,7 @@ void World::SerializeSector(u32 index)
 		
 		m_Chunks.erase(iter, m_Chunks.end());
 		for (u32 i = 0; i < m_Chunks.size(); i++)
-			mem::UnlockRegion(m_State.memory_arena, m_Chunks[i]);
+			Memory::UnlockRegion(m_State.memory_arena, m_Chunks[i]);
 	}
 
 	//Nothing to serialize
@@ -623,10 +621,10 @@ void World::SerializeSector(u32 index)
 	sz.Serialize<u32>(0);
 	for(u16 i = 0; i < count; i++)
 	{
-		Chunk* chunk = mem::Get<Chunk>(m_State.memory_arena, removable_chunks[i]);
+		Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, removable_chunks[i]);
 		chunk->Serialize(sz);
-		mem::UnlockRegion(m_State.memory_arena, removable_chunks[i]);
-		mem::Delete<Chunk>(m_State.memory_arena, removable_chunks[i]);
+		Memory::UnlockRegion(m_State.memory_arena, removable_chunks[i]);
+		Memory::Delete<Chunk>(m_State.memory_arena, removable_chunks[i]);
 		serialized_chunks++;
 	}
 
@@ -643,12 +641,12 @@ void World::DeserializeSector(u32 index)
 	if constexpr (GlCore::g_MultithreadedRendering)
 	{
 		for (u32 i = 0; i < m_Chunks.size(); i++)
-			mem::LockRegion(m_State.memory_arena, m_Chunks[i]);
+			Memory::LockRegion(m_State.memory_arena, m_Chunks[i]);
 		u32 deser_size = 0;
 		sz% deser_size;
 		m_Chunks.reserve(m_Chunks.size() + deser_size);
 		for (u32 i = 0; i < m_Chunks.size(); i++)
-			mem::UnlockRegion(m_State.memory_arena, m_Chunks[i]);
+			Memory::UnlockRegion(m_State.memory_arena, m_Chunks[i]);
 	}
 	else
 	{
@@ -658,7 +656,7 @@ void World::DeserializeSector(u32 index)
 	}
 
 	while (!sz.Eof())	
-		m_Chunks.emplace_back(mem::New<Chunk>(m_State.memory_arena, *this, sz, index));
+		m_Chunks.emplace_back(Memory::New<Chunk>(m_State.memory_arena, *this, sz, index));
 }
 
 bool World::IsPushable(const Chunk& chunk, const Defs::ChunkLocation& cl, const glm::vec3& vec)

@@ -1,5 +1,4 @@
 #pragma once
-#include <memory>
 #include <list>
 #include <thread>
 #include <mutex>
@@ -52,14 +51,14 @@ namespace GlCore
 		static void Init();
 		static Renderer& GetInstance();
 		//Single instance rendering(used for cubemap and crossaim)
-		static void Render(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model);
+		static void Render(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model);
 		//Chunk optimized rendering
 		static void RenderInstanced(u32 count);
 		static void WaitForAsyncGpu(const std::vector<GLsync>& fences);
 	private:
 		Renderer();
 		~Renderer();
-		void IRender(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model);
+		void IRender(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model);
 		void IRenderInstanced(u32 count);
 		void IWaitForAsyncGpu(const std::vector<GLsync>& fences);
 	};

@@ -2,9 +2,10 @@
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <map>
 #include "utils/types.h"
 
-//Used to refer to the virtual space address created by the memory arena
+//Used to refer to the virtual space address created by the memory mapped_space
 //no direct access to the physycal memory space is granted because of 
 //memory locking
 typedef u64 VAddr;
@@ -14,58 +15,57 @@ typedef u64 VAddr;
 	if(!(x)){*(int*)0 = 0;}
 #define MC_LOG(msg, ...) std::printf(msg, __VA_ARGS__);
 
-namespace mem 
+//TODO fix shadows and add crafting table with some very basic crafting patterns, then release
+
+namespace Memory 
 {
-
-
-	//Each region is composed by a signature u32, an u32 which tells if the memory is locked, and then the actual payload
-	struct Region
-	{
-		VAddr begin;
-		VAddr end;
-	};
-
-	struct Arena
+	struct MappedSpace
 	{
 		void* memory = nullptr;
 		u64 memory_size = 0;
 		u64 memory_used = 0;
-		std::vector<Region> mapped_regions;
+		//Describes all the mapped regions, the first u64 indicates the region begin and the second one the region end
+		std::map<u64, u64> mapped_regions;
 	};
 
+	//Each (non unchecked) region is composed by a signature u32, an u32 which tells if the memory is locked, and then the actual payload
 	//Random signature to ensure validity, translate to ascii "regb" -> Region Begin
 	static constexpr u32 signature = 0x62676572;
 	static constexpr u32 padding = 2 * sizeof(u32);
-	//Variable which tracks how much allocated memory won't be explicitly freed by
-	//destructors or some other equivalent methods. This is used to track small buffers
-	//of data that is trivially copiable, meaning that no explicit destructor must be called
-	//in order to free the memory we are concerned about.
-	//E.G this may track numbers, arrays of numbers, arrays of vectors and other stuff that
-	//can be deleted just with the arena destruction without ever having the posibility to
-	//produce any leak. Also objects with empty distructors or with distructors that free
-	//memory which is mapped in the arena are allowed to be referred here
-	//(In this current app implementation this is going to be used only for the first case)
 
-	struct MemoryArena {
-		Arena arena;
+
+	struct Arena {
+		MappedSpace mapped_space;
 		bool initialized;
 		std::mutex arena_mutex;
 		std::condition_variable arena_condition_variable;
+
+		//Variable which tracks how much allocated memory won't be explicitly freed by
+		//destructors or some other equivalent methods. This is used to track small buffers
+		//of data that is trivially copiable, meaning that no explicit destructor must be called
+		//in order to free the memory we are concerned about.
+		//E.G this may track numbers, arrays of numbers, arrays of vectors and other stuff that
+		//can be deleted just with the mapped_space destruction without ever having the posibility to
+		//produce any leak. Also objects with empty distructors or with distructors that free
+		//memory which is mapped in the mapped_space are allowed to be referred here
+		//(In this current app implementation this is going to be used only for the first case)
 		u32 unfreed_mem = 0;
 	};
 
-	MemoryArena* InitializeArena(u64 size);
-	void DestroyArena(MemoryArena* ma);
-	VAddr Allocate(MemoryArena* ma, u64 size);
-	void Free(MemoryArena* ma, VAddr ptr);
-	void Free(MemoryArena* ma, void* ptr);
-	void* Get(MemoryArena* ma, VAddr addr);
+	Arena* InitializeArena(u64 bytes);
+	void DestroyArena(Arena* arena);
+
+	VAddr Allocate(Arena* arena, u64 size);
+	void Free(Arena* arena, VAddr ptr);
+	void* AllocateUnchecked(Arena* arena, u64 size);
+	void FreeUnchecked(Arena* arena, void* ptr);
+	void* Get(Arena* arena, VAddr addr);
 
 	template<class T>
-	inline T* Get(MemoryArena* ma, VAddr addr) { return static_cast<T*>(Get(ma, addr)); }
+	inline T* Get(Arena* arena, VAddr addr) { return static_cast<T*>(Get(arena, addr)); }
 
-	void LockRegion(MemoryArena* ma, VAddr addr);
-	void UnlockRegion(MemoryArena* ma, VAddr addr);
+	void LockRegion(Arena* arena, VAddr addr);
+	void UnlockRegion(Arena* arena, VAddr addr);
 
 	template <class T>
 	struct RemoveArray {
@@ -79,10 +79,10 @@ namespace mem
 
 	//Uses c++20 features
 	template <class T, class... Args>
-	VAddr New(MemoryArena* ma, Args&&... arguments) requires (!std::is_array_v<T>)
+	VAddr New(Arena* arena, Args&&... arguments) requires (!std::is_array_v<T>)
 	{
-		VAddr addr = Allocate(ma, sizeof(T));
-		void* paddr = static_cast<u8*>(ma->arena.memory) + addr + padding;
+		VAddr addr = Allocate(arena, sizeof(T));
+		void* paddr = static_cast<u8*>(arena->mapped_space.memory) + addr + padding;
 		//Placement new, to construct an object in a pre-allocated region of memory
 		new (paddr) T{ std::forward<Args>(arguments)... };
 		return addr;
@@ -90,30 +90,44 @@ namespace mem
 
 	//Support also integral arrays
 	template <class T, class Underlying = typename RemoveArray<T>::type>
-	VAddr New(MemoryArena* ma, u64 count) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
+	VAddr New(Arena* arena, u64 count) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
 	{
 		VAddr addr = Allocate(sizeof(Underlying) * count);
 		return addr;
 	}
 
-	template<class T>
-	void Delete(MemoryArena* ma, VAddr addr) requires (!std::is_array_v<T>)
+	template <class T, class... Args>
+	T* NewUnchecked(Arena* arena, Args&&... arguments) requires (!std::is_array_v<T>)
 	{
-		u8* paddr = static_cast<u8*>(ma->arena.memory) + addr;
+		void* addr = AllocateUnchecked(arena, sizeof(T));
+		//Placement new, to construct an object in a pre-allocated region of memory
+		new (addr) T{ std::forward<Args>(arguments)... };
+		return static_cast<T*>(addr);
+	}
+
+	template<class T>
+	void Delete(Arena* arena, VAddr addr) requires (!std::is_array_v<T>)
+	{
+		u8* paddr = static_cast<u8*>(arena->mapped_space.memory) + addr;
 		u32* owner = std::bit_cast<u32*>(paddr) + 1;
       	MC_ASSERT(*owner == 0, "You cant free a locked region");
 
 		//Retrieve the actual object offset and calling the distructor
 		std::bit_cast<T*>(paddr + padding)->~T();
-		Free(ma, addr);
+		Free(arena, addr);
 	}
 
 	template<class T, class Underlying = typename RemoveArray<T>::type>
-	void Delete(MemoryArena* ma, VAddr addr) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
+	void Delete(Arena* arena, VAddr addr) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
 	{
 		//Destructor not needed in this case
-		Free(ma, addr);
+		Free(arena, addr);
 	}
 
-
+	template<class T>
+	void DeleteUnchecked(Arena* arena, T* addr) requires (!std::is_array_v<T>)
+	{
+		addr->~T();
+		FreeUnchecked(arena, addr);
+	}
 }

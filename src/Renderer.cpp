@@ -36,7 +36,7 @@ namespace GlCore
 		return instance;
 	}
 
-	void Renderer::Render(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model)
+	void Renderer::Render(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model)
 	{
 		GetInstance().IRender(shd, vm, cubemap, model);
 	}
@@ -51,7 +51,7 @@ namespace GlCore
 		GetInstance().IWaitForAsyncGpu(fences);
 	}
 
-	void Renderer::IRender(std::shared_ptr<Shader> shd, const VertexManager& vm, std::shared_ptr<CubeMap> cubemap, const glm::mat4& model)
+	void Renderer::IRender(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model)
 	{
 		shd->Use();
 		vm.BindVertexArray();

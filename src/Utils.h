@@ -17,7 +17,7 @@
 //Utilities
 namespace Utils
 {
-	//Custom allocator for dynamic arrays such as vectors so that they can use the memory arena
+	//Custom allocator for dynamic arrays such as vectors so that they can use the memory mapped_space
 	template <typename T>
 	class ArenaAllocator {
 	public:
@@ -30,19 +30,19 @@ namespace Utils
 
 		//Allow more ownership to some vectors
 		T* allocate(std::size_t n) {
-			mem::MemoryArena* inst = GlCore::pstate->memory_arena;
-			return Get<T>(inst, Allocate(inst, n * sizeof(T)));
+			Memory::Arena* inst = GlCore::pstate->memory_arena;
+			return static_cast<T*>(Memory::AllocateUnchecked(inst, n * sizeof(T)));
 		}
 		void deallocate(T* p, std::size_t n) {
-			mem::MemoryArena* inst = GlCore::pstate->memory_arena;
-			return Free(inst, p);
+			Memory::Arena* inst = GlCore::pstate->memory_arena;
+			return Memory::FreeUnchecked(inst, p);
 		}
 		std::size_t max_size() const {
 			return static_cast<std::size_t>(-1) / sizeof(T);
 		}
 	};
 
-	//Arena vector
+	//MappedSpace vector
 	template<class T>
 	using AVector = std::vector<T, ArenaAllocator<T>>;
 

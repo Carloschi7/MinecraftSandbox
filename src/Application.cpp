@@ -48,9 +48,9 @@ void Application::OnUserCreate()
 
 void Application::OnUserRun()
 {
-    //Init memory arena
-    //We will use 1Gib of ram for this program
-    mem::MemoryArena* mem_arena = mem::InitializeArena(1024 * 1024 * 1024);
+    //Init memory mapped_space
+    //We will use 800mb of ram for this program
+    Memory::Arena* mem_arena = Memory::InitializeArena(800 * 1024 * 1024);
 
     {
         //Init global vars
@@ -184,7 +184,7 @@ void Application::OnUserRun()
             }
             info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", { 0, 0 });
             info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0, 40 });
-            info_text_renderer.DrawString("mem:" + std::to_string(static_cast<f32>(mem_arena->arena.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
+            info_text_renderer.DrawString("mem:" + std::to_string(static_cast<f32>(mem_arena->mapped_space.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
             m_Window.Update();
         }
 
@@ -205,13 +205,13 @@ void Application::OnUserRun()
         path p{ "runtime_files" };
         remove_all(p); 
     }
-    //Just to be safe
+    //Be sure no one will use this anymore, shutdown phase
     GlCore::pstate = nullptr;
 
     //Check for memory leaks (done only in debug mode, just to check if there are leaks during application runtime that need to be fixed)
 #ifdef _DEBUG
-    MC_ASSERT(mem_arena->arena.memory_used == mem_arena->unfreed_mem,
+    MC_ASSERT(mem_arena->mapped_space.memory_used == mem_arena->unfreed_mem,
         "There are some memory leaks during application shutdown, please fix them, as they may leak some data outside the arena");
 #endif
-    mem::DestroyArena(mem_arena);
+    Memory::DestroyArena(mem_arena);
 }

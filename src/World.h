@@ -46,7 +46,7 @@ private:
     //Global OpenGL environment state
     GlCore::State& m_State;
     //The AVector is a vector type that uses our allocated memory
-    //arena, in this case we do not directly allocate a heap section
+    //mapped_space, in this case we do not directly allocate a heap section
     //of contiguous chunks like in AVector<Chunk> because we want to be
     //able to be flexible in multithreading. We just store a vistual address
     //in our virtual memory space
