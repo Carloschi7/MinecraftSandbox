@@ -15,5 +15,7 @@ namespace GlCore
 	State::~State()
 	{
 	}
+
+	State* pstate = nullptr;
 }
 

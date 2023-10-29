@@ -7,7 +7,7 @@ namespace GlCore
     //World definitions(load all the global opengl-related data)
     void LoadResources()
     {
-        State& state = State::GlobalInstance();
+        State& state = *pstate;
         Window& wnd = *state.game_window;
         Camera& cam = *state.camera;
 
@@ -113,29 +113,25 @@ namespace GlCore
 
     void UpdateCamera()
     {
-        State& state = State::GlobalInstance();
-        state.camera->ProcessInput(*state.game_window, 1.0f);
+        pstate->camera->ProcessInput(*pstate->game_window, 1.0f);
     }
 
     void RenderSkybox()
     {
-        State& state = State::GlobalInstance();
         //SetViewMatrix with no translation
-        glm::mat4 view = glm::mat4(glm::mat3(state.camera->GetViewMatrix()));
-        Renderer::Render(state.cubemap_shader, state.cubemap->GetVertexManager(), state.cubemap, view);
+        glm::mat4 view = glm::mat4(glm::mat3(pstate->camera->GetViewMatrix()));
+        Renderer::Render(pstate->cubemap_shader, pstate->cubemap->GetVertexManager(), pstate->cubemap, view);
     
     }
 
     void RenderCrossaim()
     {
-        State& state = State::GlobalInstance();
-        Renderer::Render(state.crossaim_shader, *state.crossaim_vm, nullptr, {});
+        Renderer::Render(pstate->crossaim_shader, *pstate->crossaim_vm, nullptr, {});
     }
 
     void UpdateShadowFramebuffer()
     {
-        State& state = State::GlobalInstance();
-        auto& pos = state.camera->GetPosition();
+        auto& pos = pstate->camera->GetPosition();
         f32 x = pos.x - std::fmod(pos.x, 32.0f);
         f32 z = pos.z - std::fmod(pos.z, 32.0f);
         glm::vec3 light_eye = glm::vec3(x, 500.0f, z);
@@ -144,22 +140,20 @@ namespace GlCore
         glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosZ);
         g_DepthSpaceMatrix = proj * view;
 
-        state.depth_shader->UniformMat4f(g_DepthSpaceMatrix, "lightSpace");
+        pstate->depth_shader->UniformMat4f(g_DepthSpaceMatrix, "lightSpace");
     }
 
     void UniformProjMatrix()
     {
-        State& state = State::GlobalInstance();
-        state.block_shader->UniformMat4f(state.camera->GetProjMatrix(), "proj");
-        state.drop_shader->UniformMat4f(state.camera->GetProjMatrix(), "proj");
+        pstate->block_shader->UniformMat4f(pstate->camera->GetProjMatrix(), "proj");
+        pstate->drop_shader->UniformMat4f(pstate->camera->GetProjMatrix(), "proj");
     }
 
     void UniformViewMatrix()
     {
-        State& state = State::GlobalInstance();
-        state.block_shader->UniformMat4f(state.camera->GetViewMatrix(), "view");
-        state.drop_shader->UniformMat4f(state.camera->GetViewMatrix(), "view");
-        state.water_shader->UniformMat4f(state.camera->GetViewMatrix(), "view");
+        pstate->block_shader->UniformMat4f(pstate->camera->GetViewMatrix(), "view");
+        pstate->drop_shader->UniformMat4f(pstate->camera->GetViewMatrix(), "view");
+        pstate->water_shader->UniformMat4f(pstate->camera->GetViewMatrix(), "view");
     }
 
     void InitGameTextures(std::vector<Texture>& textures)

@@ -54,7 +54,9 @@ void Application::OnUserRun()
 
     {
         //Init global vars
-        GlCore::State& state = GlCore::State::GlobalInstance();
+        GlCore::State state;
+        GlCore::pstate = &state;
+
         state.game_window = &m_Window;
         state.camera = &m_Camera;
         state.memory_arena = mem_arena;
@@ -203,6 +205,8 @@ void Application::OnUserRun()
         path p{ "runtime_files" };
         remove_all(p); 
     }
+    //Just to be safe
+    GlCore::pstate = nullptr;
 
     //Check for memory leaks (done only in debug mode, just to check if there are leaks during application runtime that need to be fixed)
 #ifdef _DEBUG

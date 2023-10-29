@@ -212,7 +212,7 @@ namespace Defs
             };
             glm::vec2 compass_direction_data[compass_directions_count] = { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) };
 
-            mem::MemoryArena* ma = GlCore::State::GlobalInstance().memory_arena;
+            mem::MemoryArena* ma = GlCore::pstate->memory_arena;
             directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, directions_count * sizeof(glm::vec2)));
             std::memcpy(directions, directions_data, sizeof(glm::vec2) * directions_count);
             compass_directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, compass_directions_count * sizeof(glm::vec2)));
@@ -484,14 +484,14 @@ namespace Defs
 namespace Physics {
     void HandlePlayerMovement(f32 elapsed_time) 
     {
-        Camera& camera = *GlCore::State::GlobalInstance().camera;
-        Window& window = *GlCore::State::GlobalInstance().game_window;
+        Camera& camera = *GlCore::pstate->camera;
+        Window& window = *GlCore::pstate->game_window;
         camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
     }
     void HandlePlayerGravity(f32 elapsed_time) 
     {
         using Defs::jump_data;
-        Camera& camera = *GlCore::State::GlobalInstance().camera;
+        Camera& camera = *GlCore::pstate->camera;
         //Read the value first, as that may be modified from the upload thread(WARNING, might be better to add a mutex)
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
 

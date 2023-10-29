@@ -30,11 +30,11 @@ namespace Utils
 
 		//Allow more ownership to some vectors
 		T* allocate(std::size_t n) {
-			mem::MemoryArena* inst = GlCore::State::GlobalInstance().memory_arena;
+			mem::MemoryArena* inst = GlCore::pstate->memory_arena;
 			return Get<T>(inst, Allocate(inst, n * sizeof(T)));
 		}
 		void deallocate(T* p, std::size_t n) {
-			mem::MemoryArena* inst = GlCore::State::GlobalInstance().memory_arena;
+			mem::MemoryArena* inst = GlCore::pstate->memory_arena;
 			return Free(inst, p);
 		}
 		std::size_t max_size() const {

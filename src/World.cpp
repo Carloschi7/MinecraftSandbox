@@ -6,7 +6,7 @@
 
 //Initializing a single block for now
 World::World()
-	: m_State(GlCore::State::GlobalInstance()), m_LastPos(0.0f)
+	: m_State(*GlCore::pstate), m_LastPos(0.0f)
 {
 	using namespace Defs;
 

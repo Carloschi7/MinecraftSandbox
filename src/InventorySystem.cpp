@@ -2,7 +2,7 @@
 #include "GlStructure.h"
 
 Inventory::Inventory() :
-    m_State(GlCore::State::GlobalInstance()), m_CursorIndex(0), 
+    m_State(*GlCore::pstate), m_CursorIndex(0), 
     m_TextRenderer({m_State.game_window->Width(), m_State.game_window->Height()},
         static_cast<u32>(Defs::TextureBinding::TextureText))
 {
@@ -52,7 +52,7 @@ void Inventory::AddToNewSlot(Defs::BlockType type)
 
 void Inventory::HandleInventorySelection()
 {
-    Window& wnd = *GlCore::State::GlobalInstance().game_window;
+    Window& wnd = *m_State.game_window;
     double dx, dy;
     wnd.GetCursorCoord(dx, dy);
     bool mouse_left_state = wnd.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
@@ -136,7 +136,7 @@ void Inventory::ScreenSideRender()
     glDisable(GL_DEPTH_TEST);
 
     //Move cursor if necessary
-    Window& wnd = *GlCore::State::GlobalInstance().game_window;
+    Window& wnd = *m_State.game_window;
     if (wnd.IsMouseWheelUp() && m_CursorIndex < Defs::g_InventoryScreenSlotsCount - 1)
         m_CursorIndex = (m_CursorIndex + 1) % 9;
     if (wnd.IsMouseWheelDown() && m_CursorIndex > 0)
@@ -204,7 +204,7 @@ void Inventory::RenderPendingEntry(InventoryEntry entry)
 {
     m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
 
-    Window& wnd = *GlCore::State::GlobalInstance().game_window;
+    Window& wnd = *m_State.game_window;
     double dx, dy;
     wnd.GetCursorCoord(dx, dy);
 

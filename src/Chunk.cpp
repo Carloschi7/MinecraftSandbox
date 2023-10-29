@@ -9,7 +9,7 @@ f32 Chunk::s_DiagonalLenght = 0.0f;
 u32 Chunk::s_InternalSelectedBlock = static_cast<u32>(-1);
 
 Chunk::Chunk(World& father, glm::vec2 origin)
-	:m_RelativeWorld(father), m_State(GlCore::State::GlobalInstance()),
+	:m_RelativeWorld(father), m_State(*GlCore::pstate),
 	m_ChunkOrigin({origin.x, 0.0f, origin.y}), m_SelectedBlock(static_cast<u32>(-1)),
 	m_ChunkCenter(0.0f), m_SectorIndex(0)
 {
@@ -79,7 +79,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 }
 
 Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
-	m_RelativeWorld(father), m_State(GlCore::State::GlobalInstance()),
+	m_RelativeWorld(father), m_State(*GlCore::pstate),
 	m_SectorIndex(index), m_SelectedBlock(static_cast<u32>(-1))
 {
 	//Simply forward everithing to the deserializing operator
@@ -87,7 +87,7 @@ Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
 }
 
 Chunk::Chunk(Chunk&& rhs) noexcept :
-	m_State(GlCore::State::GlobalInstance()), m_RelativeWorld(rhs.m_RelativeWorld)
+	m_State(*GlCore::pstate), m_RelativeWorld(rhs.m_RelativeWorld)
 {
 	*this = std::move(rhs);
 }

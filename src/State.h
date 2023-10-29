@@ -19,13 +19,6 @@ namespace GlCore
 		State();
 		~State();
 
-		//Global game-handled state instance, should call this for global configuration
-		static State& GlobalInstance()
-		{
-			static State state;
-			return state;
-		}
-
 		Window* game_window;
 		Camera* camera;
 		mem::MemoryArena* memory_arena;
@@ -48,4 +41,6 @@ namespace GlCore
 		std::shared_ptr<FrameBuffer> shadow_framebuffer;
 		std::shared_ptr<CubeMap> cubemap;
 	};
+
+	extern State* pstate;
 }

@@ -155,8 +155,8 @@ Drop& Drop::operator=(Drop&& right) noexcept
 
 void Drop::Render()
 {
-    auto drop_shader = GlCore::State::GlobalInstance().drop_shader;
-    auto drop_vm = GlCore::State::GlobalInstance().drop_vm;
+    auto drop_shader = GlCore::pstate->drop_shader;
+    auto drop_vm = GlCore::pstate->drop_vm;
     drop_shader->Use();
     drop_vm->BindVertexArray();
 
