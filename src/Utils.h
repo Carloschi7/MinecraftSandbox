@@ -8,6 +8,7 @@
 #include <utility>
 #include "Macros.h"
 #include "Memory.h"
+#include "State.h"
 
 #ifndef BYTE_INDEX_FOR_BITS
 #define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
@@ -16,9 +17,34 @@
 //Utilities
 namespace Utils
 {
+	//Custom allocator for dynamic arrays such as vectors so that they can use the memory arena
+	template <typename T>
+	class ArenaAllocator {
+	public:
+		using value_type = T;
+
+		ArenaAllocator() = default;
+
+		template <typename U>
+		ArenaAllocator(const ArenaAllocator<U>&) {}
+
+		//Allow more ownership to some vectors
+		T* allocate(std::size_t n) {
+			mem::MemoryArena* inst = GlCore::State::GlobalInstance().memory_arena;
+			return Get<T>(inst, Allocate(inst, n * sizeof(T)));
+		}
+		void deallocate(T* p, std::size_t n) {
+			mem::MemoryArena* inst = GlCore::State::GlobalInstance().memory_arena;
+			return Free(inst, p);
+		}
+		std::size_t max_size() const {
+			return static_cast<std::size_t>(-1) / sizeof(T);
+		}
+	};
+
 	//Arena vector
 	template<class T>
-	using AVector = std::vector<T, mem::ArenaAllocator<T>>;
+	using AVector = std::vector<T, ArenaAllocator<T>>;
 
 	//Thread safe vector
 	//This class is pseudo-safe, locking a mutex each of the many accesses in the TSvector

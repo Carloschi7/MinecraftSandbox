@@ -192,11 +192,7 @@ namespace Defs
 
     f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::AVector<WaterArea>& pushed_areas)
     {
-        //TODO remove in the codebase all of the other internal static stuff which is no longer intended
-        //to remain in that state and substitute other small std::vector with Utils::AVector or directly
-        //with some more arena allocated memory depending on the context, for example starting with 
-        //the vector directions just here below
-        //also, figure out a way to make sure the texture vector is inserted in the unfreed memory section
+
         static f32 watermap_unit = 1.0f / watermap_density;
         
         for (auto& area : pushed_areas)
@@ -216,11 +212,12 @@ namespace Defs
             };
             glm::vec2 compass_direction_data[compass_directions_count] = { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) };
 
-            directions = mem::Get<glm::vec2>(mem::Allocate(directions_count * sizeof(glm::vec2)));
+            mem::MemoryArena* ma = GlCore::State::GlobalInstance().memory_arena;
+            directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, directions_count * sizeof(glm::vec2)));
             std::memcpy(directions, directions_data, sizeof(glm::vec2) * directions_count);
-            compass_directions = mem::Get<glm::vec2>(mem::Allocate(compass_directions_count * sizeof(glm::vec2)));
+            compass_directions = mem::Get<glm::vec2>(ma, mem::Allocate(ma, compass_directions_count * sizeof(glm::vec2)));
             std::memcpy(compass_directions, compass_direction_data, sizeof(glm::vec2) * compass_directions_count);
-            mem::unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + mem::padding * 2;
+            ma->unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + mem::padding * 2;
         }
 
         //check for extra borders(should be rarely called)

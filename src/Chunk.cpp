@@ -23,8 +23,6 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 		s_DiagonalLenght = glm::sqrt(lower_diag_squared + glm::pow(s_ChunkDepth, 2)) * 0.5f;
 	}
 
-	//Init water layer position vector
-	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
 	//Chunk tree leaves if present
 	Utils::AVector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage(
 		m_RelativeWorld.relative_leaves_positions,
@@ -60,7 +58,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 				u32 water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
 
 				if (water_height >= final_height)
-					m_WaterLayerPositions->push_back(glm::vec3(fx, water_height, fy));
+					m_WaterLayerPositions.push_back(glm::vec3(fx, water_height, fy));
 
 				continue;
 			}
@@ -84,9 +82,6 @@ Chunk::Chunk(World& father, const Utils::Serializer& sz, u32 index) :
 	m_RelativeWorld(father), m_State(GlCore::State::GlobalInstance()),
 	m_SectorIndex(index), m_SelectedBlock(static_cast<u32>(-1))
 {
-	//Init water layer position vector
-	m_WaterLayerPositions = std::make_shared<std::vector<glm::vec3>>();
-
 	//Simply forward everithing to the deserializing operator
 	Deserialize(sz);
 }
@@ -639,10 +634,6 @@ void Chunk::ForwardRenderableData(glm::vec3*& position_buf, u32*& texindex_buf, 
 				GlCore::DispatchDepthRendering(position_buf, count);
 		}
 	}
-
-	//Send water layer if present
-	if (!depth_buf_draw && !m_WaterLayerPositions->empty())
-		m_RelativeWorld.PushWaterLayer(m_WaterLayerPositions);
 }
 
 void Chunk::RenderDrops()
@@ -688,6 +679,14 @@ void Chunk::AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_che
 	compute_new_normals(block_pos, GlCore::g_NegZ);
 }
 
+void Chunk::AddWaterLayerIfPresent(glm::vec3* buffer, u32& count)
+{
+	if (!m_WaterLayerPositions.empty()) {
+		std::memcpy(buffer + count, m_WaterLayerPositions.data(), m_WaterLayerPositions.size() * sizeof(glm::vec3));
+		count += m_WaterLayerPositions.size();
+	}
+}
+
 u32 Chunk::LastSelectedBlock() const
 {
 	return m_SelectedBlock;
@@ -713,7 +712,7 @@ const Utils::Serializer& Chunk::Serialize(const Utils::Serializer& sz)
 	//Serializing components
 	//At first we tell how many blocks and water layers the chunk has
 	sz& m_LocalBlocks.size();
-	sz& m_WaterLayerPositions->size();
+	sz& m_WaterLayerPositions.size();
 
 	sz& m_ChunkIndex;
 	//World address does not need to be serialized
@@ -730,7 +729,7 @@ const Utils::Serializer& Chunk::Serialize(const Utils::Serializer& sz)
 	}
 
 	//Serialize water layers
-	for (auto& layer : *m_WaterLayerPositions)
+	for (auto& layer : m_WaterLayerPositions)
 		sz& layer.x& layer.y& layer.z;
 
 	sz& m_ChunkOrigin.x & m_ChunkOrigin.z;
@@ -783,7 +782,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 	{
 		f32 x, y, z;
 		sz% x; sz% y; sz% z;
-		m_WaterLayerPositions->emplace_back(x, y, z);
+		m_WaterLayerPositions.emplace_back(x, y, z);
 	}
 
 	sz% m_ChunkOrigin.x% m_ChunkOrigin.z;

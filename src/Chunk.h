@@ -37,7 +37,7 @@ public:
 	void AddFreshNormals(Block& b);
 	//Add new normals after a block deletion
 	void AddNewExposedNormals(const glm::vec3& block_pos, bool side_chunk_check = false);
-	//Check if the player collides with the scene
+	void AddWaterLayerIfPresent(glm::vec3* buffer, u32& count);
 
 	//Collision functions
 	[[nodiscard]] std::pair<f32, Defs::HitDirection> RayCollisionLogic(const glm::vec3& camera_position, const glm::vec3& camera_direction);
@@ -105,7 +105,7 @@ private:
 	Utils::AVector<Drop> m_LocalDrops;
 
 	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
-	std::shared_ptr<std::vector<glm::vec3>> m_WaterLayerPositions;
+	Utils::AVector<glm::vec3> m_WaterLayerPositions;
 	//front-bottom-left block position
 	glm::vec3 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;

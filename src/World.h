@@ -19,7 +19,6 @@ public:
     void CheckPlayerCollision(const glm::vec3& position);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
-    void PushWaterLayer(std::shared_ptr<std::vector<glm::vec3>> vec);
 
     //Returns the corresponding chunk index if exists
     std::optional<u32> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
@@ -55,8 +54,6 @@ private:
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     Utils::AVector<glm::vec3> m_SpawnableChunks;
-    //Water layers pushed for current iteration
-    std::vector<std::shared_ptr<std::vector<glm::vec3>>> m_DrawableWaterLayers;
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;
     //For terrain generation

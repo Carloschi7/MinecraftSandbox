@@ -16,6 +16,8 @@ typedef u64 VAddr;
 
 namespace mem 
 {
+
+
 	//Each region is composed by a signature u32, an u32 which tells if the memory is locked, and then the actual payload
 	struct Region
 	{
@@ -44,24 +46,26 @@ namespace mem
 	//memory which is mapped in the arena are allowed to be referred here
 	//(In this current app implementation this is going to be used only for the first case)
 
-	extern Arena g_Arena;
-	extern bool g_ArenaInitialized;
-	extern std::mutex g_ArenaMutex;
-	extern std::condition_variable g_ArenaConditionVariable;
-	extern u32 unfreed_mem;
+	struct MemoryArena {
+		Arena arena;
+		bool initialized;
+		std::mutex arena_mutex;
+		std::condition_variable arena_condition_variable;
+		u32 unfreed_mem = 0;
+	};
 
-	void InitializeArena(u64 size);
-	void DestroyArena();
-	VAddr Allocate(u64 size);
-	void Free(VAddr ptr);
-	void Free(void* ptr);
-	void* Get(VAddr addr);
+	MemoryArena* InitializeArena(u64 size);
+	void DestroyArena(MemoryArena* ma);
+	VAddr Allocate(MemoryArena* ma, u64 size);
+	void Free(MemoryArena* ma, VAddr ptr);
+	void Free(MemoryArena* ma, void* ptr);
+	void* Get(MemoryArena* ma, VAddr addr);
 
 	template<class T>
-	inline T* Get(VAddr addr) { return static_cast<T*>(Get(addr)); }
+	inline T* Get(MemoryArena* ma, VAddr addr) { return static_cast<T*>(Get(ma, addr)); }
 
-	void LockRegion(VAddr addr);
-	void UnlockRegion(VAddr addr);
+	void LockRegion(MemoryArena* ma, VAddr addr);
+	void UnlockRegion(MemoryArena* ma, VAddr addr);
 
 	template <class T>
 	struct RemoveArray {
@@ -75,10 +79,10 @@ namespace mem
 
 	//Uses c++20 features
 	template <class T, class... Args>
-	VAddr New(Args&&... arguments) requires (!std::is_array_v<T>)
+	VAddr New(MemoryArena* ma, Args&&... arguments) requires (!std::is_array_v<T>)
 	{
-		VAddr addr = Allocate(sizeof(T));
-		void* paddr = static_cast<u8*>(g_Arena.memory) + addr + padding;
+		VAddr addr = Allocate(ma, sizeof(T));
+		void* paddr = static_cast<u8*>(ma->arena.memory) + addr + padding;
 		//Placement new, to construct an object in a pre-allocated region of memory
 		new (paddr) T{ std::forward<Args>(arguments)... };
 		return addr;
@@ -86,53 +90,30 @@ namespace mem
 
 	//Support also integral arrays
 	template <class T, class Underlying = typename RemoveArray<T>::type>
-	VAddr New(u64 count) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
+	VAddr New(MemoryArena* ma, u64 count) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
 	{
 		VAddr addr = Allocate(sizeof(Underlying) * count);
 		return addr;
 	}
 
 	template<class T>
-	void Delete(VAddr addr) requires (!std::is_array_v<T>)
+	void Delete(MemoryArena* ma, VAddr addr) requires (!std::is_array_v<T>)
 	{
-		u8* paddr = static_cast<u8*>(g_Arena.memory) + addr;
+		u8* paddr = static_cast<u8*>(ma->arena.memory) + addr;
 		u32* owner = std::bit_cast<u32*>(paddr) + 1;
       	MC_ASSERT(*owner == 0, "You cant free a locked region");
 
 		//Retrieve the actual object offset and calling the distructor
 		std::bit_cast<T*>(paddr + padding)->~T();
-		Free(addr);
+		Free(ma, addr);
 	}
 
 	template<class T, class Underlying = typename RemoveArray<T>::type>
-	void Delete(VAddr addr) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
+	void Delete(MemoryArena* ma, VAddr addr) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
 	{
 		//Destructor not needed in this case
-		Free(addr);
+		Free(ma, addr);
 	}
 
-	//Custom allocator for dynamic arrays such as vectors so that they can use the memory arena
-	template <typename T>
-	class ArenaAllocator {
-	public:
-		using value_type = T;
-		
-		ArenaAllocator() = default;
 
-		template <typename U>
-		ArenaAllocator(const ArenaAllocator<U>&) {}
-
-		//Allow more ownership to some vectors
-		T* allocate(std::size_t n) {
-			return mem::Get<T>(mem::Allocate(n * sizeof(T)));
-		}
-
-		void deallocate(T* p, std::size_t n) {
-			return mem::Free(p);
-		}
-
-		std::size_t max_size() const {
-			return static_cast<std::size_t>(-1) / sizeof(T);
-		}
-	};
 }
