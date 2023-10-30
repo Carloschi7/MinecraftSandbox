@@ -3,7 +3,6 @@
 #include "InventorySystem.h"
 #include <atomic>
 
-
 //Initializing a single block for now
 World::World()
 	: m_State(*GlCore::pstate), m_LastPos(0.0f)
@@ -299,9 +298,9 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			{
 				auto parallel_serialization = [&]()
 					{
-						std::cout << "\nSerializing:" << m_Chunks.size() << std::endl;
+						MC_LOG("() => Serializing: {}\n", m_Chunks.size());
 						SerializeSector(data.index);
-						std::cout << "Serialized:" << m_Chunks.size() << std::endl;
+						MC_LOG("Serialized: {}\n", m_Chunks.size());
 						GlCore::g_SerializationRunning = false;
 					};
 
@@ -312,8 +311,9 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			}
 			else
 			{
+				MC_LOG("() => Serializing: {}\n", m_Chunks.size());
 				SerializeSector(data.index);
-				std::cout << "Serialized:" << m_Chunks.size() << std::endl;
+				MC_LOG("Serialized: {}\n", m_Chunks.size());
 			}
 		}
 
@@ -326,9 +326,9 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			{
 				auto parallel_serialization = [&]()
 				{
-					std::cout << "\nDeserializing:" << m_Chunks.size() << std::endl;
+					MC_LOG("() => Deserializing: {}", m_Chunks.size());
 					DeserializeSector(data.index);
-					std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
+					MC_LOG("Deserialized: {}", m_Chunks.size());
 					GlCore::g_SerializationRunning = false;
 				};
 
@@ -338,8 +338,9 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			}
 			else
 			{
+				MC_LOG("() => Deserializing: {}", m_Chunks.size());
 				DeserializeSector(data.index);
-				std::cout << "Deserialized:" << m_Chunks.size() << std::endl;
+				MC_LOG("Deserialized: {}", m_Chunks.size());
 			}
 		}
 	}

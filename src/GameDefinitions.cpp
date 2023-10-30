@@ -202,9 +202,6 @@ namespace Defs
 
         const u32 directions_count = 9, compass_directions_count = 4;
         if (directions == nullptr || compass_directions == nullptr) {
-            //u32* dest;
-            //std::memcpy(dest, &directions_count, 4);
-            //*dest = 2;
             glm::vec2 directions_data[directions_count] =
             {
                 glm::vec2(1.0f, -1.0f),glm::vec2(1.0f, 0.0f),glm::vec2(1.0f, 1.0f),glm::vec2(0.0f, 1.0f),

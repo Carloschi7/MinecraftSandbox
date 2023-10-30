@@ -3,6 +3,7 @@
 #include <mutex>
 #include <vector>
 #include <map>
+#include <format>
 #include "utils/types.h"
 
 //Used to refer to the virtual space address created by the memory mapped_space
@@ -13,7 +14,8 @@ typedef u64 VAddr;
 //msg for now its just a warning displayed in the same line of the assert, no practical usage
 #define MC_ASSERT(x, msg)\
 	if(!(x)){*(int*)0 = 0;}
-#define MC_LOG(msg, ...) std::printf(msg, __VA_ARGS__);
+#define MC_CLOG(msg, ...) std::printf(msg, __VA_ARGS__)
+#define MC_LOG(msg, ...) std::printf(std::format(msg, __VA_ARGS__).c_str());
 
 //TODO fix shadows and add crafting table with some very basic crafting patterns, then release
 
