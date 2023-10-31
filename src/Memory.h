@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <format>
+#include <functional>
 #include "utils/types.h"
 
 //Used to refer to the virtual space address created by the memory mapped_space
@@ -133,3 +134,14 @@ namespace Memory
 		FreeUnchecked(arena, addr);
 	}
 }
+
+
+//Experimental
+#define defer(body) \
+struct DeferImpl##__FUNCTION__##__LINE__ \
+{\
+	DeferImpl##__FUNCTION__##__LINE__(const std::function<void()>& _func) : func(_func) {}\
+	~DeferImpl##__FUNCTION__##__LINE__() { func(); }\
+	std::function<void()> func;\
+}; \
+DeferImpl##__FUNCTION__##__LINE__ defer_impl##__FUNCTION__##__LINE__([&]() body);

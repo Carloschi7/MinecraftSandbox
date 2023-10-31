@@ -98,15 +98,23 @@ vec4 choose_tex(int index)
 
 void main()
 {
-	float diff = max(dot(Norm, vec3(0.0f, 1.0f, 0.0f)), 0.6f);
+	vec3 light_direction = vec3(0.0f, -1.0f, 0.0f);
+
+	float darkness_value = 0.4f;
+	float dot_value = dot(Norm, -light_direction);
+	float diff = max(dot_value, darkness_value);
 	OutColor = choose_tex(int(TexIndex)) * diff;
 	//If the fragment is out of the light space, discard the fragment
 	if (LightSpacePos.x < -1.0f || LightSpacePos.y < -1.0f || LightSpacePos.x > 1.0f || LightSpacePos.y > 1.0f)
 		return;
 
-	//compute the [0.0f, 1.0f] vector equivalent
-	vec3 equiv = (LightSpacePos.xyz + vec3(1.0f)) * 0.5f;
-	float closest_depth = texture(texture_depth, equiv.xy).r;
-	if (equiv.z - closest_depth > 0.002f)
-		OutColor *= 0.6f;
+	//Only apply shadow if the surface is facing the light source to some degree,
+	//otherwise rely only on dot computed diffused lighting
+	if (dot_value > 0.0f) {
+		//compute the [0.0f, 1.0f] vector equivalent
+		vec3 equiv = (LightSpacePos.xyz + vec3(1.0f)) * 0.5f;
+		float closest_depth = texture(texture_depth, equiv.xy).r;
+		if (equiv.z - closest_depth > 0.001f)
+			OutColor *= darkness_value;
+	}
 }

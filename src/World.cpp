@@ -101,7 +101,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	u32 count = 0, water_layer_count = 0;
 
 	//If at least one of this conditions are verified, we need to update the shadow texture
-	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera_position) > 10.0f)
+	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera_position) > 20.0f)
 	{
 		//Reset state
 		Defs::g_EnvironmentChange = false;
@@ -122,7 +122,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 			if (!chunk)
 				break;
 
-			if (chunk->IsChunkRenderable(camera_position) && chunk->IsChunkVisibleByShadow(camera_position, camera_direction))
+			if (chunk->IsChunkRenderable(camera_position))
 				chunk->ForwardRenderableData(depth_positions, block_texindices, count, true);
 		}
 
