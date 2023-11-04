@@ -23,11 +23,13 @@ void main()
 	TexIndex = tex_index;
 	Norm = normalize(norm);
 
+	//A translation matrix without other transformations is just an identity matrix
+	//with the 3D position written in the first 3 slots of the fourth column
 	mat4 model_matrix = mat4(
-		vec4(1.0f, 0.0f, 0.0f, 0.0f),
-		vec4(0.0f, 1.0f, 0.0f, 0.0f),
-		vec4(0.0f, 0.0f, 1.0f, 0.0f),
-		vec4(model_pos, 1.0f));
+		vec4(1.0f, 0.0f, 0.0f, 0.0f), 	//Column 1
+		vec4(0.0f, 1.0f, 0.0f, 0.0f), 	//Column 2 
+		vec4(0.0f, 0.0f, 1.0f, 0.0f), 	//Column 3
+		vec4(model_pos, 1.0f));		//Column 4
 
 	//Scale selection
 	if (int(TexIndex) >= 256)

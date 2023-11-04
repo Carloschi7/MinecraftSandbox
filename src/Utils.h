@@ -11,7 +11,13 @@
 #include "State.h"
 
 #ifndef BYTE_INDEX_FOR_BITS
-#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
+	#define BYTE_INDEX_FOR_BITS(Bits) ((Bits - 1) / 8) + 1
+#endif
+
+#ifdef MC_SOURCE_PATH
+	//Returns absolute path of the repo directory concatenated with the input string, useful for asset loading
+	#define PATH(str) std::string(MC_SOURCE_PATH) + std::string("/") + std::string(str)
+	#define CPATH(str) (PATH(str)).c_str()
 #endif
 
 //Utilities

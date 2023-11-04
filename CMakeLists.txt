@@ -72,8 +72,6 @@ if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
 	file(COPY ${ENGINE_PATH}/Dependencies/ASSIMP/bin/assimp-vc143-mtd.dll DESTINATION ${PROJECT_BINARY_DIR})
 endif()
 
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/assets/shaders)
-file(COPY assets/textures DESTINATION assets)
-file(COPY assets/shaders DESTINATION assets)
+target_compile_definitions(${PROJECT_NAME} PRIVATE MC_SOURCE_PATH="${CMAKE_CURRENT_LIST_DIR}")
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

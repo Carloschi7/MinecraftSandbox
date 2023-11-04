@@ -21,15 +21,15 @@ namespace GlCore
         //Loading cubemap data (needs to be a std::vector)
         std::vector<std::string> skybox_files =
         {
-            "assets/textures/ShadedBackground.png",
-            "assets/textures/ShadedBackground.png",
-            "assets/textures/BotBackground.png",
-            "assets/textures/TopBackground.png",
-            "assets/textures/ShadedBackground.png",
-            "assets/textures/ShadedBackground.png",
+            PATH("assets/textures/ShadedBackground.png"),
+            PATH("assets/textures/ShadedBackground.png"),
+            PATH("assets/textures/BotBackground.png"),
+            PATH("assets/textures/TopBackground.png"),
+            PATH("assets/textures/ShadedBackground.png"),
+            PATH("assets/textures/ShadedBackground.png"),
         };
         state.cubemap = Memory::NewUnchecked<CubeMap>(allocator, skybox_files, Defs::g_RenderDistance / 2.0f);
-        state.cubemap_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/cubemap.shader");
+        state.cubemap_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/cubemap.shader"));
         state.cubemap_shader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         //Loading crossaim data
@@ -37,13 +37,13 @@ namespace GlCore
         //for drawing this
         VertexData rd = CrossAim();
         state.crossaim_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.crossaim_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_overlay.shader");
+        state.crossaim_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_overlay.shader"));
         state.crossaim_shader->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
 
         //Load water stuff
         rd = WaterLayer();
         state.water_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.water_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/water.shader");
+        state.water_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/water.shader"));
         state.water_shader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
         LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
@@ -54,7 +54,7 @@ namespace GlCore
         rd = CubeForDepth();
         state.depth_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         state.shadow_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
-        state.depth_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_shadow.shader");
+        state.depth_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_shadow.shader"));
 
         //Instanced attribute for block positions in the depth shader
         el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
@@ -64,7 +64,7 @@ namespace GlCore
         //Init inventory stuff
         rd = Inventory();
         state.inventory_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
-        state.inventory_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/inventory.shader");
+        state.inventory_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/inventory.shader"));
 
 
         glm::mat4 inventory_proj = glm::ortho(0.0f, (f32)wnd.Width(), (f32)wnd.Height(), 0.0f);
@@ -77,9 +77,9 @@ namespace GlCore
         //Load block and drop resources
         VertexData cd = Cube();
         state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
-        state.block_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_cube.shader");
+        state.block_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/scene.shader"));
         state.drop_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
-        state.drop_shader = Memory::NewUnchecked<Shader>(allocator, "assets/shaders/basic_collectable.shader");
+        state.drop_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_collectable.shader"));
 
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
@@ -160,14 +160,14 @@ namespace GlCore
 
     void InitGameTextures(std::vector<Texture>& textures)
     {
-        textures.emplace_back("assets/textures/dirt.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/grass.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/sand.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/trunk.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/leaves.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/water.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/Inventory.png", false, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/ScreenInventory.png", true, TextureFilter::Nearest);
-        textures.emplace_back("assets/textures/ScreenInventorySelector.png", true, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/dirt.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/grass.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/sand.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/trunk.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/leaves.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/water.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/Inventory.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/ScreenInventory.png"), true, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/ScreenInventorySelector.png"), true, TextureFilter::Nearest);
     }
 }
