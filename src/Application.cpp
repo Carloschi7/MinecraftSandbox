@@ -71,8 +71,10 @@ void Application::OnUserRun()
         {
             if (Defs::g_ViewMode == Defs::ViewMode::WorldInteraction)
                 Defs::g_ViewMode = Defs::ViewMode::Inventory;
-            else
+            else {
+                game_inventory.view_crafting_table = false;
                 Defs::g_ViewMode = Defs::ViewMode::WorldInteraction;
+            }
 
             state_switch = true;
         };
@@ -95,7 +97,12 @@ void Application::OnUserRun()
                 if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                     switch_game_state();
 
-                world_instance.UpdateScene(game_inventory, elapsed_time);
+                WorldEvent world_event = world_instance.UpdateScene(game_inventory, elapsed_time);
+                if (world_event.crafting_table_open_command) {
+                    game_inventory.view_crafting_table = true;
+                    switch_game_state();
+                }
+
                 game_inventory.HandleInventorySelection();
                 state.game_window->UpdateKeys();
                 //Update local elapsed_timer
@@ -156,7 +163,10 @@ void Application::OnUserRun()
                     state_switch = false;
                 }
 
-                game_inventory.InternalSideRender();
+                if (game_inventory.view_crafting_table)
+                    game_inventory.CraftingTableRender();
+                else
+                    game_inventory.InternalSideRender();
             }
             else
             {

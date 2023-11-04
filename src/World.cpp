@@ -182,7 +182,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	GlCore::g_Drawcalls = 0;
 }
 
-void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
+WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 {
 	//Chunk dynamic spawning
 	auto& camera_position = m_State.camera->GetPosition();
@@ -267,7 +267,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 	}
 
 	//Determine selection
-	HandleSelection(inventory, camera_position, camera_direction);
+	WorldEvent world_event = HandleSelection(inventory, camera_position, camera_direction);
 
 	//normal updating & player collision
 	for (u32 i = 0; i < m_Chunks.size(); i++)
@@ -284,7 +284,7 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 
 	if constexpr (GlCore::g_MultithreadedRendering)
 		if (GlCore::g_SerializationRunning)
-			return;
+			return world_event;
 
 	//Serialization (Working but still causing random crashes sometimes)
 	for (Defs::SectionData& data : m_SectionsData)
@@ -344,10 +344,15 @@ void World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			}
 		}
 	}
+
+	return world_event;
 }
 
-void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
+WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
+	WorldEvent world_event = { 0 };
+	world_event.crafting_table_open_command = false;
+
 	f32 nearest_distance = INFINITY;
 	Defs::HitDirection hit = Defs::HitDirection::None;
 	s32 involved_chunk = static_cast<u32>(-1);
@@ -402,14 +407,20 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 			{
 				//if the selected block isn't -1 that means selection is not NONE
 				Defs::BlockType bt = Defs::g_InventorySelectedBlock;
+
+				//If this is a crafting table, then no block is placed and we open the crafting table inventory
 				auto& block = blocks[selected_block];
+				if (block.Type() == Defs::BlockType::CraftingTable) {
+					world_event.crafting_table_open_command = true;
+					return world_event;
+				}
 
 				//Remove one unit from the selection
 				std::optional<InventoryEntry>& entry = inventory.HoveredFromSelector();
 
 				//No block selected, no block inserted
 				if (!entry.has_value())
-					return;
+					return world_event;
 
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
@@ -495,6 +506,8 @@ void World::HandleSelection(Inventory& inventory, const glm::vec3& camera_positi
 			Defs::g_EnvironmentChange = true;
 		}
 	}
+
+	return world_event;
 }
 
 void World::CheckPlayerCollision(const glm::vec3& position)

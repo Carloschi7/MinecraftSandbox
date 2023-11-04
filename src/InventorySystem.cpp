@@ -19,11 +19,13 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     m_IntervalDimension = { 588 - 482, 558 - 470 };
 
     m_InternAbsTransf = scale(translate(mat4(1.0f), vec3(960.0f, 468.0f, 0.0f)), vec3(1049.0f, 800.0f, 0.0f));
+    m_CraftingAbsTransf = scale(translate(mat4(1.0f), vec3(960.0f, 460.0f, 0.0f)), vec3(970.0f, 789.0f, 0.0f));
     m_ScreenAbsTransf = scale(translate(mat4(1.0f), vec3(958.0f, 1030.0f, 0.0f)), vec3(1010.0f, 100.0f, 0.0f));
 
     //Item grids
     m_InternalGrid = Grid(ivec2(530, 510), ivec2(1500, 772), 9, 3);
     m_InternalScreenGrid = Grid(ivec2(530, 790), ivec2(1500, 890), 9, 1);
+    m_CraftingTableInternalScreenGrid = Grid(ivec2(530, 810), ivec2(1510, 898), 9, 1);
     m_ScreenGrid = Grid(ivec2(510, 1030), ivec2(1526, 1070), 9, 1);
 }
 
@@ -111,6 +113,37 @@ void Inventory::InternalSideRender()
     m_State.game_textures[inventory_binding].Bind(inventory_binding);
     m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
+
+    //Draw entries
+    for (u32 i = 0; i < m_Slots.size(); i++) {
+        std::optional<InventoryEntry> entry = m_Slots[i];
+        if (!entry.has_value())
+            continue;
+
+        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
+            continue;
+
+        RenderEntry(entry.value(), i);
+    }
+
+    //Draw selection
+    if (m_PendingEntry.has_value()) {
+        InventoryEntry entry = m_Slots[m_PendingEntry.value()].value();
+        RenderPendingEntry(entry);
+    }
+
+    glEnable(GL_DEPTH_TEST);
+}
+
+void Inventory::CraftingTableRender()
+{
+    glDisable(GL_DEPTH_TEST);
+
+    //Actual inventory rendering
+    u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureCraftingTableInventory);
+    m_State.game_textures[inventory_binding].Bind(inventory_binding);
+    m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_CraftingAbsTransf);
 
     //Draw entries
     for (u32 i = 0; i < m_Slots.size(); i++) {
@@ -261,7 +294,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(u32 slot_index, bool tw
         num_ret = ms.number_position + (ms.number_stride * ivec2(slot_index % 9, slot_index / 9)) - ivec2(two_digit_offset, 0);
     }
     else {
-        GridMeasures& ms = m_InternalScreenGrid.measures;
+        GridMeasures& ms = view_crafting_table ? m_CraftingTableInternalScreenGrid.measures : m_InternalScreenGrid.measures;
         ret = translate(ret, vec3(ms.entry_position, 0.0f) + vec3(ms.entry_stride.x * (slot_index % 9), 0.0f, 0.0f));
         num_ret = ms.number_position + ivec2(ms.number_stride.x * (slot_index % 9) - two_digit_offset, 0);
     }

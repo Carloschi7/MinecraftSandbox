@@ -41,6 +41,7 @@ namespace Defs
 		TextureCraftingTable,
 		TextureWater,
 		TextureInventory,
+		TextureCraftingTableInventory,
 		TextureScreenInventory,
 		TextureScreenInventorySelector,
 		TextureDepth,

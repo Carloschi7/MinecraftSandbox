@@ -23,7 +23,7 @@ struct GridMeasures
 };
 
 struct Grid {
-	Grid() {}
+	Grid() = default;
 	Grid(const Grid&) = default;
 	Grid& operator=(const Grid&) = default;
 	Grid(glm::ivec2 start, glm::ivec2 end, u32 x_slots, u32 y_slots)
@@ -46,6 +46,7 @@ public:
 	void AddToNewSlot(Defs::BlockType block);
 	void HandleInventorySelection();
 	void InternalSideRender();
+	void CraftingTableRender();
 	void ScreenSideRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
 	void ClearUsedSlots();
@@ -55,6 +56,9 @@ private:
 	void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
+public:
+	//Tells if this is a crafting table view or a normal inventory view
+	bool view_crafting_table = false;
 private:
 	GlCore::State& m_State;
 	TextRenderer& m_TextRenderer;
@@ -65,11 +69,10 @@ private:
 	std::optional<u32> m_PendingEntry;
 
 	//This values fit the inventory only for the current image scaling, very important to note
-	glm::vec2 m_InternalStart;
-	glm::vec2 m_ScreenStart;
-	glm::vec2 m_IntervalDimension;
+	glm::vec2 m_InternalStart, m_ScreenStart, m_IntervalDimension;
 
 	glm::mat4 m_InternAbsTransf;
+	glm::mat4 m_CraftingAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
 	s32 m_CursorIndex;
 
@@ -82,5 +85,6 @@ private:
 	//	internal
 	//	internal for screen section
 	//	screen section
-	Grid m_InternalGrid, m_InternalScreenGrid, m_ScreenGrid;
+	//MAIN INVENTORY GRID
+	Grid m_InternalGrid, m_InternalScreenGrid, m_ScreenGrid, m_CraftingTableInternalScreenGrid;
 };
