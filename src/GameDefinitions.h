@@ -23,7 +23,7 @@ namespace Defs
 
 	enum class BlockType : u8
 	{
-		Dirt = 0, Grass, Sand, Wood, Leaves
+		Dirt = 0, Grass, Sand, Wood, Leaves, CraftingTable
 	};
 
 	enum class HitDirection : u8
@@ -38,6 +38,7 @@ namespace Defs
 		TextureSand,
 		TextureWood,
 		TextureLeaves,
+		TextureCraftingTable,
 		TextureWater,
 		TextureInventory,
 		TextureScreenInventory,

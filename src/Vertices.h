@@ -94,12 +94,15 @@ namespace GlCore
     };
 
     static const std::vector<f32> inventory_entry{
-        -0.5f, -0.5f,   0.25f, 2.0f * one_third,
-         0.5f, -0.5f,   0.50f, 2.0f * one_third,
+        // The 0.01f padding adjust the item image perfectly to the center,
+        // that probably does not happen by default because of unfortunate
+        // float rounding
+        -0.5f, -0.5f,   0.25f, 2.0f * one_third - 0.01f, 
+         0.5f, -0.5f,   0.50f, 2.0f * one_third - 0.01f,
          0.5f,  0.5f,   0.50f, one_third,
          0.5f,  0.5f,   0.50f, one_third,
         -0.5f,  0.5f,   0.25f, one_third,
-        -0.5f, -0.5f,   0.25f, 2.0f * one_third,
+        -0.5f, -0.5f,   0.25f, 2.0f * one_third - 0.01f,
     };
 
     inline VertexData Cube()

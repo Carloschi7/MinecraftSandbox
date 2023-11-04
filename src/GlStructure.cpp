@@ -89,17 +89,18 @@ namespace GlCore
             {"texture_grass",    Defs::TextureBinding::TextureGrass},
             {"texture_sand",     Defs::TextureBinding::TextureSand},
             {"texture_trunk",    Defs::TextureBinding::TextureWood},
-            {"texture_leaves",   Defs::TextureBinding::TextureLeaves}
+            {"texture_leaves",   Defs::TextureBinding::TextureLeaves},
+            {"texture_crafting_table", Defs::TextureBinding::TextureCraftingTable}
         };
 
         //The binding matches the vector position
         InitGameTextures(state.game_textures);
-        for (auto& elem : textures)
+        for (auto&[uniform_name, texture_type] : textures)
         {
-            u32 tex_index = static_cast<u32>(elem.second);
+            u32 tex_index = static_cast<u32>(texture_type);
             state.game_textures[tex_index].Bind(tex_index);
-            state.block_shader->Uniform1i(tex_index, elem.first);
-            state.drop_shader->Uniform1i(tex_index, elem.first);
+            state.block_shader->Uniform1i(tex_index, uniform_name);
+            state.drop_shader->Uniform1i(tex_index, uniform_name);
         }
 
         //Create instance buffer for model matrices
@@ -165,6 +166,7 @@ namespace GlCore
         textures.emplace_back(CPATH("assets/textures/sand.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/trunk.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/leaves.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/crafting_table.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/water.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/Inventory.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/ScreenInventory.png"), true, TextureFilter::Nearest);

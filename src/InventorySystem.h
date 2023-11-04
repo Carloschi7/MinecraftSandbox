@@ -42,7 +42,7 @@ struct Grid {
 class Inventory
 {
 public:
-	Inventory();
+	Inventory(TextRenderer& text_renderer);
 	void AddToNewSlot(Defs::BlockType block);
 	void HandleInventorySelection();
 	void InternalSideRender();
@@ -57,7 +57,7 @@ private:
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
 private:
 	GlCore::State& m_State;
-	TextRenderer m_TextRenderer;
+	TextRenderer& m_TextRenderer;
 
 	static constexpr u32 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
 	static constexpr u8 s_MaxItemsPerSlot = 64;

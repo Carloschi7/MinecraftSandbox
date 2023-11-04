@@ -64,8 +64,8 @@ void Application::OnUserRun()
 
         //Game data
         World world_instance;
-        Inventory game_inventory;
         TextRenderer info_text_renderer{ {m_Window.Width(), m_Window.Height() }, static_cast<u32>(Defs::TextureBinding::TextureText) };
+        Inventory game_inventory{ info_text_renderer };
 
         auto switch_game_state = [&]()
         {

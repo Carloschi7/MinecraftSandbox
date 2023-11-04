@@ -1,12 +1,14 @@
 #include "InventorySystem.h"
 #include "GlStructure.h"
 
-Inventory::Inventory() :
+Inventory::Inventory(TextRenderer& text_renderer) :
     m_State(*GlCore::pstate), m_CursorIndex(0), 
-    m_TextRenderer({m_State.game_window->Width(), m_State.game_window->Height()},
-        static_cast<u32>(Defs::TextureBinding::TextureText))
+    m_TextRenderer{ text_renderer }
 {
-    for (u32 i = 0; i < 5; i++)
+    //TextureWater at the moment is the first non-block texture in the game assets
+    //so use this as a limit so that each block type occupies a slot in the 
+    //inventory
+    for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
         m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
     
     //Avoid writing glm a thousand times in some of these functions
