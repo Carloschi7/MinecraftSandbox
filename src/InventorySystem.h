@@ -18,6 +18,12 @@ struct PendingEntry
 	bool from_crafting_grid;
 };
 
+enum class GridType : u8
+{
+	Grid2x2 = 0,
+	Grid3x3
+};
+
 struct GridMeasures
 {
 	glm::ivec2 entry_position;
@@ -60,11 +66,11 @@ public:
 private:
 	void RenderEntry(InventoryEntry entry, u32 binding_index);
 	void RenderScreenEntry(InventoryEntry entry, u32 binding_index);
-	void RenderCraftingEntry(InventoryEntry entry, u32 binding_index);
+	void RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index);
 	void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
-	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(u32 slot_index, bool two_digit_number);
+	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(GridType grid_type, u32 slot_index, bool two_digit_number);
 public:
 	//Tells if this is a crafting table view or a normal inventory view
 	bool view_crafting_table = false;
