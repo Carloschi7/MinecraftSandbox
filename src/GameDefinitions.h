@@ -122,8 +122,9 @@ namespace Defs
 	extern std::atomic<u32> g_SelectedChunk;
 	extern bool g_EnvironmentChange;
 	//Inventory
-	static constexpr u32 g_InventoryInternalSlotsCount = 27;
-	static constexpr u32 g_InventoryScreenSlotsCount = 9;
+	static constexpr u8 g_InventoryInternalSlotsCount = 27;
+	static constexpr u8 g_InventoryScreenSlotsCount = 9;
+	static constexpr u8 g_CraftingSlotsMaxCount = 9;
 	extern Defs::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<u32> g_PushedSections;

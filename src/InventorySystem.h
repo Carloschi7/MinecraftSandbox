@@ -12,6 +12,12 @@ struct InventoryEntry
 	u8 block_count; //Max 64 like in the original, so small type used
 };
 
+struct PendingEntry
+{
+	u32 index;
+	bool from_crafting_grid;
+};
+
 struct GridMeasures
 {
 	glm::ivec2 entry_position;
@@ -53,10 +59,12 @@ public:
 	inline void UnsetPendingEntry() { m_PendingEntry = std::nullopt; }
 private:
 	void RenderEntry(InventoryEntry entry, u32 binding_index);
-	void RenderScreenEntry(InventoryEntry binding, u32 binding_index);
+	void RenderScreenEntry(InventoryEntry entry, u32 binding_index);
+	void RenderCraftingEntry(InventoryEntry entry, u32 binding_index);
 	void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
+	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(u32 slot_index, bool two_digit_number);
 public:
 	//Tells if this is a crafting table view or a normal inventory view
 	bool view_crafting_table = false;
@@ -66,8 +74,10 @@ private:
 
 	static constexpr u32 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
 	static constexpr u8 s_MaxItemsPerSlot = 64;
+	static constexpr u8 s_CraftingMaxSize = Defs::g_CraftingSlotsMaxCount;
 	std::array<std::optional<InventoryEntry>, s_InventorySize> m_Slots;
-	std::optional<u32> m_PendingEntry;
+	std::array<std::optional<InventoryEntry>, s_CraftingMaxSize> m_CraftingSlots;
+	std::optional<PendingEntry> m_PendingEntry;
 
 	glm::mat4 m_InternAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
@@ -84,4 +94,5 @@ private:
 	//	screen section
 	//MAIN INVENTORY GRID
 	Grid m_InternalGrid, m_ScreenGrid, m_InternalScreenGrid;
+	Grid crafting_2x2, crafting_3x3;
 };

@@ -21,6 +21,8 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     m_InternalGrid = Grid(ivec2(530, 510), ivec2(1502, 772), 9, 3);
     m_InternalScreenGrid = Grid(ivec2(530, 810), ivec2(1502, 898), 9, 1);
     m_ScreenGrid = Grid(ivec2(510, 1030), ivec2(1526, 1070), 9, 1);
+
+    crafting_2x2 = Grid(ivec2(912, 214), ivec2(912 + 106 * 2, 214 + 88 * 2), 2, 2);
 }
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
@@ -63,9 +65,6 @@ void Inventory::HandleInventorySelection()
             for (u32 j = 0; j < 9; j++)
             {
                 u32 x_start, y_start, x_size, y_size;
-                //TODO fix this also for the crafting table, create new Grids and enable them for bound-checking and
-                //rendering if the view_crafting_table flag is on
-
                 if (i != 3) {
                     x_start = (m_InternalGrid.measures.entry_position.x - 48.0f) + m_InternalGrid.measures.entry_stride.x * j;
                     y_start = (m_InternalGrid.measures.entry_position.y - 40.0f) + m_InternalGrid.measures.entry_stride.y * i;
@@ -84,20 +83,60 @@ void Inventory::HandleInventorySelection()
                     u32 index = i * 9 + j;
                     if (m_PendingEntry.has_value()) {
                         if (!m_Slots[index].has_value()) {
-                            m_Slots[index] = m_Slots[m_PendingEntry.value()];
-                            m_Slots[m_PendingEntry.value()] = std::nullopt;
+                            auto& opt = m_PendingEntry->from_crafting_grid ? m_CraftingSlots[m_PendingEntry->index] : m_Slots[m_PendingEntry->index];
+                            m_Slots[index] = opt;
+                            opt = std::nullopt;
                             m_PendingEntry = std::nullopt;
                             return;
                         }
 
-                        if (index == m_PendingEntry.value())
+                        if (!m_PendingEntry->from_crafting_grid && index == m_PendingEntry->index)
                             m_PendingEntry = std::nullopt;
                     } else {
                         if (m_Slots[index].has_value()) {
-                            m_PendingEntry = index;
+                            m_PendingEntry = { index, false };
                             return;
                         }
                     }
+                }
+            }
+        }
+
+        //Crafting section
+        if (view_crafting_table) {
+            //TODO
+        } else {
+            GridMeasures& measures = crafting_2x2.measures;
+            for (u32 i = 0; i < 2; i++) {
+                for (u32 j = 0; j < 2; j++) {
+                    u32 x_start = (measures.entry_position.x - 48.0f) + measures.entry_stride.x * j;
+                    u32 y_start = (measures.entry_position.y - 40.0f) + measures.entry_stride.y * i;
+                    u32 x_size = measures.entry_stride.x;
+                    u32 y_size = measures.entry_stride.y;
+
+                    if (dx >= x_start && dy >= y_start && dx < x_start + x_size && dy < y_start + y_size)
+                    {
+                        u32 index = i * 3 + j;
+                        if (m_PendingEntry.has_value()) {
+                            if (!m_CraftingSlots[index].has_value()) {
+                                auto& opt = m_PendingEntry->from_crafting_grid ? m_CraftingSlots[m_PendingEntry->index] : m_Slots[m_PendingEntry->index];
+                                m_CraftingSlots[index] = opt;
+                                opt = std::nullopt;
+                                m_PendingEntry = std::nullopt;
+                                return;
+                            }
+
+                            if (m_PendingEntry->from_crafting_grid && index == m_PendingEntry->index)
+                                m_PendingEntry = std::nullopt;
+                        }
+                        else {
+                            if (m_CraftingSlots[index].has_value()) {
+                                m_PendingEntry = { index, true };
+                                return;
+                            }
+                        }
+                    }
+
                 }
             }
         }
@@ -120,16 +159,30 @@ void Inventory::InternalSideRender()
         if (!entry.has_value())
             continue;
 
-        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
+        if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
             continue;
 
         RenderEntry(entry.value(), i);
     }
 
+    //Draw crafting entries if present
+    for (u32 i = 0; i < m_CraftingSlots.size(); i++) {
+        std::optional<InventoryEntry> entry = m_CraftingSlots[i];
+        if (!entry.has_value())
+            continue;
+
+        if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
+            continue;
+
+        RenderCraftingEntry(entry.value(), i);
+    }
+
     //Draw selection
     if (m_PendingEntry.has_value()) {
-        InventoryEntry entry = m_Slots[m_PendingEntry.value()].value();
-        RenderPendingEntry(entry);
+        if (m_PendingEntry->from_crafting_grid)
+            RenderPendingEntry(m_CraftingSlots[m_PendingEntry->index].value());
+        else
+            RenderPendingEntry(m_Slots[m_PendingEntry->index].value());
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -151,16 +204,30 @@ void Inventory::CraftingTableRender()
         if (!entry.has_value())
             continue;
 
-        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
+        if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
             continue;
 
         RenderEntry(entry.value(), i);
     }
 
+    //Draw crafting entries if present
+    for (u32 i = 0; i < 4; i++) {
+        std::optional<InventoryEntry> entry = m_CraftingSlots[i];
+        if (!entry.has_value())
+            continue;
+
+        if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
+            continue;
+
+        RenderCraftingEntry(entry.value(), i);
+    }
+
     //Draw selection
     if (m_PendingEntry.has_value()) {
-        InventoryEntry entry = m_Slots[m_PendingEntry.value()].value();
-        RenderPendingEntry(entry);
+        if (m_PendingEntry->from_crafting_grid)
+            RenderPendingEntry(m_CraftingSlots[m_PendingEntry->index].value());
+        else
+            RenderPendingEntry(m_Slots[m_PendingEntry->index].value());
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -179,7 +246,7 @@ void Inventory::ScreenSideRender()
 
     //Assign the selection to the right variable
     std::optional<InventoryEntry> block_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
-    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type.value().block_type : Defs::BlockType::Dirt;
+    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type->block_type : Defs::BlockType::Dirt;
     
 
     u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
@@ -191,9 +258,6 @@ void Inventory::ScreenSideRender()
     for (u32 i = Defs::g_InventoryInternalSlotsCount; i < m_Slots.size(); i++) {
         std::optional<InventoryEntry> entry = m_Slots[i];
         if (!entry.has_value())
-            continue;
-
-        if (m_PendingEntry.has_value() && i == m_PendingEntry.value())
             continue;
 
         RenderScreenEntry(entry.value(), i);
@@ -235,6 +299,17 @@ void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
     glDisable(GL_BLEND);
 }
 
+void Inventory::RenderCraftingEntry(InventoryEntry entry, u32 binding_index)
+{
+    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+    auto [screen_slot_transform, num_transform] = SlotCraftingTransform(binding_index, entry.block_count >= 10);
+    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
+
+    glEnable(GL_BLEND);
+    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
+    glDisable(GL_BLEND);
+}
+
 void Inventory::RenderPendingEntry(InventoryEntry entry)
 {
     m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
@@ -263,7 +338,7 @@ std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
 void Inventory::ClearUsedSlots()
 {
     for (auto& entry : m_Slots) {
-        if (entry.has_value() && entry.value().block_count == 0)
+        if (entry.has_value() && entry->block_count == 0)
             entry = std::nullopt;
     }
 }
@@ -272,9 +347,8 @@ void Inventory::ClearUsedSlots()
 std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(u32 slot_index, bool two_digit_number)
 {
     using namespace glm;
-
     if (slot_index >= Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount)
-        return std::make_pair(mat4(), vec2());
+        return { mat4{}, vec2{} };
 
     mat4 ret(1.0f);
     vec2 num_ret(1.0f);
@@ -300,23 +374,47 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotTransform(u32 slot_index, bool tw
     }
     
     mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
-    return std::make_pair(icon_transform, num_ret);
+    return { icon_transform, num_ret };
 }
 
 std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(u32 slot_index, bool two_digit_number)
 {
+    using namespace glm;
     if (slot_index >= Defs::g_InventoryScreenSlotsCount)
-        return std::make_pair(glm::mat4(), glm::vec2());
+        return { mat4{}, vec2{} };
 
-    glm::mat4 ret(1.0f);
-    glm::vec2 num_ret(1.0f);
+    mat4 ret(1.0f);
+    vec2 num_ret(1.0f);
     GridMeasures& ms = m_ScreenGrid.measures;
 
     u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
-    ret = glm::translate(ret, glm::vec3(ms.entry_position, 0.0f) + glm::vec3(ms.entry_stride.x * slot_index, 0.0f, 0.0f));
-    num_ret = ms.number_position + glm::ivec2(ms.number_stride.x * slot_index - two_digit_offset, 0.0f);
+    ret = translate(ret, vec3(ms.entry_position, 0.0f) + vec3(ms.entry_stride.x * slot_index, 0.0f, 0.0f));
+    num_ret = ms.number_position + ivec2(ms.number_stride.x * slot_index - two_digit_offset, 0.0f);
 
-    glm::mat4 icon_transform = glm::scale(ret, GridMeasures::tile_transform);
-    return std::make_pair(icon_transform, num_ret);
+    mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
+    return { icon_transform, num_ret };
+}
+
+std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(u32 slot_index, bool two_digit_number)
+{
+    using namespace glm;
+    if (slot_index > Defs::g_CraftingSlotsMaxCount)
+        return { mat4{}, vec2{} };
+
+    mat4 ret(1.0f);
+    vec2 num_ret(1.0f);
+    GridMeasures& ms = crafting_2x2.measures;
+    u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
+
+    vec3 tile_offset = {
+        ms.entry_position + ms.entry_stride * ivec2(slot_index % 3, slot_index / 3),
+        0.0f
+    };
+
+    ret = translate(ret, tile_offset);
+    num_ret = ms.number_position + (ms.number_stride * ivec2(slot_index % 3, slot_index / 3)) - ivec2(two_digit_offset, 0);
+
+    mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
+    return { icon_transform, num_ret };
 }
