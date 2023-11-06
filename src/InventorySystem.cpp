@@ -142,12 +142,13 @@ void Inventory::HandleInventorySelection()
     }
 }
 
-void Inventory::InternalSideRender()
+void Inventory::InternalRender()
 {
     glDisable(GL_DEPTH_TEST);
 
     //Actual inventory rendering
-    u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureInventory);
+    Defs::TextureBinding texture = view_crafting_table ? Defs::TextureBinding::TextureCraftingTableInventory : Defs::TextureBinding::TextureInventory;
+    u32 inventory_binding = static_cast<u32>(texture);
     m_State.game_textures[inventory_binding].Bind(inventory_binding);
     m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
@@ -161,7 +162,7 @@ void Inventory::InternalSideRender()
         if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
             continue;
 
-        RenderEntry(entry.value(), i);
+        RenderEntry(EntryType::Default, entry.value(), i);
     }
 
     //Draw crafting entries if present
@@ -172,8 +173,9 @@ void Inventory::InternalSideRender()
         //TODO this function that can be integrated with the current UnsetPendingEntry, for how that it
         //is called in the main code, can be implemented in the future, for now we leave everithing in the
         //inventory slots without removing them
-        if (i != 0 && i != 1 && i != 3 && i != 4)
-            continue;
+        if(texture == Defs::TextureBinding::TextureInventory)
+            if (i != 0 && i != 1 && i != 3 && i != 4)
+                continue;
 
         std::optional<InventoryEntry> entry = m_CraftingSlots[i];
         if (!entry.has_value())
@@ -182,66 +184,66 @@ void Inventory::InternalSideRender()
         if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
             continue;
 
-        RenderCraftingEntry(entry.value(), GridType::Grid2x2, i);
+        RenderEntry(view_crafting_table ? EntryType::Crafting_3x3 : EntryType::Crafting_2x2, entry.value(), i);
     }
 
     //Draw selection
     if (m_PendingEntry.has_value()) {
         if (m_PendingEntry->from_crafting_grid)
-            RenderPendingEntry(m_CraftingSlots[m_PendingEntry->index].value());
+            RenderEntry(EntryType::Pending, m_CraftingSlots[m_PendingEntry->index].value(), {}); //{} symbolyzed the value is not needed if Pending
         else
-            RenderPendingEntry(m_Slots[m_PendingEntry->index].value());
+            RenderEntry(EntryType::Pending, m_Slots[m_PendingEntry->index].value(), {});
     }
 
     glEnable(GL_DEPTH_TEST);
 }
 
-void Inventory::CraftingTableRender()
-{
-    glDisable(GL_DEPTH_TEST);
+//void Inventory::CraftingTableRender()
+//{
+//    glDisable(GL_DEPTH_TEST);
+//
+//    //Actual inventory rendering
+//    u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureCraftingTableInventory);
+//    m_State.game_textures[inventory_binding].Bind(inventory_binding);
+//    m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
+//    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
+//
+//    //Draw entries
+//    for (u32 i = 0; i < m_Slots.size(); i++) {
+//        std::optional<InventoryEntry> entry = m_Slots[i];
+//        if (!entry.has_value())
+//            continue;
+//
+//        if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
+//            continue;
+//
+//        RenderEntry(entry.value(), i);
+//    }
+//
+//    //Draw crafting entries if present
+//    for (u32 i = 0; i < m_CraftingSlots.size(); i++) {
+//        std::optional<InventoryEntry> entry = m_CraftingSlots[i];
+//        if (!entry.has_value())
+//            continue;
+//
+//        if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
+//            continue;
+//
+//        RenderCraftingEntry(entry.value(), GridType::Grid3x3, i);
+//    }
+//
+//    //Draw selection
+//    if (m_PendingEntry.has_value()) {
+//        if (m_PendingEntry->from_crafting_grid)
+//            RenderPendingEntry(m_CraftingSlots[m_PendingEntry->index].value());
+//        else
+//            RenderPendingEntry(m_Slots[m_PendingEntry->index].value());
+//    }
+//
+//    glEnable(GL_DEPTH_TEST);
+//}
 
-    //Actual inventory rendering
-    u32 inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureCraftingTableInventory);
-    m_State.game_textures[inventory_binding].Bind(inventory_binding);
-    m_State.inventory_shader->Uniform1i(inventory_binding, "texture_inventory");
-    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, m_InternAbsTransf);
-
-    //Draw entries
-    for (u32 i = 0; i < m_Slots.size(); i++) {
-        std::optional<InventoryEntry> entry = m_Slots[i];
-        if (!entry.has_value())
-            continue;
-
-        if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
-            continue;
-
-        RenderEntry(entry.value(), i);
-    }
-
-    //Draw crafting entries if present
-    for (u32 i = 0; i < m_CraftingSlots.size(); i++) {
-        std::optional<InventoryEntry> entry = m_CraftingSlots[i];
-        if (!entry.has_value())
-            continue;
-
-        if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
-            continue;
-
-        RenderCraftingEntry(entry.value(), GridType::Grid3x3, i);
-    }
-
-    //Draw selection
-    if (m_PendingEntry.has_value()) {
-        if (m_PendingEntry->from_crafting_grid)
-            RenderPendingEntry(m_CraftingSlots[m_PendingEntry->index].value());
-        else
-            RenderPendingEntry(m_Slots[m_PendingEntry->index].value());
-    }
-
-    glEnable(GL_DEPTH_TEST);
-}
-
-void Inventory::ScreenSideRender()
+void Inventory::ScreenRender()
 {
     glDisable(GL_DEPTH_TEST);
 
@@ -268,7 +270,7 @@ void Inventory::ScreenSideRender()
         if (!entry.has_value())
             continue;
 
-        RenderScreenEntry(entry.value(), i);
+        RenderEntry(EntryType::Screen, entry.value(), i);
     }
 
     //Render selector
@@ -281,61 +283,95 @@ void Inventory::ScreenSideRender()
     glEnable(GL_DEPTH_TEST);
 }
 
-void Inventory::RenderEntry(InventoryEntry entry, u32 binding_index)
+void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 binding_index)
 {
+    auto draw_string_basic = [this, entry](glm::vec2 num_transform)
+    {
+        //Drawing block count
+        //Number testing, needs to be removed soon
+        glEnable(GL_BLEND);
+        m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
+        glDisable(GL_BLEND);
+    };
+
     //Drawing actual block
     m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
-    auto[icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
-    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, icon_transform);
+    switch (entry_type) {
+    case EntryType::Default: {
+            auto [icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
+            GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, icon_transform);
+            draw_string_basic(num_transform);
+        } return;
+    case EntryType::Screen: {
+            auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
+            GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
+            draw_string_basic(num_transform);
+        } return;
+    case EntryType::Crafting_2x2:
+    case EntryType::Crafting_3x3: {
+            auto [screen_slot_transform, num_transform] = SlotCraftingTransform(entry_type == EntryType::Crafting_3x3, binding_index, entry.block_count >= 10);
+            GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
+            draw_string_basic(num_transform);
+        } return;
+    case EntryType::Pending: {
+            m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
 
-    //Drawing block count
-    //Number testing, needs to be removed soon
-    glEnable(GL_BLEND);
-    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
-    glDisable(GL_BLEND);
+            Window& wnd = *m_State.game_window;
+            double dx, dy;
+            wnd.GetCursorCoord(dx, dy);
 
+            glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
+            pos_mat = glm::scale(pos_mat, GridMeasures::tile_transform);
+            GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, pos_mat);
+
+            glEnable(GL_BLEND);
+            f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
+            glm::ivec2 number_padding(2, 2);
+            m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
+            glDisable(GL_BLEND);
+        } return;
+    }
 }
 
-void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
-{
-    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
-    auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
-    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
-
-    glEnable(GL_BLEND);
-    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
-    glDisable(GL_BLEND);
-}
-
-void Inventory::RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index)
-{
-    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
-    auto [screen_slot_transform, num_transform] = SlotCraftingTransform(grid_type, binding_index, entry.block_count >= 10);
-    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
-
-    glEnable(GL_BLEND);
-    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
-    glDisable(GL_BLEND);
-}
-
-void Inventory::RenderPendingEntry(InventoryEntry entry)
-{
-    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
-
-    Window& wnd = *m_State.game_window;
-    double dx, dy;
-    wnd.GetCursorCoord(dx, dy);
-
-    glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
-    pos_mat = glm::scale(pos_mat, GridMeasures::tile_transform);
-    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, pos_mat);
-
-    glEnable(GL_BLEND);
-    f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
-    glm::ivec2 number_padding(2, 2);
-    m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
-    glDisable(GL_BLEND);
-}
+//void Inventory::RenderScreenEntry(InventoryEntry entry, u32 binding_index)
+//{
+//    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+//
+//
+//    glEnable(GL_BLEND);
+//    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
+//    glDisable(GL_BLEND);
+//}
+//
+//void Inventory::RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index)
+//{
+//    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+//    auto [screen_slot_transform, num_transform] = SlotCraftingTransform(grid_type, binding_index, entry.block_count >= 10);
+//    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
+//
+//    glEnable(GL_BLEND);
+//    m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
+//    glDisable(GL_BLEND);
+//}
+//
+//void Inventory::RenderPendingEntry(InventoryEntry entry)
+//{
+//    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+//
+//    Window& wnd = *m_State.game_window;
+//    double dx, dy;
+//    wnd.GetCursorCoord(dx, dy);
+//
+//    glm::mat4 pos_mat = glm::translate(glm::mat4(1.0f), glm::vec3(dx, dy, 0.0f));
+//    pos_mat = glm::scale(pos_mat, GridMeasures::tile_transform);
+//    GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, pos_mat);
+//
+//    glEnable(GL_BLEND);
+//    f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
+//    glm::ivec2 number_padding(2, 2);
+//    m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
+//    glDisable(GL_BLEND);
+//}
 
 std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
 {
@@ -404,7 +440,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotScreenTransform(u32 slot_index, b
     return { icon_transform, num_ret };
 }
 
-std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(GridType grid_type, u32 slot_index, bool two_digit_number)
+std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(bool grid_3x3, u32 slot_index, bool two_digit_number)
 {
     using namespace glm;
     if (slot_index > Defs::g_CraftingSlotsMaxCount)
@@ -412,7 +448,7 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(GridType grid_t
 
     mat4 ret(1.0f);
     vec2 num_ret(1.0f);
-    GridMeasures& ms = grid_type == GridType::Grid3x3 ? crafting_3x3.measures : crafting_2x2.measures;
+    GridMeasures& ms = grid_3x3 ? crafting_3x3.measures : crafting_2x2.measures;
     u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
 
     vec3 tile_offset = {

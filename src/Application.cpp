@@ -154,7 +154,7 @@ void Application::OnUserRun()
             glm::vec3 camera_position = m_Camera.position;
             glm::vec3 camera_direction = m_Camera.GetFront();
             world_instance.Render(camera_position, camera_direction);
-            game_inventory.ScreenSideRender();
+            game_inventory.ScreenRender();
 
             if (Defs::g_ViewMode == Defs::ViewMode::Inventory)
             {
@@ -164,10 +164,7 @@ void Application::OnUserRun()
                     state_switch = false;
                 }
 
-                if (game_inventory.view_crafting_table)
-                    game_inventory.CraftingTableRender();
-                else
-                    game_inventory.InternalSideRender();
+                game_inventory.InternalRender();
             }
             else
             {

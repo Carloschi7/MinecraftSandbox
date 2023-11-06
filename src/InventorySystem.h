@@ -24,6 +24,15 @@ enum class GridType : u8
 	Grid3x3
 };
 
+enum class EntryType : u8
+{
+	Default = 0,
+	Screen,
+	Crafting_2x2,
+	Crafting_3x3,
+	Pending
+};
+
 struct GridMeasures
 {
 	glm::ivec2 entry_position;
@@ -57,20 +66,19 @@ public:
 	Inventory(TextRenderer& text_renderer);
 	void AddToNewSlot(Defs::BlockType block);
 	void HandleInventorySelection();
-	void InternalSideRender();
-	void CraftingTableRender();
-	void ScreenSideRender();
+	void InternalRender();
+	void ScreenRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
 	void ClearUsedSlots();
 	inline void UnsetPendingEntry() { m_PendingEntry = std::nullopt; }
 private:
-	void RenderEntry(InventoryEntry entry, u32 binding_index);
-	void RenderScreenEntry(InventoryEntry entry, u32 binding_index);
-	void RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index);
-	void RenderPendingEntry(InventoryEntry entry);
+	void RenderEntry(EntryType entry_type, InventoryEntry entry, u32 binding_index);
+	//void RenderScreenEntry(InventoryEntry entry, u32 binding_index);
+	//void RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index);
+	//void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
-	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(GridType grid_type, u32 slot_index, bool two_digit_number);
+	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(bool grid_3x3, u32 slot_index, bool two_digit_number);
 public:
 	//Tells if this is a crafting table view or a normal inventory view
 	bool view_crafting_table = false;
