@@ -73,6 +73,7 @@ void Application::OnUserRun()
                 Defs::g_ViewMode = Defs::ViewMode::Inventory;
             else {
                 game_inventory.view_crafting_table = false;
+                game_inventory.UnsetPendingEntry();
                 Defs::g_ViewMode = Defs::ViewMode::WorldInteraction;
             }
 

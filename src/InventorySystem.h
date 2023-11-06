@@ -50,6 +50,7 @@ public:
 	void ScreenSideRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
 	void ClearUsedSlots();
+	inline void UnsetPendingEntry() { m_PendingEntry = std::nullopt; }
 private:
 	void RenderEntry(InventoryEntry entry, u32 binding_index);
 	void RenderScreenEntry(InventoryEntry binding, u32 binding_index);
@@ -68,11 +69,7 @@ private:
 	std::array<std::optional<InventoryEntry>, s_InventorySize> m_Slots;
 	std::optional<u32> m_PendingEntry;
 
-	//This values fit the inventory only for the current image scaling, very important to note
-	glm::vec2 m_InternalStart, m_ScreenStart, m_IntervalDimension;
-
 	glm::mat4 m_InternAbsTransf;
-	glm::mat4 m_CraftingAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
 	s32 m_CursorIndex;
 
@@ -86,5 +83,5 @@ private:
 	//	internal for screen section
 	//	screen section
 	//MAIN INVENTORY GRID
-	Grid m_InternalGrid, m_InternalScreenGrid, m_ScreenGrid, m_CraftingTableInternalScreenGrid;
+	Grid m_InternalGrid, m_ScreenGrid, m_InternalScreenGrid;
 };
