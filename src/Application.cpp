@@ -72,8 +72,8 @@ void Application::OnUserRun()
             if (Defs::g_ViewMode == Defs::ViewMode::WorldInteraction)
                 Defs::g_ViewMode = Defs::ViewMode::Inventory;
             else {
+                game_inventory.ViewCleanup();
                 game_inventory.view_crafting_table = false;
-                game_inventory.UnsetPendingEntry();
                 Defs::g_ViewMode = Defs::ViewMode::WorldInteraction;
             }
 
@@ -146,7 +146,16 @@ void Application::OnUserRun()
             //resulting too slow
             if constexpr (!GlCore::g_MultithreadedRendering)
             {
-                world_instance.UpdateScene(game_inventory, elapsed_time);
+                //The gamemode check is here because the key state update is reqwuired by the logic thread
+                if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
+                    switch_game_state();
+
+                WorldEvent world_event = world_instance.UpdateScene(game_inventory, elapsed_time);
+                if (world_event.crafting_table_open_command) {
+                    game_inventory.view_crafting_table = true;
+                    switch_game_state();
+                }
+
                 game_inventory.HandleInventorySelection();
                 state.game_window->UpdateKeys();
             }
@@ -165,6 +174,8 @@ void Application::OnUserRun()
                 }
 
                 game_inventory.InternalRender();
+                //Done to keep the same view angle after using the inventory
+                state.camera->UpdateMousePosition(*state.game_window);
             }
             else
             {
@@ -180,6 +191,7 @@ void Application::OnUserRun()
                     Physics::HandlePlayerGravity(elapsed_time);
 
                 world_instance.CheckPlayerCollision(camera_position);
+                
             }
 
 

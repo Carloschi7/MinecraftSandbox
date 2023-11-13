@@ -57,9 +57,10 @@ void Inventory::HandleInventorySelection()
     double dx, dy;
     wnd.GetCursorCoord(dx, dy);
     bool mouse_left_state = wnd.IsKeyPressed(GLFW_MOUSE_BUTTON_1);
+    bool mouse_right_state = wnd.IsKeyPressed(GLFW_MOUSE_BUTTON_2);
 
     //Scan inventory
-    if (mouse_left_state)
+    if (mouse_left_state || mouse_right_state)
     {
         for (u32 i = 0; i < 4; i++)
         {
@@ -82,20 +83,32 @@ void Inventory::HandleInventorySelection()
                 if (dx >= x_start && dy >= y_start && dx < x_start + x_size && dy < y_start + y_size)
                 {
                     u32 index = i * 9 + j;
+                    auto& slot = m_Slots[index];
                     if (m_PendingEntry.has_value()) {
-                        if (!m_Slots[index].has_value()) {
-                            auto& opt = m_PendingEntry->from_crafting_grid ? m_CraftingSlots[m_PendingEntry->index] : m_Slots[m_PendingEntry->index];
-                            m_Slots[index] = opt;
-                            opt = std::nullopt;
+                        if (!slot.has_value()) {
+                            slot = m_PendingEntry;
+                            m_PendingEntry = std::nullopt;
+                            return;
+                        }
+                        if (slot.has_value() && slot->block_count + m_PendingEntry->block_count <= s_MaxItemsPerSlot) {
+                            slot->block_count += m_PendingEntry->block_count;
                             m_PendingEntry = std::nullopt;
                             return;
                         }
 
-                        if (!m_PendingEntry->from_crafting_grid && index == m_PendingEntry->index)
-                            m_PendingEntry = std::nullopt;
                     } else {
-                        if (m_Slots[index].has_value()) {
-                            m_PendingEntry = { index, false };
+                        //Grab a single block unit from that entry or the whole stack if right clicking
+                        if (slot.has_value()) {
+                            MC_ASSERT(slot->block_count != 0, "this entry should have been deleted previously");
+                            if (mouse_left_state) {
+                                slot->block_count--;
+                                m_PendingEntry = { slot->block_type, 1 };
+                                ClearUsedSlots();
+                            }
+                            else if(mouse_right_state) {
+                                m_PendingEntry = slot;
+                                slot = std::nullopt;
+                            }
                             return;
                         }
                     }
@@ -117,21 +130,31 @@ void Inventory::HandleInventorySelection()
                 if (dx >= x_start && dy >= y_start && dx < x_start + x_size && dy < y_start + y_size)
                 {
                     u32 index = i * 3 + j;
+                    auto& slot = m_CraftingSlots[index];
                     if (m_PendingEntry.has_value()) {
-                        if (!m_CraftingSlots[index].has_value()) {
-                            auto& opt = m_PendingEntry->from_crafting_grid ? m_CraftingSlots[m_PendingEntry->index] : m_Slots[m_PendingEntry->index];
-                            m_CraftingSlots[index] = opt;
-                            opt = std::nullopt;
+                        if (!slot.has_value()) {
+                            slot = m_PendingEntry;
                             m_PendingEntry = std::nullopt;
                             return;
                         }
-
-                        if (m_PendingEntry->from_crafting_grid && index == m_PendingEntry->index)
+                        if (slot.has_value() && slot->block_count + m_PendingEntry->block_count <= s_MaxItemsPerSlot) {
+                            slot->block_count += m_PendingEntry->block_count;
                             m_PendingEntry = std::nullopt;
+                            return;
+                        }
                     }
                     else {
-                        if (m_CraftingSlots[index].has_value()) {
-                            m_PendingEntry = { index, true };
+                        if (slot.has_value()) {
+                            MC_ASSERT(slot->block_count != 0, "this entry should have been deleted previously");
+                            if (mouse_left_state) {
+                                slot->block_count--;
+                                m_PendingEntry = { slot->block_type, 1 };
+                                ClearUsedSlots();
+                            }
+                            else if (mouse_right_state) {
+                                m_PendingEntry = slot;
+                                slot = std::nullopt;
+                            }
                             return;
                         }
                     }
@@ -159,9 +182,6 @@ void Inventory::InternalRender()
         if (!entry.has_value())
             continue;
 
-        if (m_PendingEntry.has_value() && !m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
-            continue;
-
         RenderEntry(EntryType::Default, entry.value(), i);
     }
 
@@ -181,19 +201,12 @@ void Inventory::InternalRender()
         if (!entry.has_value())
             continue;
 
-        if (m_PendingEntry.has_value() && m_PendingEntry->from_crafting_grid && i == m_PendingEntry->index)
-            continue;
-
         RenderEntry(view_crafting_table ? EntryType::Crafting_3x3 : EntryType::Crafting_2x2, entry.value(), i);
     }
 
     //Draw selection
-    if (m_PendingEntry.has_value()) {
-        if (m_PendingEntry->from_crafting_grid)
-            RenderEntry(EntryType::Pending, m_CraftingSlots[m_PendingEntry->index].value(), {}); //{} symbolized the value is not needed if Pending
-        else
-            RenderEntry(EntryType::Pending, m_Slots[m_PendingEntry->index].value(), {});
-    }
+    if (m_PendingEntry.has_value()) 
+        RenderEntry(EntryType::Pending, m_PendingEntry.value(), {});
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -300,6 +313,44 @@ void Inventory::ClearUsedSlots()
         if (entry.has_value() && entry->block_count == 0)
             entry = std::nullopt;
     }
+
+    for (auto& entry : m_CraftingSlots) {
+        if (entry.has_value() && entry->block_count == 0)
+            entry = std::nullopt;
+    }
+}
+
+void Inventory::ViewCleanup()
+{
+    //Empty pending entry
+    if (m_PendingEntry.has_value()) {
+        for (u8 k = 0; k < s_InventorySize; k++) {
+            if (PerformCleanup(m_Slots[k], m_PendingEntry))
+                break;
+        }
+    }
+
+#ifdef _DEBUG
+    MC_ASSERT(m_PendingEntry == std::nullopt, "this should have been cleared, wasn't the original slot found?");
+#else
+    //If for some reason the current pending entry was not backed in the inventory(should never happen tecnically), just simply erase it
+    m_PendingEntry = std::nullopt;
+#endif
+
+    //Empty inventory slots
+    u8 lim = view_crafting_table ? 3 : 2;
+    for (u8 i = 0; i < lim; i++) {
+        for (u8 j = 0; j < lim; j++) {
+            u8 index = i * 3 + j;
+
+            if (m_CraftingSlots[index].has_value()) {
+                for (u8 k = 0; k < s_InventorySize; k++) {
+                    if (PerformCleanup(m_Slots[k], m_CraftingSlots[index]))
+                        break;
+                }
+            }
+        }
+    }
 }
 
 //pardon for the hardcoded section, haven't come up with a more appropriate way of doing this
@@ -376,4 +427,20 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(bool grid_3x3, 
 
     mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
     return { icon_transform, num_ret };
+}
+
+bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::optional<InventoryEntry>& second)
+{
+    if (first.has_value() && first->block_type == second->block_type && first->block_count + second->block_count <= s_MaxItemsPerSlot) {
+        first->block_count += second->block_count;
+        second = std::nullopt;
+        return true;
+    }
+    else if (!first.has_value()) {
+        first = second;
+        second = std::nullopt;
+        return true;
+    }
+
+    return false;
 }

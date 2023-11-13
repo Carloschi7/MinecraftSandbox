@@ -12,12 +12,6 @@ struct InventoryEntry
 	u8 block_count; //Max 64 like in the original, so small type used
 };
 
-struct PendingEntry
-{
-	u32 index;
-	bool from_crafting_grid;
-};
-
 enum class GridType : u8
 {
 	Grid2x2 = 0,
@@ -70,15 +64,13 @@ public:
 	void ScreenRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
 	void ClearUsedSlots();
-	inline void UnsetPendingEntry() { m_PendingEntry = std::nullopt; }
+	void ViewCleanup();
 private:
 	void RenderEntry(EntryType entry_type, InventoryEntry entry, u32 binding_index);
-	//void RenderScreenEntry(InventoryEntry entry, u32 binding_index);
-	//void RenderCraftingEntry(InventoryEntry entry, GridType grid_type, u32 binding_index);
-	//void RenderPendingEntry(InventoryEntry entry);
 	std::pair<glm::mat4, glm::vec2> SlotTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotScreenTransform(u32 slot_index, bool two_digit_number);
 	std::pair<glm::mat4, glm::vec2> SlotCraftingTransform(bool grid_3x3, u32 slot_index, bool two_digit_number);
+	bool PerformCleanup(std::optional<InventoryEntry>& first, std::optional<InventoryEntry>& second);
 public:
 	//Tells if this is a crafting table view or a normal inventory view
 	bool view_crafting_table = false;
@@ -86,12 +78,12 @@ private:
 	GlCore::State& m_State;
 	TextRenderer& m_TextRenderer;
 
-	static constexpr u32 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
+	static constexpr u8 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
 	static constexpr u8 s_MaxItemsPerSlot = 64;
 	static constexpr u8 s_CraftingMaxSize = Defs::g_CraftingSlotsMaxCount;
 	std::array<std::optional<InventoryEntry>, s_InventorySize> m_Slots;
 	std::array<std::optional<InventoryEntry>, s_CraftingMaxSize> m_CraftingSlots;
-	std::optional<PendingEntry> m_PendingEntry;
+	std::optional<InventoryEntry> m_PendingEntry;
 
 	glm::mat4 m_InternAbsTransf;
 	glm::mat4 m_ScreenAbsTransf;
