@@ -48,12 +48,6 @@ namespace Defs
 		TextureText
 	};
 
-	struct MouseInput
-	{
-		bool right_click;
-		bool left_click;
-	};
-
 	struct WorldSeed
 	{
 		//Chosed world seed

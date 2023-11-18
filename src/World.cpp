@@ -203,9 +203,8 @@ WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
 				//Generate new chunk
-				VAddr chunk_addr = Memory::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
+				Ptr<Chunk> chunk_addr = Memory::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
 				m_Chunks.push_back(chunk_addr);
-				//Memory::LockRegion(chunk_addr);
 				Chunk* this_chunk = Memory::Get<Chunk>(m_State.memory_arena, chunk_addr);
 				HandleSectionData();
 
@@ -580,7 +579,7 @@ std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation&
 Chunk& World::GetChunk(u32 index)
 {
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
-		[this, index](VAddr addr) {return Memory::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
+		[this, index](Ptr<Chunk> addr) {return Memory::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
 
 	MC_ASSERT(iter != m_Chunks.end(), "the provided variable index should be valid");
 
@@ -612,7 +611,7 @@ void World::SerializeSector(u32 index)
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 			Memory::LockRegion(m_State.memory_arena, m_Chunks[i]);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [this, index](VAddr addr) 
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [this, index](Ptr<Chunk> addr) 
 			{
 				Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, addr);
 				return chunk->SectorIndex() != index; 

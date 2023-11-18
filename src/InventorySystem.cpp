@@ -24,6 +24,10 @@ Inventory::Inventory(TextRenderer& text_renderer) :
 
     crafting_2x2 = Grid(ivec2(912, 214), ivec2(912 + 106 * 2, 214 + 88 * 2), 2, 2);
     crafting_3x3 = Grid(ivec2(692, 174), ivec2(692 + 106 * 3, 174 + 88 * 3), 3, 3);
+    product_grid = Grid(ivec2(1304, 263), ivec2(1304 + 106, 263 + 88), 1, 1);
+
+    //Game related stuff
+    LoadRecipes(recipes_2x2, recipes_3x3);
 }
 
 void Inventory::AddToNewSlot(Defs::BlockType type)
@@ -208,6 +212,9 @@ void Inventory::InternalRender()
     if (m_PendingEntry.has_value()) 
         RenderEntry(EntryType::Pending, m_PendingEntry.value(), {});
 
+    //DEBUG
+    RenderEntry(EntryType::CraftingProduct, { Defs::BlockType::Wood, 1 }, {});
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -278,6 +285,12 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
     case EntryType::Crafting_2x2:
     case EntryType::Crafting_3x3: {
             auto [screen_slot_transform, num_transform] = SlotCraftingTransform(entry_type == EntryType::Crafting_3x3, binding_index, entry.block_count >= 10);
+            GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
+            draw_string_basic(num_transform);
+        } return;
+
+    case EntryType::CraftingProduct: {
+            auto [screen_slot_transform, num_transform] = SlotCraftingProductTransform(entry.block_count >= 10);
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
             draw_string_basic(num_transform);
         } return;
@@ -429,6 +442,21 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingTransform(bool grid_3x3, 
     return { icon_transform, num_ret };
 }
 
+std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingProductTransform(bool two_digit_number)
+{
+    using namespace glm;
+    mat4 ret(1.0f);
+    vec2 num_ret(1.0f);
+    GridMeasures& ms = product_grid.measures;
+    u32 two_digit_offset = two_digit_number ? double_digit_offset : single_digit_offset;
+
+    ret = translate(ret, vec3(ms.entry_position, 0.0f));
+    num_ret = ms.number_position - ivec2(two_digit_offset, 0);
+
+    mat4 icon_transform = scale(ret, GridMeasures::tile_transform);
+    return { icon_transform, num_ret };
+}
+
 bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::optional<InventoryEntry>& second)
 {
     if (first.has_value() && first->block_type == second->block_type && first->block_count + second->block_count <= s_MaxItemsPerSlot) {
@@ -443,4 +471,25 @@ bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::option
     }
 
     return false;
+}
+
+void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x3>& recipes_3x3)
+{
+    //TODO insert here some basic recipes
+    recipes_2x2.clear();
+    recipes_3x3.clear();
+    //Lets get rusty poggers
+    auto some = [](Defs::BlockType type) {return std::make_optional(type); };
+    auto none = []() {return std::nullopt; };
+    
+    using enum Defs::BlockType;
+    //Test recipes (final product irrelevant for now)
+    recipes_2x2.push_back({ {   some(Sand), some(Sand), 
+                                none(), none() }, 
+                                Wood } );
+
+    recipes_3x3.push_back({ {   some(Grass), some(Wood), some(Sand),
+                                none(), some(Leaves), none(),
+                                none(), none(), none()},
+                                Wood });
 }

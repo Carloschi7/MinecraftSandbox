@@ -63,7 +63,7 @@ private:
     //of contiguous chunks like in AVector<Chunk> because we want to be
     //able to be flexible in multithreading. We just store a vistual address
     //in our virtual memory space
-    Utils::AVector<VAddr> m_Chunks;
+    Utils::AVector<Ptr<Chunk>> m_Chunks;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     Utils::AVector<glm::vec3> m_SpawnableChunks;
@@ -81,8 +81,8 @@ private:
     //which the player can collide with
     //Also by declaring this we minimize the amount of allocation per frame
     //in the renderer thread
-    VAddr m_CollisionChunkBuffer;
-    VAddr m_RemovableChunkBuffer;
+    Ptr<Chunk*> m_CollisionChunkBuffer;
+    Ptr<VAddr*> m_RemovableChunkBuffer;
 
     //Serialization threads
     std::future<void> m_SerializingFut;

@@ -12,6 +12,10 @@
 //memory locking
 typedef u64 VAddr;
 
+//Virtual pointer mapped in a Memory::Arena, VAddr alias that leaves the pointed type explicit
+template<class T>
+using Ptr = VAddr;
+
 //msg for now its just a warning displayed in the same line of the assert, no practical usage
 #define MC_ASSERT(x, msg)\
 	if(!(x)){*(int*)0 = 0;}
@@ -36,7 +40,6 @@ namespace Memory
 	static constexpr u32 signature = 0x62676572;
 	static constexpr u32 padding = 2 * sizeof(u32);
 
-
 	struct Arena {
 		MappedSpace mapped_space;
 		bool initialized;
@@ -55,6 +58,7 @@ namespace Memory
 		u32 unfreed_mem = 0;
 	};
 
+	//NOTE: is it better to implement these as Arena methods?
 	Arena* InitializeArena(u64 bytes);
 	void DestroyArena(Arena* arena);
 
