@@ -173,10 +173,8 @@ namespace GlCore
         textures.emplace_back(CPATH("assets/textures/wood_planks.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/leaves.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/crafting_table.png"), false, TextureFilter::Nearest);
-        // for the wooden stick and pickaxe
         textures.emplace_back(CPATH("assets/textures/wood_stick.png"), true, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/wood_pickaxe.png"), true, TextureFilter::Nearest);
-        //
         textures.emplace_back(CPATH("assets/textures/water.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/inventory.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/crafting_table_inventory.png"), false, TextureFilter::Nearest);

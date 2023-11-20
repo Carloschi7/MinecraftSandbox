@@ -22,8 +22,6 @@ using Ptr = VAddr;
 #define MC_CLOG(msg, ...) std::printf(msg, __VA_ARGS__)
 #define MC_LOG(msg, ...) std::printf(std::format(msg, __VA_ARGS__).c_str());
 
-//TODO fix shadows and add crafting table with some very basic crafting patterns, then release
-
 namespace Memory 
 {
 	struct MappedSpace

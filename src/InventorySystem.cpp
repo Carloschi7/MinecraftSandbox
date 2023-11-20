@@ -236,12 +236,6 @@ void Inventory::InternalRender()
 
     //Draw crafting entries if present
     for (u32 i = 0; i < m_CraftingSlots.size(); i++) {
-
-        //This will need to be removed, because if the player exit the inventory screen the items 
-        //left in the inventory greed need to be inserted back into the inventory.
-        //TODO this function that can be integrated with the current UnsetPendingEntry, for how that it
-        //is called in the main code, can be implemented in the future, for now we leave everithing in the
-        //inventory slots without removing them
         if(texture == Defs::TextureBinding::TextureInventory)
             if (i != 0 && i != 1 && i != 3 && i != 4)
                 continue;
@@ -522,7 +516,6 @@ bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::option
 
 void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x3>& recipes_3x3)
 {
-    //TODO insert here some basic recipes
     recipes_2x2.clear();
     recipes_3x3.clear();
     //Lets get rusty poggers
@@ -530,16 +523,6 @@ void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x
     auto none = []() {return std::nullopt; };
     
     using enum Defs::Sprite;
-    //Test recipes examples
-    //recipes_2x2.push_back({ {   some(Sand), some(Sand), 
-    //                            none(), none() }, 
-    //                            {Wood, 1} });
-
-    //recipes_3x3.push_back({ {   some(Grass), some(Wood), some(Sand),
-    //                            none(), some(Leaves), none(),
-    //                            none(), none(), none()},
-    //                            {Wood, 1} });
-
     recipes_2x2.push_back({some(Wood),          none(),
                            none(),              none(),
                            {WoodPlanks, 4} });

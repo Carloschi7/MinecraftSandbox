@@ -62,8 +62,6 @@ struct Grid {
 };
 
 //Game related inventory stuff
-
-
 struct Recipe2x2 
 {
 	template<uint32_t count>
@@ -71,7 +69,7 @@ struct Recipe2x2
 	template<uint32_t count>
 	using IngredientArray = std::array<std::optional<Defs::Sprite>, count>;
 
-	//TODO these probably should be riconverted to counted entries for much more
+	//NOTE these probably should be riconverted to counted entries for much more
 	//specific crafting. This feature will not be used for now
 	IngredientArray<4> ingredients;
 	//Result block type and quantity

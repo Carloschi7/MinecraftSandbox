@@ -420,7 +420,6 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 				//No block selected, no block inserted
 				//also prevent the user from placing items as blocks
 				if (!entry.has_value() || entry->block_type >= Defs::Sprite::WoodStick) {
-					MC_LOG("Skipped\n");
 					return world_event;
 				}
 
