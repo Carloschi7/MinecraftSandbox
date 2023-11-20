@@ -10,6 +10,12 @@ struct InventoryEntry
 {
 	Defs::BlockType block_type;
 	u8 block_count; //Max 64 like in the original, so small type used
+
+	bool CanBeInserted(InventoryEntry other) 
+	{
+		return block_type == other.block_type &&
+			block_count + other.block_count <= Defs::g_MaxItemsPerSlot;
+	}
 };
 
 enum class GridType : u8
@@ -65,8 +71,11 @@ struct Recipe2x2
 	template<uint32_t count>
 	using IngredientArray = std::array<std::optional<Defs::BlockType>, count>;
 
+	//TODO these probably should be riconverted to counted entries for much more
+	//specific crafting. This feature will not be used for now
 	IngredientArray<4> ingredients;
-	Defs::BlockType product;
+	//Result block type and quantity
+	InventoryEntry product;
 	//Accepts maximum entry array dimensions (crafting-table like)
 	bool Matches(const EntryArray<Defs::g_CraftingSlotsMaxCount>& entry_array) const 
 	{
@@ -99,7 +108,7 @@ struct Recipe3x3
 	using IngredientArray = std::array<std::optional<Defs::BlockType>, count>;
 
 	IngredientArray<Defs::g_CraftingSlotsMaxCount> ingredients;
-	Defs::BlockType product;
+	InventoryEntry product;
 
 	bool Matches(const EntryArray<Defs::g_CraftingSlotsMaxCount>& entry_array) const
 	{
@@ -126,6 +135,7 @@ public:
 	Inventory(TextRenderer& text_renderer);
 	void AddToNewSlot(Defs::BlockType block);
 	void HandleInventorySelection();
+	void ProcessRecipes();
 	void InternalRender();
 	void ScreenRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
@@ -146,10 +156,11 @@ private:
 	TextRenderer& m_TextRenderer;
 
 	static constexpr u8 s_InventorySize = Defs::g_InventoryInternalSlotsCount + Defs::g_InventoryScreenSlotsCount;
-	static constexpr u8 s_MaxItemsPerSlot = 64;
+	static constexpr u8 s_MaxItemsPerSlot = Defs::g_MaxItemsPerSlot;
 	static constexpr u8 s_CraftingMaxSize = Defs::g_CraftingSlotsMaxCount;
 	std::array<std::optional<InventoryEntry>, s_InventorySize> m_Slots;
 	std::array<std::optional<InventoryEntry>, s_CraftingMaxSize> m_CraftingSlots;
+	std::optional<InventoryEntry> m_ProductEntry;
 	std::optional<InventoryEntry> m_PendingEntry;
 
 	glm::mat4 m_InternAbsTransf;

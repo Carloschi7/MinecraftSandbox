@@ -56,7 +56,8 @@ void main()
 uniform sampler2D texture_dirt;
 uniform sampler2D texture_grass;
 uniform sampler2D texture_sand;
-uniform sampler2D texture_trunk;
+uniform sampler2D texture_wood;
+uniform sampler2D texture_wood_planks;
 uniform sampler2D texture_leaves;
 uniform sampler2D texture_crafting_table;
 
@@ -78,13 +79,14 @@ vec4 choose_tex(int index)
 	case 1:
 		return texture(texture_grass, TexCoords);
 	case 2:
-		//return vec4(texture(texture_depth, TexCoords).r);
 		return texture(texture_sand, TexCoords);
 	case 3:
-		return texture(texture_trunk, TexCoords);
+		return texture(texture_wood, TexCoords);
 	case 4:
-		return texture(texture_leaves, TexCoords);
+		return texture(texture_wood_planks, TexCoords);
 	case 5:
+		return texture(texture_leaves, TexCoords);
+	case 6:
 		return texture(texture_crafting_table, TexCoords);
 	case 256 + 0:
 		return texture(texture_dirt, TexCoords) * 0.4f;
@@ -93,10 +95,12 @@ vec4 choose_tex(int index)
 	case 256 + 2:
 		return texture(texture_sand, TexCoords) * 0.4f;
 	case 256 + 3:
-		return texture(texture_trunk, TexCoords) * 0.4f;
+		return texture(texture_wood, TexCoords) * 0.4f;
 	case 256 + 4:
-		return texture(texture_leaves, TexCoords) * 0.4f;
+		return texture(texture_wood_planks, TexCoords) * 0.4f;
 	case 256 + 5:
+		return texture(texture_leaves, TexCoords) * 0.4f;
+	case 256 + 6:
 		return texture(texture_crafting_table, TexCoords) * 0.4f;
 	}
 

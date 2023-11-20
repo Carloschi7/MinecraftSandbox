@@ -23,7 +23,13 @@ namespace Defs
 
 	enum class BlockType : u8
 	{
-		Dirt = 0, Grass, Sand, Wood, Leaves, CraftingTable
+		Dirt = 0,
+		Grass,
+		Sand,
+		Wood,
+		WoodPlanks,
+		Leaves,
+		CraftingTable
 	};
 
 	enum class HitDirection : u8
@@ -37,6 +43,7 @@ namespace Defs
 		TextureGrass,
 		TextureSand,
 		TextureWood,
+		TextureWoodPlanks,
 		TextureLeaves,
 		TextureCraftingTable,
 		TextureWater,
@@ -119,6 +126,7 @@ namespace Defs
 	static constexpr u8 g_InventoryInternalSlotsCount = 27;
 	static constexpr u8 g_InventoryScreenSlotsCount = 9;
 	static constexpr u8 g_CraftingSlotsMaxCount = 9;
+	static constexpr u8 g_MaxItemsPerSlot = 64;
 	extern Defs::BlockType g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<u32> g_PushedSections;

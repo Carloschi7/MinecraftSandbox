@@ -94,7 +94,7 @@ void Inventory::HandleInventorySelection()
                             m_PendingEntry = std::nullopt;
                             return;
                         }
-                        if (slot.has_value() && slot->block_count + m_PendingEntry->block_count <= s_MaxItemsPerSlot) {
+                        if (slot.has_value() && slot->CanBeInserted(m_PendingEntry.value())) {
                             slot->block_count += m_PendingEntry->block_count;
                             m_PendingEntry = std::nullopt;
                             return;
@@ -121,7 +121,6 @@ void Inventory::HandleInventorySelection()
         }
 
         //Crafting section
-
         GridMeasures& measures = view_crafting_table ? crafting_3x3.measures : crafting_2x2.measures;
         u32 lim = view_crafting_table ? 3 : 2;
         for (u32 i = 0; i < lim; i++) {
@@ -138,11 +137,14 @@ void Inventory::HandleInventorySelection()
                     if (m_PendingEntry.has_value()) {
                         if (!slot.has_value()) {
                             slot = m_PendingEntry;
+                            //Find if the new configuration matches a recipe
+                            ProcessRecipes();
                             m_PendingEntry = std::nullopt;
                             return;
                         }
                         if (slot.has_value() && slot->block_count + m_PendingEntry->block_count <= s_MaxItemsPerSlot) {
                             slot->block_count += m_PendingEntry->block_count;
+                            ProcessRecipes();
                             m_PendingEntry = std::nullopt;
                             return;
                         }
@@ -159,11 +161,54 @@ void Inventory::HandleInventorySelection()
                                 m_PendingEntry = slot;
                                 slot = std::nullopt;
                             }
+                            if (m_ProductEntry.has_value())
+                                m_ProductEntry = {};
+
                             return;
                         }
                     }
                 }
 
+            }
+        }
+
+        //Handle crafting product
+        if (m_ProductEntry.has_value() && !m_PendingEntry.has_value()) {
+            GridMeasures& measures = product_grid.measures;
+            u32 x_start = (measures.entry_position.x - 48.0f);
+            u32 y_start = (measures.entry_position.y - 40.0f);
+            u32 x_size = measures.entry_stride.x;
+            u32 y_size = measures.entry_stride.y;
+            if (dx >= x_start && dy >= y_start && dx < x_start + x_size && dy < y_start + y_size) {
+                for (auto& slot : m_CraftingSlots)
+                    if (slot.has_value())
+                        slot->block_count--;
+
+                ClearUsedSlots();
+                m_PendingEntry = std::exchange(m_ProductEntry, std::nullopt);
+                ProcessRecipes();
+                return;
+            }
+        }
+    }
+}
+
+void Inventory::ProcessRecipes()
+{
+    //Check for recipes only when we insert a new item in the crafting table section
+    bool set_occurrency = false;
+    if (m_PendingEntry.has_value()) {
+        if (view_crafting_table) {
+            for (auto& recipe : recipes_3x3) {
+                if (recipe.Matches(m_CraftingSlots)) {
+                    m_ProductEntry = recipe.product;
+                }
+            }
+        }
+
+        for (auto& recipe : recipes_2x2) {
+            if (recipe.Matches(m_CraftingSlots)) {
+                m_ProductEntry = recipe.product;
             }
         }
     }
@@ -208,12 +253,14 @@ void Inventory::InternalRender()
         RenderEntry(view_crafting_table ? EntryType::Crafting_3x3 : EntryType::Crafting_2x2, entry.value(), i);
     }
 
+
+    if (m_ProductEntry.has_value())
+        RenderEntry(EntryType::CraftingProduct, m_ProductEntry.value(), {});
+
     //Draw selection
     if (m_PendingEntry.has_value()) 
         RenderEntry(EntryType::Pending, m_PendingEntry.value(), {});
 
-    //DEBUG
-    RenderEntry(EntryType::CraftingProduct, { Defs::BlockType::Wood, 1 }, {});
 
     glEnable(GL_DEPTH_TEST);
 }
@@ -483,13 +530,17 @@ void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x
     auto none = []() {return std::nullopt; };
     
     using enum Defs::BlockType;
-    //Test recipes (final product irrelevant for now)
-    recipes_2x2.push_back({ {   some(Sand), some(Sand), 
-                                none(), none() }, 
-                                Wood } );
+    //Test recipes examples
+    //recipes_2x2.push_back({ {   some(Sand), some(Sand), 
+    //                            none(), none() }, 
+    //                            {Wood, 1} });
 
-    recipes_3x3.push_back({ {   some(Grass), some(Wood), some(Sand),
-                                none(), some(Leaves), none(),
-                                none(), none(), none()},
-                                Wood });
+    //recipes_3x3.push_back({ {   some(Grass), some(Wood), some(Sand),
+    //                            none(), some(Leaves), none(),
+    //                            none(), none(), none()},
+    //                            {Wood, 1} });
+
+    recipes_2x2.push_back({some(Wood), none(),
+                           none(), none(),
+                           {WoodPlanks, 4} });
 }
