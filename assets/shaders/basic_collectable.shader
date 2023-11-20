@@ -29,6 +29,8 @@ uniform sampler2D texture_wood;
 uniform sampler2D texture_wood_planks;
 uniform sampler2D texture_leaves;
 uniform sampler2D texture_crafting_table;
+uniform sampler2D texture_wood_stick;
+uniform sampler2D texture_wood_pickaxe;
 
 out vec4 OutColor;
 
@@ -50,6 +52,10 @@ vec4 choose_tex(int index)
 		return texture(texture_leaves, TexCoords);
 	case 6:
 		return texture(texture_crafting_table, TexCoords);
+	case 7:
+		return texture(texture_wood_stick, TexCoords);
+	case 8:
+		return texture(texture_wood_pickaxe, TexCoords);
 	}
 
 	return vec4(0.0f);

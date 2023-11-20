@@ -85,13 +85,17 @@ namespace GlCore
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
         Utils::AVector<TextureLoaderType> textures
         {
+            //Block textures
             {"texture_dirt",            Defs::TextureBinding::TextureDirt},
             {"texture_grass",           Defs::TextureBinding::TextureGrass},
             {"texture_sand",            Defs::TextureBinding::TextureSand},
             {"texture_wood",            Defs::TextureBinding::TextureWood},
             {"texture_wood_planks",     Defs::TextureBinding::TextureWoodPlanks},
             {"texture_leaves",          Defs::TextureBinding::TextureLeaves},
-            {"texture_crafting_table",  Defs::TextureBinding::TextureCraftingTable}
+            {"texture_crafting_table",  Defs::TextureBinding::TextureCraftingTable},
+            //Item textures
+            {"texture_wood_stick",  Defs::TextureBinding::TextureWoodStick},
+            {"texture_wood_pickaxe", Defs::TextureBinding::TextureWoodPickaxe}
         };
 
         //The binding matches the vector position
@@ -169,6 +173,10 @@ namespace GlCore
         textures.emplace_back(CPATH("assets/textures/wood_planks.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/leaves.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/crafting_table.png"), false, TextureFilter::Nearest);
+        // for the wooden stick and pickaxe
+        textures.emplace_back(CPATH("assets/textures/wood_stick.png"), true, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/wood_pickaxe.png"), true, TextureFilter::Nearest);
+        //
         textures.emplace_back(CPATH("assets/textures/water.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/inventory.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/crafting_table_inventory.png"), false, TextureFilter::Nearest);

@@ -12,8 +12,8 @@ static const std::array<u8, 6> bitshifts = {
     (1 << 5), //neg z
 };
 
-Block::Block(glm::u8vec3 position, const Defs::BlockType& bt)
-    :position(position), m_BlockType(bt), exposed_normals{}
+Block::Block(glm::u8vec3 position, const Defs::Sprite& bt)
+    :position(position), m_Sprite(bt), exposed_normals{}
 {
 }
 
@@ -36,9 +36,9 @@ void Block::UpdateRenderableSides(const Chunk* parent, const glm::vec3& camera_p
     }
 }
 
-const Defs::BlockType& Block::Type() const
+const Defs::Sprite& Block::Type() const
 {
-    return m_BlockType;
+    return m_Sprite;
 }
 
 const GlCore::DrawableData& Block::DrawableSides() const
@@ -86,7 +86,7 @@ void Block::Serialize(const Utils::Serializer& sz)
     sz& exposed_normals;
     //m_BlockStructure and m_DrawableData do not need to be serialized
 
-    sz& static_cast<u8>(m_BlockType);
+    sz& static_cast<u8>(m_Sprite);
 }
 
 u8 Block::IndexForNormal(const glm::vec3& vec)
@@ -128,7 +128,7 @@ glm::vec3 Block::NormalForIndex(u32 index)
     return glm::vec3(0.0f);
 }
 
-Drop::Drop(const glm::vec3& position, Defs::BlockType type) :
+Drop::Drop(const glm::vec3& position, Defs::Sprite type) :
     m_Type(type), position(position), m_RotationAngle(0.0f), m_Model(1.0f)
 {
     GlCore::VertexData vd = GlCore::Cube();

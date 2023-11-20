@@ -21,15 +21,19 @@ namespace Defs
 		Normal, Creative
 	};
 
-	enum class BlockType : u8
+	enum class Sprite : u8
 	{
+		//Blocks
 		Dirt = 0,
 		Grass,
 		Sand,
 		Wood,
 		WoodPlanks,
 		Leaves,
-		CraftingTable
+		CraftingTable,
+		//Items
+		WoodStick,
+		WoodPickaxe
 	};
 
 	enum class HitDirection : u8
@@ -46,6 +50,8 @@ namespace Defs
 		TextureWoodPlanks,
 		TextureLeaves,
 		TextureCraftingTable,
+		TextureWoodStick,
+		TextureWoodPickaxe,
 		TextureWater,
 		TextureInventory,
 		TextureCraftingTableInventory,
@@ -127,7 +133,7 @@ namespace Defs
 	static constexpr u8 g_InventoryScreenSlotsCount = 9;
 	static constexpr u8 g_CraftingSlotsMaxCount = 9;
 	static constexpr u8 g_MaxItemsPerSlot = 64;
-	extern Defs::BlockType g_InventorySelectedBlock;
+	extern Defs::Sprite g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<u32> g_PushedSections;
 	extern std::string g_SerializedFileFormat;

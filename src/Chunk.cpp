@@ -44,10 +44,10 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 				{
 				case Defs::Biome::Plains:
 					m_LocalBlocks.emplace_back(glm::u8vec3(i, j, k), (j == final_height - 1) ?
-						Defs::BlockType::Grass : Defs::BlockType::Dirt);
+						Defs::Sprite::Grass : Defs::Sprite::Dirt);
 					break;
 				case Defs::Biome::Desert:
-					m_LocalBlocks.emplace_back(glm::u8vec3(i, j, k), Defs::BlockType::Sand);
+					m_LocalBlocks.emplace_back(glm::u8vec3(i, j, k), Defs::Sprite::Sand);
 					break;
 				}
 			}
@@ -66,10 +66,10 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 			glm::vec3 tree_center(s_ChunkWidthAndHeight / 2, final_height + 4, s_ChunkWidthAndHeight / 2);
 			if (perlin_data.biome == Defs::Biome::Plains && i == tree_center.x && k == tree_center.z) {
 				for (u32 p = 0; p < 4; p++)
-					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::BlockType::Wood);
+					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::Sprite::Wood);
 
 				for (auto& vec : leaves_positions)
-					m_LocalBlocks.emplace_back(static_cast<glm::u8vec3>(tree_center + vec), Defs::BlockType::Leaves);
+					m_LocalBlocks.emplace_back(static_cast<glm::u8vec3>(tree_center + vec), Defs::Sprite::Leaves);
 			}
 		}
 	}
@@ -247,7 +247,7 @@ void Chunk::InitGlobalNorms()
 				else {
 					//If the current block is a leaf block, we wont discard lower placed blocks automatically
 					//because we could find trunk or some other stuff
-					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+					if (m_LocalBlocks[blk_index].Type() != Defs::Sprite::Leaves)
 						break;
 				}
 
@@ -262,7 +262,7 @@ void Chunk::InitGlobalNorms()
 					m_LocalBlocks[p].AddNormal(neg_x);
 				}
 				else {
-					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+					if (m_LocalBlocks[blk_index].Type() != Defs::Sprite::Leaves)
 						break;
 				}
 				p--;
@@ -276,7 +276,7 @@ void Chunk::InitGlobalNorms()
 					m_LocalBlocks[p].AddNormal(pos_z);
 				}
 				else {
-					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+					if (m_LocalBlocks[blk_index].Type() != Defs::Sprite::Leaves)
 						break;
 				}
 				
@@ -291,7 +291,7 @@ void Chunk::InitGlobalNorms()
 					m_LocalBlocks[p].AddNormal(neg_z);
 				}
 				else {
-					if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+					if (m_LocalBlocks[blk_index].Type() != Defs::Sprite::Leaves)
 						break;
 				}
 
@@ -771,7 +771,7 @@ const Utils::Serializer& Chunk::Deserialize(const Utils::Serializer& sz)
 			sz% norm_payload;
 			sz% block_type;
 
-			m_LocalBlocks.emplace_back(v, static_cast<Defs::BlockType>(block_type));
+			m_LocalBlocks.emplace_back(v, static_cast<Defs::Sprite>(block_type));
 			auto& bb = m_LocalBlocks.back();
 			bb.exposed_normals = norm_payload;
 		}
@@ -856,11 +856,11 @@ bool Chunk::BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 b
 			adjacent_found = chunk && chunk->IsBlock(ToWorld(m_LocalBlocks[top_index].position) + pos, 0, true, &blk_index);
 
 	if (local_found) {
-		if (m_LocalBlocks[blk_index].Type() != Defs::BlockType::Leaves)
+		if (m_LocalBlocks[blk_index].Type() != Defs::Sprite::Leaves)
 			return true;
 	}
 	else if (adjacent_found) {
-		if (chunk->GetBlock(blk_index).Type() != Defs::BlockType::Leaves)
+		if (chunk->GetBlock(blk_index).Type() != Defs::Sprite::Leaves)
 			return true;
 	}
 	else {

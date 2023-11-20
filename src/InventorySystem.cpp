@@ -8,8 +8,8 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     //TextureWater at the moment is the first non-block texture in the game assets
     //so use this as a limit so that each block type occupies a slot in the 
     //inventory
-    for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
-        m_Slots[i] = { static_cast<Defs::BlockType>(i), 1 };
+    //for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
+    //    m_Slots[i] = { static_cast<Defs::Sprite>(i), 1 };
     
     //Avoid writing glm a thousand times in some of these functions
     using namespace glm;
@@ -30,7 +30,7 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     LoadRecipes(recipes_2x2, recipes_3x3);
 }
 
-void Inventory::AddToNewSlot(Defs::BlockType type)
+void Inventory::AddToNewSlot(Defs::Sprite type)
 {
     //check for a stacking slot first
     for (std::optional<InventoryEntry>& slot : m_Slots) {
@@ -161,9 +161,8 @@ void Inventory::HandleInventorySelection()
                                 m_PendingEntry = slot;
                                 slot = std::nullopt;
                             }
-                            if (m_ProductEntry.has_value())
-                                m_ProductEntry = {};
 
+                            ProcessRecipes();
                             return;
                         }
                     }
@@ -195,6 +194,7 @@ void Inventory::HandleInventorySelection()
 
 void Inventory::ProcessRecipes()
 {
+    m_ProductEntry = std::nullopt;
     //Check for recipes only when we insert a new item in the crafting table section
     bool set_occurrency = false;
     if (m_PendingEntry.has_value()) {
@@ -278,7 +278,7 @@ void Inventory::ScreenRender()
 
     //Assign the selection to the right variable
     std::optional<InventoryEntry> block_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
-    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type->block_type : Defs::BlockType::Dirt;
+    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type->block_type : Defs::Sprite::Dirt;
     
 
     u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
@@ -526,10 +526,10 @@ void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x
     recipes_2x2.clear();
     recipes_3x3.clear();
     //Lets get rusty poggers
-    auto some = [](Defs::BlockType type) {return std::make_optional(type); };
+    auto some = [](Defs::Sprite type) {return std::make_optional(type); };
     auto none = []() {return std::nullopt; };
     
-    using enum Defs::BlockType;
+    using enum Defs::Sprite;
     //Test recipes examples
     //recipes_2x2.push_back({ {   some(Sand), some(Sand), 
     //                            none(), none() }, 
@@ -540,7 +540,20 @@ void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x
     //                            none(), none(), none()},
     //                            {Wood, 1} });
 
-    recipes_2x2.push_back({some(Wood), none(),
-                           none(), none(),
+    recipes_2x2.push_back({some(Wood),          none(),
+                           none(),              none(),
                            {WoodPlanks, 4} });
+
+    recipes_2x2.push_back({ some(WoodPlanks),   none(),
+                            some(WoodPlanks),   none(),
+                            {WoodStick, 4} });
+
+    recipes_2x2.push_back({ some(WoodPlanks),   some(WoodPlanks),
+                            some(WoodPlanks),   some(WoodPlanks),
+                            {CraftingTable, 1} });
+
+    recipes_3x3.push_back({ {   some(WoodPlanks),   some(WoodPlanks),   some(WoodPlanks),
+                                none(),             some(WoodStick),    none()          ,
+                                none(),             some(WoodStick),    none()          },
+                                {WoodPickaxe, 1} });
 }

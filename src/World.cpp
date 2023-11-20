@@ -392,7 +392,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
 				const glm::vec3 position = local_chunk->ToWorld(blocks[selected_block].position);
-				const Defs::BlockType type = blocks[selected_block].Type();
+				const Defs::Sprite type = blocks[selected_block].Type();
 
 				local_chunk->AddNewExposedNormals(position);
 				blocks.erase(blocks.begin() + selected_block);
@@ -405,11 +405,11 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 			if (right_click && selected_block != static_cast<u32>(-1))
 			{
 				//if the selected block isn't -1 that means selection is not NONE
-				Defs::BlockType bt = Defs::g_InventorySelectedBlock;
+				Defs::Sprite bt = Defs::g_InventorySelectedBlock;
 
 				//If this is a crafting table, then no block is placed and we open the crafting table inventory
 				auto& block = blocks[selected_block];
-				if (block.Type() == Defs::BlockType::CraftingTable) {
+				if (block.Type() == Defs::Sprite::CraftingTable) {
 					world_event.crafting_table_open_command = true;
 					return world_event;
 				}
@@ -418,8 +418,11 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 				std::optional<InventoryEntry>& entry = inventory.HoveredFromSelector();
 
 				//No block selected, no block inserted
-				if (!entry.has_value())
+				//also prevent the user from placing items as blocks
+				if (!entry.has_value() || entry->block_type >= Defs::Sprite::WoodStick) {
+					MC_LOG("Skipped\n");
 					return world_event;
+				}
 
 				entry.value().block_count--;
 				inventory.ClearUsedSlots();
