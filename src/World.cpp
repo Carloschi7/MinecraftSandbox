@@ -109,7 +109,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
 		m_State.shadow_framebuffer->Bind();
-		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+		//Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
 		//Update depth framebuffer
 		GlCore::UpdateShadowFramebuffer();
@@ -138,10 +138,9 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	}
 
 	//Render skybox
-	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	GlCore::RenderSkybox();
-	//Init matrices
-	GlCore::UniformViewMatrix();
+
 	u32 ch = Defs::g_SelectedChunk.load();
 	//Setting selected block index, which will be used only by the owning chunk
 	Chunk::s_InternalSelectedBlock = Defs::g_SelectedBlock.load();	
@@ -177,8 +176,8 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	GlCore::Renderer::RenderInstanced(water_layer_count);
 
 	glDisable(GL_BLEND);
-	GlCore::RenderCrossaim();
 
+	GlCore::RenderCrossaim();
 	GlCore::g_Drawcalls = 0;
 }
 
@@ -392,7 +391,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
 				const glm::vec3 position = local_chunk->ToWorld(blocks[selected_block].position);
-				const Defs::Sprite type = blocks[selected_block].Type();
+				const Defs::Item type = blocks[selected_block].Type();
 
 				local_chunk->AddNewExposedNormals(position);
 				blocks.erase(blocks.begin() + selected_block);
@@ -405,11 +404,11 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 			if (right_click && selected_block != static_cast<u32>(-1))
 			{
 				//if the selected block isn't -1 that means selection is not NONE
-				Defs::Sprite bt = Defs::g_InventorySelectedBlock;
+				Defs::Item bt = Defs::g_InventorySelectedBlock;
 
 				//If this is a crafting table, then no block is placed and we open the crafting table inventory
 				auto& block = blocks[selected_block];
-				if (block.Type() == Defs::Sprite::CraftingTable) {
+				if (block.Type() == Defs::Item::CraftingTable) {
 					world_event.crafting_table_open_command = true;
 					return world_event;
 				}
@@ -419,11 +418,11 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 
 				//No block selected, no block inserted
 				//also prevent the user from placing items as blocks
-				if (!entry.has_value() || entry->block_type >= Defs::Sprite::WoodStick) {
+				if (!entry.has_value() || !Defs::IsBlock(entry->item_type)) {
 					return world_event;
 				}
 
-				entry.value().block_count--;
+				entry.value().item_count--;
 				inventory.ClearUsedSlots();
 				bool block_added_to_side_chunk = false;
 				switch (hit)

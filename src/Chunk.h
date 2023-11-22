@@ -67,7 +67,7 @@ public:
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
 	inline glm::vec3 ToWorld(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
 	inline Utils::AVector<Block>& Blocks() { return m_LocalBlocks; }
-	inline void PushDrop(const glm::vec3& position, Defs::Sprite type) { m_LocalDrops.emplace_back(position, type); }
+	inline void PushDrop(const glm::vec3& position, Defs::Item type) { m_LocalDrops.emplace_back(position, type); }
 
 	//Sum this with the chunk origin to get chunk's center
 	static glm::vec3 GetHalfWayVector();

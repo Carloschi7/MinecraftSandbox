@@ -12,7 +12,7 @@ static const std::array<u8, 6> bitshifts = {
     (1 << 5), //neg z
 };
 
-Block::Block(glm::u8vec3 position, const Defs::Sprite& bt)
+Block::Block(glm::u8vec3 position, const Defs::Item& bt)
     :position(position), m_Sprite(bt), exposed_normals{}
 {
 }
@@ -36,7 +36,7 @@ void Block::UpdateRenderableSides(const Chunk* parent, const glm::vec3& camera_p
     }
 }
 
-const Defs::Sprite& Block::Type() const
+const Defs::Item& Block::Type() const
 {
     return m_Sprite;
 }
@@ -128,7 +128,7 @@ glm::vec3 Block::NormalForIndex(u32 index)
     return glm::vec3(0.0f);
 }
 
-Drop::Drop(const glm::vec3& position, Defs::Sprite type) :
+Drop::Drop(const glm::vec3& position, Defs::Item type) :
     m_Type(type), position(position), m_RotationAngle(0.0f), m_Model(1.0f)
 {
     GlCore::VertexData vd = GlCore::Cube();
@@ -161,7 +161,6 @@ void Drop::Render()
     drop_vm->BindVertexArray();
 
     drop_shader->UniformMat4f(m_Model, "model");
-    //shader->Uniform1i(static_cast<u32>(m_Type), "texture_diffuse");
     drop_shader->Uniform1i(static_cast<u32>(m_Type), "drop_texture_index");
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }

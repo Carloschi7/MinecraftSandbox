@@ -6,6 +6,7 @@
 #include "InventorySystem.h"
 #include "Memory.h"
 
+
 #ifdef __linux__
 #   include <experimental/filesystem>
 #else
@@ -117,6 +118,7 @@ void Application::OnUserRun()
 
         if constexpr (GlCore::g_MultithreadedRendering)
         {
+            //this line starts the thread btw
             m_AppThreads.emplace_back(logic_thread_impl);
             //Populate thread pool with static threads (currently unused)
             GlCore::g_ThreadPool.insert({ "Renderer thread", std::this_thread::get_id() });
@@ -130,6 +132,9 @@ void Application::OnUserRun()
         glDisable(GL_BLEND);
 
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
         Utils::Timer elapsed_timer;
         thread1_record_timer.StartTimer();
         //Standard value for the first frame
@@ -159,16 +164,38 @@ void Application::OnUserRun()
                 game_inventory.HandleInventorySelection();
                 state.game_window->UpdateKeys();
             }
-            //Copy these vector to make the camera indipendent from the logic thread
+
+            //Rendering ---------------------
+            state.shadow_framebuffer->Bind();
+            Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+            FrameBuffer::BindDefault();
+            glStencilFunc(GL_ALWAYS, 1, 0xff);
+            glStencilMask(0xff);
+            Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            
+            GlCore::UniformViewMatrix();
+
+            //Render the inventory selected block with the drop shader in a stencil instance
+            auto selected_block_opt = game_inventory.HoveredFromSelector();
+            bool held_sprite_render = false;
+            if (selected_block_opt.has_value() && Defs::IsBlock(selected_block_opt->item_type)) {
+                GlCore::RenderHeldItem(selected_block_opt->item_type);
+                glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+                glStencilMask(0x00);
+
+                held_sprite_render = true;
+            }
+
+            //Copy these vectors to make the camera indipendent from the logic thread
             glm::vec3 camera_position = m_Camera.position;
             glm::vec3 camera_direction = m_Camera.GetFront();
             world_instance.Render(camera_position, camera_direction);
+            if(held_sprite_render)
+                glStencilFunc(GL_ALWAYS, 1, 0xff);
             game_inventory.ScreenRender();
 
-            if (Defs::g_ViewMode == Defs::ViewMode::Inventory)
-            {
-                if (state_switch)
-                {
+            if (Defs::g_ViewMode == Defs::ViewMode::Inventory) {
+                if (state_switch) {
                     state.game_window->EnableCursor();
                     state_switch = false;
                 }
@@ -177,10 +204,8 @@ void Application::OnUserRun()
                 //Done to keep the same view angle after using the inventory
                 state.camera->UpdateMousePosition(*state.game_window);
             }
-            else
-            {
-                if (state_switch)
-                {
+            else {
+                if (state_switch) {
                     state.game_window->DisableCursor();
                     state_switch = false;
                 }
@@ -191,10 +216,7 @@ void Application::OnUserRun()
                     Physics::HandlePlayerGravity(elapsed_time);
 
                 world_instance.CheckPlayerCollision(camera_position);
-                
             }
-
-
 
             //Timing & logging
             elapsed_time = elapsed_timer.GetElapsedSeconds();

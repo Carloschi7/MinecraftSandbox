@@ -9,7 +9,7 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     //so use this as a limit so that each block type occupies a slot in the 
     //inventory
     //for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
-    //    m_Slots[i] = { static_cast<Defs::Sprite>(i), 1 };
+    //    m_Slots[i] = { static_cast<Defs::Item>(i), 1 };
     
     //Avoid writing glm a thousand times in some of these functions
     using namespace glm;
@@ -30,12 +30,12 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     LoadRecipes(recipes_2x2, recipes_3x3);
 }
 
-void Inventory::AddToNewSlot(Defs::Sprite type)
+void Inventory::AddToNewSlot(Defs::Item type)
 {
     //check for a stacking slot first
     for (std::optional<InventoryEntry>& slot : m_Slots) {
-        if (slot.has_value() && slot->block_type == type && slot->block_count < s_MaxItemsPerSlot) {
-            slot->block_count++;
+        if (slot.has_value() && slot->item_type == type && slot->item_count < s_MaxItemsPerSlot) {
+            slot->item_count++;
             return;
         }
     }
@@ -95,7 +95,7 @@ void Inventory::HandleInventorySelection()
                             return;
                         }
                         if (slot.has_value() && slot->CanBeInserted(m_PendingEntry.value())) {
-                            slot->block_count += m_PendingEntry->block_count;
+                            slot->item_count += m_PendingEntry->item_count;
                             m_PendingEntry = std::nullopt;
                             return;
                         }
@@ -103,10 +103,10 @@ void Inventory::HandleInventorySelection()
                     } else {
                         //Grab a single block unit from that entry or the whole stack if right clicking
                         if (slot.has_value()) {
-                            MC_ASSERT(slot->block_count != 0, "this entry should have been deleted previously");
+                            MC_ASSERT(slot->item_count != 0, "this entry should have been deleted previously");
                             if (mouse_left_state) {
-                                slot->block_count--;
-                                m_PendingEntry = { slot->block_type, 1 };
+                                slot->item_count--;
+                                m_PendingEntry = { slot->item_type, 1 };
                                 ClearUsedSlots();
                             }
                             else if(mouse_right_state) {
@@ -142,8 +142,8 @@ void Inventory::HandleInventorySelection()
                             m_PendingEntry = std::nullopt;
                             return;
                         }
-                        if (slot.has_value() && slot->block_count + m_PendingEntry->block_count <= s_MaxItemsPerSlot) {
-                            slot->block_count += m_PendingEntry->block_count;
+                        if (slot.has_value() && slot->item_count + m_PendingEntry->item_count <= s_MaxItemsPerSlot) {
+                            slot->item_count += m_PendingEntry->item_count;
                             ProcessRecipes();
                             m_PendingEntry = std::nullopt;
                             return;
@@ -151,10 +151,10 @@ void Inventory::HandleInventorySelection()
                     }
                     else {
                         if (slot.has_value()) {
-                            MC_ASSERT(slot->block_count != 0, "this entry should have been deleted previously");
+                            MC_ASSERT(slot->item_count != 0, "this entry should have been deleted previously");
                             if (mouse_left_state) {
-                                slot->block_count--;
-                                m_PendingEntry = { slot->block_type, 1 };
+                                slot->item_count--;
+                                m_PendingEntry = { slot->item_type, 1 };
                                 ClearUsedSlots();
                             }
                             else if (mouse_right_state) {
@@ -181,7 +181,7 @@ void Inventory::HandleInventorySelection()
             if (dx >= x_start && dy >= y_start && dx < x_start + x_size && dy < y_start + y_size) {
                 for (auto& slot : m_CraftingSlots)
                     if (slot.has_value())
-                        slot->block_count--;
+                        slot->item_count--;
 
                 ClearUsedSlots();
                 m_PendingEntry = std::exchange(m_ProductEntry, std::nullopt);
@@ -271,8 +271,8 @@ void Inventory::ScreenRender()
         m_CursorIndex = (m_CursorIndex - 1) % 9;
 
     //Assign the selection to the right variable
-    std::optional<InventoryEntry> block_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
-    Defs::g_InventorySelectedBlock = block_type.has_value() ? block_type->block_type : Defs::Sprite::Dirt;
+    std::optional<InventoryEntry> item_type = m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
+    Defs::g_InventorySelectedBlock = item_type.has_value() ? item_type->item_type : Defs::Item::Dirt;
     
 
     u32 scr_inventory_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenInventory);
@@ -306,37 +306,37 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
         //Drawing block count
         //Number testing, needs to be removed soon
         glEnable(GL_BLEND);
-        m_TextRenderer.DrawString(std::to_string(entry.block_count), num_transform);
+        m_TextRenderer.DrawString(std::to_string(entry.item_count), num_transform);
         glDisable(GL_BLEND);
     };
 
     //Drawing actual block
-    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.item_type), "texture_inventory");
     switch (entry_type) {
     case EntryType::Default: {
-            auto [icon_transform, num_transform] = SlotTransform(binding_index, entry.block_count >= 10);
+            auto [icon_transform, num_transform] = SlotTransform(binding_index, entry.item_count >= 10);
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, icon_transform);
             draw_string_basic(num_transform);
         } return;
     case EntryType::Screen: {
-            auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.block_count >= 10);
+            auto [screen_slot_transform, num_transform] = SlotScreenTransform(binding_index - Defs::g_InventoryInternalSlotsCount, entry.item_count >= 10);
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
             draw_string_basic(num_transform);
         } return;
     case EntryType::Crafting_2x2:
     case EntryType::Crafting_3x3: {
-            auto [screen_slot_transform, num_transform] = SlotCraftingTransform(entry_type == EntryType::Crafting_3x3, binding_index, entry.block_count >= 10);
+            auto [screen_slot_transform, num_transform] = SlotCraftingTransform(entry_type == EntryType::Crafting_3x3, binding_index, entry.item_count >= 10);
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
             draw_string_basic(num_transform);
         } return;
 
     case EntryType::CraftingProduct: {
-            auto [screen_slot_transform, num_transform] = SlotCraftingProductTransform(entry.block_count >= 10);
+            auto [screen_slot_transform, num_transform] = SlotCraftingProductTransform(entry.item_count >= 10);
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, screen_slot_transform);
             draw_string_basic(num_transform);
         } return;
     case EntryType::Pending: {
-            m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.block_type), "texture_inventory");
+            m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.item_type), "texture_inventory");
 
             Window& wnd = *m_State.game_window;
             double dx, dy;
@@ -347,9 +347,9 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
             GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_entry_vm, nullptr, pos_mat);
 
             glEnable(GL_BLEND);
-            f32 factor = entry.block_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
+            f32 factor = entry.item_count >= 10 ? pending_double_digit_offset : pending_single_digit_offset;
             glm::ivec2 number_padding(2, 2);
-            m_TextRenderer.DrawString(std::to_string(entry.block_count), glm::ivec2(dx + factor, dy) + number_padding);
+            m_TextRenderer.DrawString(std::to_string(entry.item_count), glm::ivec2(dx + factor, dy) + number_padding);
             glDisable(GL_BLEND);
         } return;
     }
@@ -364,12 +364,12 @@ std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
 void Inventory::ClearUsedSlots()
 {
     for (auto& entry : m_Slots) {
-        if (entry.has_value() && entry->block_count == 0)
+        if (entry.has_value() && entry->item_count == 0)
             entry = std::nullopt;
     }
 
     for (auto& entry : m_CraftingSlots) {
-        if (entry.has_value() && entry->block_count == 0)
+        if (entry.has_value() && entry->item_count == 0)
             entry = std::nullopt;
     }
 }
@@ -500,8 +500,8 @@ std::pair<glm::mat4, glm::vec2> Inventory::SlotCraftingProductTransform(bool two
 
 bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::optional<InventoryEntry>& second)
 {
-    if (first.has_value() && first->block_type == second->block_type && first->block_count + second->block_count <= s_MaxItemsPerSlot) {
-        first->block_count += second->block_count;
+    if (first.has_value() && first->item_type == second->item_type && first->item_count + second->item_count <= s_MaxItemsPerSlot) {
+        first->item_count += second->item_count;
         second = std::nullopt;
         return true;
     }
@@ -519,10 +519,10 @@ void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x
     recipes_2x2.clear();
     recipes_3x3.clear();
     //Lets get rusty poggers
-    auto some = [](Defs::Sprite type) {return std::make_optional(type); };
+    auto some = [](Defs::Item type) {return std::make_optional(type); };
     auto none = []() {return std::nullopt; };
     
-    using enum Defs::Sprite;
+    using enum Defs::Item;
     recipes_2x2.push_back({some(Wood),          none(),
                            none(),              none(),
                            {WoodPlanks, 4} });

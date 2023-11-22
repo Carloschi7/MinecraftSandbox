@@ -8,13 +8,13 @@
 
 struct InventoryEntry
 {
-	Defs::Sprite block_type;
-	u8 block_count; //Max 64 like in the original, so small type used
+	Defs::Item item_type;
+	u8 item_count; //Max 64 like in the original, so small type used
 
 	bool CanBeInserted(InventoryEntry other) 
 	{
-		return block_type == other.block_type &&
-			block_count + other.block_count <= Defs::g_MaxItemsPerSlot;
+		return item_type == other.item_type &&
+			item_count + other.item_count <= Defs::g_MaxItemsPerSlot;
 	}
 };
 
@@ -67,7 +67,7 @@ struct Recipe2x2
 	template<uint32_t count>
 	using EntryArray = std::array<std::optional<InventoryEntry>, count>;
 	template<uint32_t count>
-	using IngredientArray = std::array<std::optional<Defs::Sprite>, count>;
+	using IngredientArray = std::array<std::optional<Defs::Item>, count>;
 
 	//NOTE these probably should be riconverted to counted entries for much more
 	//specific crafting. This feature will not be used for now
@@ -77,9 +77,9 @@ struct Recipe2x2
 	//Accepts maximum entry array dimensions (crafting-table like)
 	bool Matches(const EntryArray<Defs::g_CraftingSlotsMaxCount>& entry_array) const 
 	{
-		auto equals = [](const std::optional<InventoryEntry>& a, const std::optional<Defs::Sprite>& b) ->bool
+		auto equals = [](const std::optional<InventoryEntry>& a, const std::optional<Defs::Item>& b) ->bool
 		{
-			return(!a.has_value() && !b.has_value()) || (a.has_value() && b.has_value() && a.value().block_type == b.value());
+			return(!a.has_value() && !b.has_value()) || (a.has_value() && b.has_value() && a.value().item_type == b.value());
 		};
 
 		//Assert the number of items is the same, so there wont be extra items inserted
@@ -115,16 +115,16 @@ struct Recipe3x3
 	template<uint32_t count>
 	using EntryArray = std::array<std::optional<InventoryEntry>, count>;
 	template<uint32_t count>
-	using IngredientArray = std::array<std::optional<Defs::Sprite>, count>;
+	using IngredientArray = std::array<std::optional<Defs::Item>, count>;
 
 	IngredientArray<Defs::g_CraftingSlotsMaxCount> ingredients;
 	InventoryEntry product;
 
 	bool Matches(const EntryArray<Defs::g_CraftingSlotsMaxCount>& entry_array) const
 	{
-		auto equals = [](const std::optional<InventoryEntry>& a, const std::optional<Defs::Sprite>& b) ->bool
+		auto equals = [](const std::optional<InventoryEntry>& a, const std::optional<Defs::Item>& b) ->bool
 		{
-			return(!a.has_value() && !b.has_value()) || (a.has_value() && b.has_value() && a.value().block_type == b.value());
+			return(!a.has_value() && !b.has_value()) || (a.has_value() && b.has_value() && a.value().item_type == b.value());
 		};
 
 		for (u8 i = 0; i < Defs::g_CraftingSlotsMaxCount; i++) {
@@ -143,7 +143,7 @@ class Inventory
 {
 public:
 	Inventory(TextRenderer& text_renderer);
-	void AddToNewSlot(Defs::Sprite block);
+	void AddToNewSlot(Defs::Item block);
 	void HandleInventorySelection();
 	void ProcessRecipes();
 	void InternalRender();

@@ -22,7 +22,7 @@ namespace Memory
 	{
 		MC_ASSERT(arena != nullptr);
 		if (arena->mapped_space.memory) {
-			std::free(arena->mapped_space.memory);
+			::operator delete(arena->mapped_space.memory);
 			arena->mapped_space.memory_size = 0;
 			arena->mapped_space.mapped_regions.clear();
 

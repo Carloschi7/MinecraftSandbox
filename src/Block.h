@@ -9,10 +9,10 @@ class Chunk;
 class Block
 {
 public:
-    Block(glm::u8vec3 position, const Defs::Sprite& bt);
+    Block(glm::u8vec3 position, const Defs::Item& bt);
     void UpdateRenderableSides(const Chunk* parent, const glm::vec3& camera_pos);
 
-    const Defs::Sprite& Type() const;
+    const Defs::Item& Type() const;
 
     const GlCore::DrawableData& DrawableSides() const;
     void AddNormal(const glm::vec3& norm);
@@ -38,7 +38,7 @@ private:
     //Drawable sides of a cube(max 3 in 3d space obv)
     //Determines which sides can be drawn
     GlCore::DrawableData m_DrawableSides;
-    Defs::Sprite m_Sprite;
+    Defs::Item m_Sprite;
 };
 
 constexpr int i = sizeof(Block);
@@ -47,13 +47,13 @@ constexpr int i = sizeof(Block);
 class Drop 
 {
 public:
-    Drop(const glm::vec3& position, Defs::Sprite type);
+    Drop(const glm::vec3& position, Defs::Item type);
     Drop(const Drop&) = delete;
     Drop(Drop&& right) noexcept;
 
     Drop& operator=(Drop&& right) noexcept;
 
-    inline Defs::Sprite Type() const { return m_Type; }
+    inline Defs::Item Type() const { return m_Type; }
 
     void Render();
     void Update(Chunk* chunk, f32 elapsed_time);
@@ -63,7 +63,7 @@ private:
     glm::vec3 m_Velocity;
     glm::vec3 m_Acceleration;
 
-    Defs::Sprite m_Type;
+    Defs::Item m_Type;
     f32 m_RotationAngle;
     glm::mat4 m_Model;
 };

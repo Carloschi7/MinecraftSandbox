@@ -26,7 +26,7 @@ namespace Defs
     const glm::vec3 g_LightDirection{ 0.0f, -1.0f, 0.0f };
     std::atomic<u32> g_SelectedBlock{static_cast<u32>(-1)};
     std::atomic<u32> g_SelectedChunk{static_cast<u32>(-1)};
-    Defs::Sprite g_InventorySelectedBlock = Defs::Sprite::Dirt;
+    Defs::Item g_InventorySelectedBlock = Defs::Item::Dirt;
     bool g_EnvironmentChange = false;
     //Shorthand for Sector SerialiZeD
     std::string g_SerializedFileFormat = ".sszd";

@@ -21,7 +21,7 @@ namespace Defs
 		Normal, Creative
 	};
 
-	enum class Sprite : u8
+	enum class Item : u8
 	{
 		//Blocks
 		Dirt = 0,
@@ -35,6 +35,10 @@ namespace Defs
 		WoodStick,
 		WoodPickaxe
 	};
+
+	static inline bool IsBlock(Item sprite) {
+		return !(sprite >= Item::WoodStick);
+	}
 
 	enum class HitDirection : u8
 	{
@@ -133,7 +137,7 @@ namespace Defs
 	static constexpr u8 g_InventoryScreenSlotsCount = 9;
 	static constexpr u8 g_CraftingSlotsMaxCount = 9;
 	static constexpr u8 g_MaxItemsPerSlot = 64;
-	extern Defs::Sprite g_InventorySelectedBlock;
+	extern Defs::Item g_InventorySelectedBlock;
 	//Used to track how many sections have been pushed
 	extern std::unordered_set<u32> g_PushedSections;
 	extern std::string g_SerializedFileFormat;

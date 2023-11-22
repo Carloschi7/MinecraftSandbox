@@ -17,6 +17,8 @@ namespace GlCore
     void LoadResources();
     void UpdateCamera();
     void RenderSkybox();
+    //Renders the items that is held by the player
+    void RenderHeldItem(Defs::Item sprite);
     void RenderCrossaim();
     void UpdateShadowFramebuffer();
 

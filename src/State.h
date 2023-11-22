@@ -18,6 +18,8 @@ namespace GlCore
 	struct State
 	{
 		State() = default;
+		State(const State&) = delete;
+		State& operator=(const State&) = delete;
 		~State();
 
 		Window*					game_window;

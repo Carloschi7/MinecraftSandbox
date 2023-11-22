@@ -2,6 +2,7 @@
 #include "Vertices.h"
 #include "Block.h"
 #include "State.h"
+#include "algs_3d.h"
 
 namespace GlCore
 {
@@ -129,7 +130,30 @@ namespace GlCore
         //SetViewMatrix with no translation
         glm::mat4 view = glm::mat4(glm::mat3(pstate->camera->GetViewMatrix()));
         Renderer::Render(pstate->cubemap_shader, pstate->cubemap->GetVertexManager(), pstate->cubemap, view);
-    
+    }
+
+    void RenderHeldItem(Defs::Item sprite)
+    {
+        State& state = *pstate;
+
+        state.drop_shader->Use();
+        state.drop_vm->BindVertexArray();
+
+        state.drop_shader->Uniform1i(static_cast<u32>(sprite), "drop_texture_index");
+
+        //Rotate the block selected to the bottom-right section of the player view
+        constexpr f32 theta = glm::radians(35.0f);
+
+        glm::vec3 relative_up = state.camera->ComputeRelativeUp();
+        const glm::vec3& front = state.camera->GetFront();
+        glm::vec3 new_rot_axis = Algs3D::RotateVector(relative_up, front, -theta);
+        glm::vec3 translation = Algs3D::RotateVector(front, new_rot_axis, theta) - glm::vec3(0.0f, 0.1f, 0.0f);
+
+        glm::mat4 position_mat = glm::translate(glm::mat4(1.0f), state.camera->position + translation);
+        position_mat = glm::scale(position_mat, glm::vec3(0.5f));
+        state.drop_shader->UniformMat4f(position_mat, "model");
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
     void RenderCrossaim()
