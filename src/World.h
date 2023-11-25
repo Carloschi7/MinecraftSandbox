@@ -12,7 +12,7 @@ class Inventory;
 struct WorldEvent
 {
     u8 crafting_table_open_command : 1;
-    u8 unused0 : 1;
+    u8 held_sprite_render : 1;
     u8 unused1 : 1;
     u8 unused2 : 1;
     u8 unused3 : 1;
@@ -26,7 +26,7 @@ public:
     World();
     ~World();
     //Renders visible world
-    void Render(const glm::vec3& camera_position, const glm::vec3& camera_direction);
+    void Render(const Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
     [[nodiscard]] WorldEvent UpdateScene(Inventory& inventory, f32 elapsed_time);
     [[nodiscard]] WorldEvent HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
     void CheckPlayerCollision(const glm::vec3& position);

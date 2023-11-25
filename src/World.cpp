@@ -86,7 +86,7 @@ World::~World()
 		Memory::Delete<Chunk>(m_State.memory_arena, chunk_addr);
 }
 
-void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_direction)
+void World::Render(const Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction)
 {
 	//Draw to depth framebuffer
 	auto block_vm = m_State.block_vm;
@@ -109,7 +109,7 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 
 		glViewport(0, 0, GlCore::g_DepthMapWidth, GlCore::g_DepthMapHeight);
 		m_State.shadow_framebuffer->Bind();
-		//Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
+		Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
 
 		//Update depth framebuffer
 		GlCore::UpdateShadowFramebuffer();
@@ -138,6 +138,22 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 	}
 
 	//Render skybox
+
+	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	//Render the inventory selected block with the drop shader in a stencil instance
+	auto selected_block_opt = inventory.HoveredFromSelector();
+	bool held_sprite_render = false;
+	if (selected_block_opt.has_value()) {
+		glStencilFunc(GL_ALWAYS, 1, 0xff);
+		glStencilMask(0xff);
+		Window::ClearScreen(GL_STENCIL_BUFFER_BIT);
+		GlCore::RenderHeldItem(selected_block_opt->item_type);
+		glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+		glStencilMask(0x00);
+
+		held_sprite_render = true;
+	}
 
 	GlCore::RenderSkybox();
 
@@ -179,6 +195,9 @@ void World::Render(const glm::vec3& camera_position, const glm::vec3& camera_dir
 
 	GlCore::RenderCrossaim();
 	GlCore::g_Drawcalls = 0;
+
+	if(held_sprite_render)
+		glStencilFunc(GL_ALWAYS, 1, 0xff);
 }
 
 WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)

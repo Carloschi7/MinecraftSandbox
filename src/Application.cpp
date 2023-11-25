@@ -166,32 +166,19 @@ void Application::OnUserRun()
             }
 
             //Rendering ---------------------
-            state.shadow_framebuffer->Bind();
+            /*state.shadow_framebuffer->Bind();
             Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
             FrameBuffer::BindDefault();
             glStencilFunc(GL_ALWAYS, 1, 0xff);
             glStencilMask(0xff);
-            Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);*/
             
             GlCore::UniformViewMatrix();
-
-            //Render the inventory selected block with the drop shader in a stencil instance
-            auto selected_block_opt = game_inventory.HoveredFromSelector();
-            bool held_sprite_render = false;
-            if (selected_block_opt.has_value() && Defs::IsBlock(selected_block_opt->item_type)) {
-                GlCore::RenderHeldItem(selected_block_opt->item_type);
-                glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-                glStencilMask(0x00);
-
-                held_sprite_render = true;
-            }
 
             //Copy these vectors to make the camera indipendent from the logic thread
             glm::vec3 camera_position = m_Camera.position;
             glm::vec3 camera_direction = m_Camera.GetFront();
-            world_instance.Render(camera_position, camera_direction);
-            if(held_sprite_render)
-                glStencilFunc(GL_ALWAYS, 1, 0xff);
+            world_instance.Render(game_inventory, camera_position, camera_direction);
             game_inventory.ScreenRender();
 
             if (Defs::g_ViewMode == Defs::ViewMode::Inventory) {

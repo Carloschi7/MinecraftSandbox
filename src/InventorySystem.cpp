@@ -11,6 +11,7 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     //for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
     //    m_Slots[i] = { static_cast<Defs::Item>(i), 1 };
     
+    m_Slots[0] = { static_cast<Defs::Item>(Defs::Item::WoodPickaxe), 1 };
     //Avoid writing glm a thousand times in some of these functions
     using namespace glm;
 
@@ -142,7 +143,7 @@ void Inventory::HandleInventorySelection()
                             m_PendingEntry = std::nullopt;
                             return;
                         }
-                        if (slot.has_value() && slot->item_count + m_PendingEntry->item_count <= s_MaxItemsPerSlot) {
+                        if (slot.has_value() && slot->CanBeInserted(m_PendingEntry.value())) {
                             slot->item_count += m_PendingEntry->item_count;
                             ProcessRecipes();
                             m_PendingEntry = std::nullopt;
@@ -336,8 +337,6 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
             draw_string_basic(num_transform);
         } return;
     case EntryType::Pending: {
-            m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.item_type), "texture_inventory");
-
             Window& wnd = *m_State.game_window;
             double dx, dy;
             wnd.GetCursorCoord(dx, dy);
@@ -358,6 +357,11 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
 std::optional<InventoryEntry>& Inventory::HoveredFromSelector()
 {
     //Should always be defined when the method is called
+    return m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
+}
+
+const std::optional<InventoryEntry>& Inventory::HoveredFromSelector() const
+{
     return m_Slots[Defs::g_InventoryInternalSlotsCount + m_CursorIndex];
 }
 

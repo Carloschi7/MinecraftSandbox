@@ -40,7 +40,9 @@ namespace GlCore
 		VertexManager*			water_vm;			
 		VertexManager*			inventory_vm;		
 		VertexManager*			inventory_entry_vm;	
-		VertexManager*			crossaim_vm;			
+		VertexManager*			crossaim_vm;		
+		//This is used to render 2d sprites when the player holds them
+		VertexManager*			decal2d_vm;
 		FrameBuffer*			shadow_framebuffer;	
 		CubeMap*				cubemap;				
 	};

@@ -149,6 +149,7 @@ public:
 	void InternalRender();
 	void ScreenRender();
 	std::optional<InventoryEntry>& HoveredFromSelector();
+	const std::optional<InventoryEntry>& HoveredFromSelector() const;
 	void ClearUsedSlots();
 	void ViewCleanup();
 private:

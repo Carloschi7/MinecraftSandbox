@@ -26,6 +26,7 @@ namespace GlCore
 		Memory::DeleteUnchecked(arena, inventory_vm);
 		Memory::DeleteUnchecked(arena, inventory_entry_vm);
 		Memory::DeleteUnchecked(arena, crossaim_vm);
+		Memory::DeleteUnchecked(arena, decal2d_vm);
 		Memory::DeleteUnchecked(arena, shadow_framebuffer);
 		Memory::DeleteUnchecked(arena, cubemap);
 	}

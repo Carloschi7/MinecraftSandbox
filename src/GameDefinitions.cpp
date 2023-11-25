@@ -210,11 +210,11 @@ namespace Defs
             glm::vec2 compass_direction_data[compass_directions_count] = { glm::vec2(1.0f, 0.0f), glm::vec2(-1.0f, 0.0f), glm::vec2(0.0f, 1.0f), glm::vec2(0.0f, -1.0f) };
 
             Memory::Arena* ma = GlCore::pstate->memory_arena;
-            directions = Memory::Get<glm::vec2>(ma, Memory::Allocate(ma, directions_count * sizeof(glm::vec2)));
+            directions = static_cast<glm::vec2*>(Memory::AllocateUnchecked(ma, directions_count * sizeof(glm::vec2)));
             std::memcpy(directions, directions_data, sizeof(glm::vec2) * directions_count);
-            compass_directions = Memory::Get<glm::vec2>(ma, Memory::Allocate(ma, compass_directions_count * sizeof(glm::vec2)));
+            compass_directions = static_cast<glm::vec2*>(Memory::AllocateUnchecked(ma, compass_directions_count * sizeof(glm::vec2)));
             std::memcpy(compass_directions, compass_direction_data, sizeof(glm::vec2) * compass_directions_count);
-            ma->unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data) + Memory::padding * 2;
+            ma->unfreed_mem += sizeof(directions_data) + sizeof(compass_direction_data);
         }
 
         //check for extra borders(should be rarely called)
@@ -501,7 +501,7 @@ namespace Physics {
         f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.3f ? 0.3f : clamped_y;
         //the pow function is used to make the result higher on lower elapsed_time values, to make the jump_data speed
         //more linear as the rendering gets heavier, the exponent is arbitrary for now
-        camera.position.y += Defs::jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);
+        camera.position.y += jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);
     }
     void ProcessPlayerAxisMovement(f32 elapsed_time)
     {

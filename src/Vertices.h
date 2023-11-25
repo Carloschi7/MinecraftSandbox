@@ -63,6 +63,17 @@ namespace GlCore
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
     };
 
+    static const std::vector<f32> pos_and_tex_coord_decal2d
+    {
+        //Back
+        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
+         0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     one_third,
+         0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
+         0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
+        -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    2.0f * one_third,
+        -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
+    };
+
     static const std::vector<f32> water_layer
     {               
         -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
@@ -112,6 +123,15 @@ namespace GlCore
         lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 3 * sizeof(f32) });
         lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 6 * sizeof(f32) });
         return { pos_and_tex_coord_sided, lyt };
+    }
+
+    inline VertexData Decal2D()
+    {
+        Layout lyt;
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 0 });
+        lyt.PushAttribute({ 3, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 3 * sizeof(f32) });
+        lyt.PushAttribute({ 2, GL_FLOAT, GL_FALSE, 8 * sizeof(f32), 6 * sizeof(f32) });
+        return { pos_and_tex_coord_decal2d, lyt };
     }
 
     inline VertexData WaterLayer()

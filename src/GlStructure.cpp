@@ -75,6 +75,9 @@ namespace GlCore
         rd = InventoryEntryData();
         state.inventory_entry_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
 
+        rd = Decal2D();
+        state.decal2d_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+
         //Load block and drop resources
         VertexData cd = Cube();
         state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
@@ -84,19 +87,20 @@ namespace GlCore
 
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
+        using enum Defs::TextureBinding;
         Utils::AVector<TextureLoaderType> textures
         {
             //Block textures
-            {"texture_dirt",            Defs::TextureBinding::TextureDirt},
-            {"texture_grass",           Defs::TextureBinding::TextureGrass},
-            {"texture_sand",            Defs::TextureBinding::TextureSand},
-            {"texture_wood",            Defs::TextureBinding::TextureWood},
-            {"texture_wood_planks",     Defs::TextureBinding::TextureWoodPlanks},
-            {"texture_leaves",          Defs::TextureBinding::TextureLeaves},
-            {"texture_crafting_table",  Defs::TextureBinding::TextureCraftingTable},
+            {"texture_dirt",            TextureDirt},
+            {"texture_grass",           TextureGrass},
+            {"texture_sand",            TextureSand},
+            {"texture_wood",            TextureWood},
+            {"texture_wood_planks",     TextureWoodPlanks},
+            {"texture_leaves",          TextureLeaves},
+            {"texture_crafting_table",  TextureCraftingTable},
             //Item textures
-            {"texture_wood_stick",  Defs::TextureBinding::TextureWoodStick},
-            {"texture_wood_pickaxe", Defs::TextureBinding::TextureWoodPickaxe}
+            {"texture_wood_stick",      TextureWoodStick},
+            {"texture_wood_pickaxe",    TextureWoodPickaxe}
         };
 
         //The binding matches the vector position
@@ -135,25 +139,38 @@ namespace GlCore
     void RenderHeldItem(Defs::Item sprite)
     {
         State& state = *pstate;
+        Camera& camera = *pstate->camera;
+        bool is_block = Defs::IsBlock(sprite);
 
         state.drop_shader->Use();
-        state.drop_vm->BindVertexArray();
-
         state.drop_shader->Uniform1i(static_cast<u32>(sprite), "drop_texture_index");
+        if (is_block) 
+            state.drop_vm->BindVertexArray();
+        else 
+            state.decal2d_vm->BindVertexArray();
 
         //Rotate the block selected to the bottom-right section of the player view
-        constexpr f32 theta = glm::radians(35.0f);
+        f32 theta = is_block ? glm::radians(35.0f) : glm::radians(20.0f);
+        f32 extra_rotation = is_block ? 0.0f : glm::radians(-75.0f);
 
-        glm::vec3 relative_up = state.camera->ComputeRelativeUp();
-        const glm::vec3& front = state.camera->GetFront();
+        glm::vec3 relative_up = camera.ComputeRelativeUp();
+        const glm::vec3& front = camera.GetFront();
         glm::vec3 new_rot_axis = Algs3D::RotateVector(relative_up, front, -theta);
         glm::vec3 translation = Algs3D::RotateVector(front, new_rot_axis, theta) - glm::vec3(0.0f, 0.1f, 0.0f);
 
-        glm::mat4 position_mat = glm::translate(glm::mat4(1.0f), state.camera->position + translation);
+        glm::mat4 position_mat = glm::translate(glm::mat4(1.0f), camera.position + translation);
+        //rotation to the view perspective
+        position_mat = glm::rotate(position_mat, camera.RotationY(), glm::cross(camera.GetFront(), relative_up));
+        position_mat = glm::rotate(position_mat, -camera.RotationX() + extra_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
         position_mat = glm::scale(position_mat, glm::vec3(0.5f));
         state.drop_shader->UniformMat4f(position_mat, "model");
 
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        if (is_block) {
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+        else {
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
     }
 
     void RenderCrossaim()
