@@ -100,6 +100,8 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 
 	u32 count = 0, water_layer_count = 0;
 
+	glEnable(GL_DEPTH_TEST);
+
 	//If at least one of this conditions are verified, we need to update the shadow texture
 	if (Defs::g_EnvironmentChange || glm::length(m_LastPos - camera_position) > 20.0f)
 	{
@@ -141,19 +143,7 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 	m_State.screen_framebuffer->Bind();
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Render the inventory selected block with the drop shader in a stencil instance
-	auto selected_block_opt = inventory.HoveredFromSelector();
-	bool held_sprite_render = false;
-	if (selected_block_opt.has_value()) {
-		glStencilFunc(GL_ALWAYS, 1, 0xff);
-		glStencilMask(0xff);
-		Window::ClearScreen(GL_STENCIL_BUFFER_BIT);
-		GlCore::RenderHeldItem(selected_block_opt->item_type);
-		glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-		glStencilMask(0x00);
 
-		held_sprite_render = true;
-	}
 
 	GlCore::RenderSkybox();
 
@@ -196,17 +186,27 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 	GlCore::RenderCrossaim();
 	GlCore::g_Drawcalls = 0;
 
-	if(held_sprite_render)
-		glStencilFunc(GL_ALWAYS, 1, 0xff);
-
+	//Render the inventory selected block with the drop shader in a stencil instance
 	FrameBuffer::BindDefault();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
-	glClear(GL_COLOR_BUFFER_BIT);
+
 	u32 screen_framebuffer_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenFramebuffer);
 	m_State.screen_framebuffer->BindFrameTexture(screen_framebuffer_binding);
 	m_State.screen_shader->Uniform1i(screen_framebuffer_binding, "texture_screen");
 	GlCore::Renderer::Render(m_State.screen_shader, *m_State.screen_vm, nullptr, {});
+
 	glEnable(GL_DEPTH_TEST);
+	auto selected_block_opt = inventory.HoveredFromSelector();
+	if (selected_block_opt.has_value()) {
+		//Window::ClearScreen(GL_STENCIL_BUFFER_BIT);
+		glEnable(GL_BLEND);
+		glBlendEquation(GL_FUNC_ADD);
+		GlCore::RenderHeldItem(selected_block_opt->item_type);
+		glBlendEquation(GL_MIN);
+		glDisable(GL_BLEND);
+	}
+	glDisable(GL_DEPTH_TEST);
 }
 
 WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)

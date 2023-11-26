@@ -11,7 +11,7 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     //for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
     //    m_Slots[i] = { static_cast<Defs::Item>(i), 1 };
     
-    m_Slots[0] = { static_cast<Defs::Item>(Defs::Item::WoodPickaxe), 1 };
+    m_Slots[27] = { static_cast<Defs::Item>(Defs::Item::WoodPickaxe), 1 };
     //Avoid writing glm a thousand times in some of these functions
     using namespace glm;
 
@@ -217,8 +217,6 @@ void Inventory::ProcessRecipes()
 
 void Inventory::InternalRender()
 {
-    glDisable(GL_DEPTH_TEST);
-
     //Actual inventory rendering
     Defs::TextureBinding texture = view_crafting_table ? Defs::TextureBinding::TextureCraftingTableInventory : Defs::TextureBinding::TextureInventory;
     u32 inventory_binding = static_cast<u32>(texture);
@@ -255,15 +253,10 @@ void Inventory::InternalRender()
     //Draw selection
     if (m_PendingEntry.has_value()) 
         RenderEntry(EntryType::Pending, m_PendingEntry.value(), {});
-
-
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Inventory::ScreenRender()
 {
-    glDisable(GL_DEPTH_TEST);
-
     //Move cursor if necessary
     Window& wnd = *m_State.game_window;
     if (wnd.IsMouseWheelUp() && m_CursorIndex < Defs::g_InventoryScreenSlotsCount - 1)
@@ -296,8 +289,6 @@ void Inventory::ScreenRender()
     m_State.inventory_shader->Uniform1i(selector_binding, "texture_inventory");
     auto [screen_slot_transform, _] = SlotScreenTransform(m_CursorIndex, true);
     GlCore::Renderer::Render(m_State.inventory_shader, *m_State.inventory_vm, nullptr, screen_slot_transform);
-
-    glEnable(GL_DEPTH_TEST);
 }
 
 void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 binding_index)

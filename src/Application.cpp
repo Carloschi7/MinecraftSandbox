@@ -131,10 +131,6 @@ void Application::OnUserRun()
         glBlendEquation(GL_MIN);
         glDisable(GL_BLEND);
 
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_STENCIL_TEST);
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
         Utils::Timer elapsed_timer;
         thread1_record_timer.StartTimer();
         //Standard value for the first frame
@@ -166,13 +162,6 @@ void Application::OnUserRun()
             }
 
             //Rendering ---------------------
-            /*state.shadow_framebuffer->Bind();
-            Window::ClearScreen(GL_DEPTH_BUFFER_BIT);
-            FrameBuffer::BindDefault();
-            glStencilFunc(GL_ALWAYS, 1, 0xff);
-            glStencilMask(0xff);
-            Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);*/
-            
             GlCore::UniformViewMatrix();
 
             //Copy these vectors to make the camera indipendent from the logic thread
@@ -211,11 +200,9 @@ void Application::OnUserRun()
                 thread1_record = elapsed_time;
                 thread1_record_timer.StartTimer();
             }
-            glDisable(GL_DEPTH_TEST);
             info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", { 0, 0 });
             info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0, 40 });
             info_text_renderer.DrawString("mem:" + std::to_string(static_cast<f32>(mem_arena->mapped_space.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
-            glEnable(GL_DEPTH_TEST);
             m_Window.Update();
         }
 

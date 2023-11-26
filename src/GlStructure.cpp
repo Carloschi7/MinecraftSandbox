@@ -82,6 +82,7 @@ namespace GlCore
         rd = ScreenMesh();
         state.screen_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
         state.screen_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/screen.shader"));
+        state.screen_shader->UniformMat4f(glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 15.0f), "proj");
         state.screen_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, Defs::g_ScreenWidth, Defs::g_ScreenHeight, FrameBufferType::COLOR_ATTACHMENT);
 
         //Load block and drop resources
