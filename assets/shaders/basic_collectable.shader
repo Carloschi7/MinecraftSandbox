@@ -64,3 +64,4 @@ vec4 choose_tex(int index)
 void main() {
 	OutColor = choose_tex(drop_texture_index);
 }
+
