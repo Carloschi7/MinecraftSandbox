@@ -78,6 +78,12 @@ namespace GlCore
         rd = Decal2D();
         state.decal2d_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
 
+        //Screen texture
+        rd = ScreenMesh();
+        state.screen_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        state.screen_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/screen.shader"));
+        state.screen_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, Defs::g_ScreenWidth, Defs::g_ScreenHeight, FrameBufferType::COLOR_ATTACHMENT);
+
         //Load block and drop resources
         VertexData cd = Cube();
         state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
@@ -144,10 +150,8 @@ namespace GlCore
 
         state.drop_shader->Use();
         state.drop_shader->Uniform1i(static_cast<u32>(sprite), "drop_texture_index");
-        if (is_block) 
-            state.drop_vm->BindVertexArray();
-        else 
-            state.decal2d_vm->BindVertexArray();
+        const VertexManager* cur = is_block ? state.drop_vm : state.decal2d_vm;
+        cur->BindVertexArray();
 
         //Rotate the block selected to the bottom-right section of the player view
         f32 theta = is_block ? glm::radians(35.0f) : glm::radians(20.0f);
@@ -165,12 +169,7 @@ namespace GlCore
         position_mat = glm::scale(position_mat, glm::vec3(0.5f));
         state.drop_shader->UniformMat4f(position_mat, "model");
 
-        if (is_block) {
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-        else {
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
+        glDrawArrays(GL_TRIANGLES, 0, cur->GetIndicesCount());
     }
 
     void RenderCrossaim()

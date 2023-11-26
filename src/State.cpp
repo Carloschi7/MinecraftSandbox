@@ -19,6 +19,8 @@ namespace GlCore
 		Memory::DeleteUnchecked(arena, inventory_shader);
 		Memory::DeleteUnchecked(arena, crossaim_shader);
 		Memory::DeleteUnchecked(arena, drop_shader);
+		Memory::DeleteUnchecked(arena, screen_shader);
+
 		Memory::DeleteUnchecked(arena, block_vm);
 		Memory::DeleteUnchecked(arena, drop_vm);
 		Memory::DeleteUnchecked(arena, depth_vm);
@@ -27,7 +29,11 @@ namespace GlCore
 		Memory::DeleteUnchecked(arena, inventory_entry_vm);
 		Memory::DeleteUnchecked(arena, crossaim_vm);
 		Memory::DeleteUnchecked(arena, decal2d_vm);
+		Memory::DeleteUnchecked(arena, screen_vm);
+
+		Memory::DeleteUnchecked(arena, screen_framebuffer);
 		Memory::DeleteUnchecked(arena, shadow_framebuffer);
+		
 		Memory::DeleteUnchecked(arena, cubemap);
 	}
 

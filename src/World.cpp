@@ -129,16 +129,16 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 		//Render any leftover data
 		GlCore::DispatchDepthRendering(depth_positions, count);
 
-		u32 depth_binding = static_cast<u32>(Defs::TextureBinding::TextureDepth);
+		u32 depth_binding = static_cast<u32>(Defs::TextureBinding::TextureDepthFramebuffer);
 		m_State.shadow_framebuffer->BindFrameTexture(depth_binding);
 		m_State.block_shader->Uniform1i(depth_binding, "texture_depth");
 
 		glViewport(0, 0, Defs::g_ScreenWidth, Defs::g_ScreenHeight);
-		FrameBuffer::BindDefault();
+		//FrameBuffer::BindDefault();
 	}
 
-	//Render skybox
-
+	//Scene renderpass
+	m_State.screen_framebuffer->Bind();
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Render the inventory selected block with the drop shader in a stencil instance
@@ -198,6 +198,15 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 
 	if(held_sprite_render)
 		glStencilFunc(GL_ALWAYS, 1, 0xff);
+
+	FrameBuffer::BindDefault();
+	glDisable(GL_DEPTH_TEST);
+	glClear(GL_COLOR_BUFFER_BIT);
+	u32 screen_framebuffer_binding = static_cast<u32>(Defs::TextureBinding::TextureScreenFramebuffer);
+	m_State.screen_framebuffer->BindFrameTexture(screen_framebuffer_binding);
+	m_State.screen_shader->Uniform1i(screen_framebuffer_binding, "texture_screen");
+	GlCore::Renderer::Render(m_State.screen_shader, *m_State.screen_vm, nullptr, {});
+	glEnable(GL_DEPTH_TEST);
 }
 
 WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)

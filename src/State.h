@@ -34,6 +34,7 @@ namespace GlCore
 		Shader*					inventory_shader;
 		Shader*					crossaim_shader;
 		Shader*					drop_shader;
+		Shader*					screen_shader;
 		VertexManager*			block_vm;	
 		VertexManager*			drop_vm;
 		VertexManager*			depth_vm;
@@ -43,7 +44,12 @@ namespace GlCore
 		VertexManager*			crossaim_vm;		
 		//This is used to render 2d sprites when the player holds them
 		VertexManager*			decal2d_vm;
+		VertexManager*			screen_vm;
+
+		//Framebuffer on which all the scene drawcalls will be executed
+		FrameBuffer*			screen_framebuffer;
 		FrameBuffer*			shadow_framebuffer;	
+		
 		CubeMap*				cubemap;				
 	};
 

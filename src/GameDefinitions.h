@@ -61,7 +61,8 @@ namespace Defs
 		TextureCraftingTableInventory,
 		TextureScreenInventory,
 		TextureScreenInventorySelector,
-		TextureDepth,
+		TextureScreenFramebuffer,
+		TextureDepthFramebuffer,
 		TextureText
 	};
 
