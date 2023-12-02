@@ -54,7 +54,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/State.h src/State.cpp
 		src/Macros.h
 		src/Utils.h
-		src/Vertices.h
+		src/Vertices.h src/Vertices.cpp
 		)
 
 target_link_libraries(${PROJECT_NAME} ${C7ENGINE_OPENGL_LIB} ${C7ENGINE_DEPENDENCIES} ${C7ENGINE_LIB_PATH})

@@ -12,6 +12,7 @@ namespace GlCore
         State& state = *pstate;
         Window& wnd = *state.game_window;
         Camera& cam = *state.camera;
+        MeshStorage& stg = *state.mesh_storage;
         Memory::Arena* allocator = state.memory_arena;
 
         cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
@@ -36,35 +37,35 @@ namespace GlCore
         //Loading crossaim data
         //We set the crossaim model matrix here, for now this shader is used only 
         //for drawing this
-        VertexData rd = CrossAim();
-        state.crossaim_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        MeshElement* elem = &stg.crossaim;
+        state.crossaim_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.crossaim_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_overlay.shader"));
         state.crossaim_shader->UniformMat4f(glm::scale(glm::mat4(1.0f), glm::vec3(0.01f)), "model");
 
         //Load water stuff
-        rd = WaterLayer();
-        state.water_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.water_layer;
+        state.water_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.water_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/water.shader"));
         state.water_shader->UniformMat4f(cam.GetProjMatrix(), "proj");
 
-        LayoutElement el{ 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
+        LayoutElement instanced_layout_element{ 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         state.water_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxWaterLayersCount,
-            state.water_shader->GetAttributeLocation("model_pos"), el);
+            state.water_shader->GetAttributeLocation("model_pos"), instanced_layout_element);
 
         //Init framebuffer
-        rd = CubeForDepth();
-        state.depth_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.pos_and_tex_coord_depth;
+        state.depth_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.shadow_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, g_DepthMapWidth, g_DepthMapHeight, FrameBufferType::DEPTH_ATTACHMENT);
         state.depth_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_shadow.shader"));
 
         //Instanced attribute for block positions in the depth shader
-        el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
+        instanced_layout_element = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         state.depth_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
-        state.depth_shader->GetAttributeLocation("model_depth_pos"), el);
+        state.depth_shader->GetAttributeLocation("model_depth_pos"), instanced_layout_element);
 
         //Init inventory stuff
-        rd = Inventory();
-        state.inventory_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.inventory;
+        state.inventory_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.inventory_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/inventory.shader"));
 
 
@@ -72,24 +73,24 @@ namespace GlCore
         state.inventory_shader->UniformMat4f(inventory_proj, "proj");
 
         //and also the inventory entry VM
-        rd = InventoryEntryData();
-        state.inventory_entry_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.inventory_entry;
+        state.inventory_entry_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
 
-        rd = Decal2D();
-        state.decal2d_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.pos_and_tex_coords_decal2d;
+        state.decal2d_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
 
         //Screen texture
-        rd = ScreenMesh();
-        state.screen_vm = Memory::NewUnchecked<VertexManager>(allocator, rd.vertices.data(), rd.vertices.size() * sizeof(f32), rd.lyt);
+        elem = &stg.pos_and_tex_coords_screen;
+        state.screen_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.screen_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/screen.shader"));
-        state.screen_shader->UniformMat4f(glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 15.0f), "proj");
+        //state.screen_shader->UniformMat4f(glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 15.0f), "proj");
         state.screen_framebuffer = Memory::NewUnchecked<FrameBuffer>(allocator, Defs::g_ScreenWidth, Defs::g_ScreenHeight, FrameBufferType::COLOR_ATTACHMENT);
 
         //Load block and drop resources
-        VertexData cd = Cube();
-        state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
+        elem = &stg.pos_and_tex_coord_default;
+        state.block_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.block_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/scene.shader"));
-        state.drop_vm = Memory::NewUnchecked<VertexManager>(allocator, cd.vertices.data(), cd.vertices.size() * sizeof(f32), cd.lyt);
+        state.drop_vm = Memory::NewUnchecked<VertexManager>(allocator, elem->data, elem->count * sizeof(f32), elem->lyt);
         state.drop_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_collectable.shader"));
 
         //Load textures
@@ -120,14 +121,14 @@ namespace GlCore
             state.drop_shader->Uniform1i(tex_index, uniform_name);
         }
 
-        //Create instance buffer for model matrices
-        el = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
+        //Create instance buffer for positions and texindices
+        instanced_layout_element = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
         state.block_vm->PushInstancedAttribute(nullptr, sizeof(glm::vec3) * g_MaxRenderedObjCount,
-            state.block_shader->GetAttributeLocation("model_pos"), el);
+            state.block_shader->GetAttributeLocation("model_pos"), instanced_layout_element);
 
-        el = { 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(u32), 0 };
+        instanced_layout_element = { 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(u32), 0 };
         state.block_vm->PushInstancedAttribute(nullptr, sizeof(u32) * g_MaxRenderedObjCount,
-            state.block_shader->GetAttributeLocation("tex_index"), el);
+            state.block_shader->GetAttributeLocation("tex_index"), instanced_layout_element);
     }
 
 

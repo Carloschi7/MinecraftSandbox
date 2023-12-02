@@ -143,8 +143,6 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 	m_State.screen_framebuffer->Bind();
 	Window::ClearScreen(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
 	GlCore::RenderSkybox();
 
 	u32 ch = Defs::g_SelectedChunk.load();

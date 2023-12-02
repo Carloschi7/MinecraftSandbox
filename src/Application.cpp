@@ -63,6 +63,10 @@ void Application::OnUserRun()
         state.memory_arena = mem_arena;
         static bool state_switch = false;
 
+        //Initialize OpenGL meshes
+        GlCore::MeshStorage mesh_storage = GlCore::AllocateMeshStorage(mem_arena);
+        state.mesh_storage = &mesh_storage;
+
         //Game data
         World world_instance;
         TextRenderer info_text_renderer{ {m_Window.Width(), m_Window.Height() }, static_cast<u32>(Defs::TextureBinding::TextureText) };
@@ -220,6 +224,7 @@ void Application::OnUserRun()
         using namespace std::filesystem;
 #endif
 
+        GlCore::FreeMeshStorage(mesh_storage, mem_arena);
         path p{ "runtime_files" };
         remove_all(p); 
     }

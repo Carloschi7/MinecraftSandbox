@@ -3,6 +3,7 @@
 #include <vector>
 #include "Texture.h"
 #include "Memory.h"
+#include "Vertices.h"
 
 class Window;
 class Camera;
@@ -25,6 +26,7 @@ namespace GlCore
 		Window*					game_window;
 		Camera*					camera;
 		Memory::Arena*			memory_arena;
+		MeshStorage*			mesh_storage;
 		std::vector<Texture>	game_textures;
 
 		Shader*					cubemap_shader;	

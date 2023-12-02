@@ -131,8 +131,6 @@ glm::vec3 Block::NormalForIndex(u32 index)
 Drop::Drop(const glm::vec3& position, Defs::Item type) :
     m_Type(type), position(position), m_RotationAngle(0.0f), m_Model(1.0f)
 {
-    GlCore::VertexData vd = GlCore::Cube();
-    
     m_Acceleration = { 0.0f, -1.0f, 0.0f };
     m_Velocity = { 0.0f, 0.0f, 0.0f };
 }
