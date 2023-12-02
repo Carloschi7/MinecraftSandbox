@@ -182,7 +182,6 @@ void World::Render(const Inventory& inventory, const glm::vec3& camera_position,
 	glDisable(GL_BLEND);
 
 	GlCore::RenderCrossaim();
-	GlCore::g_Drawcalls = 0;
 
 	//Render the inventory selected block with the drop shader in a stencil instance
 	FrameBuffer::BindDefault();

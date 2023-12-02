@@ -26,7 +26,6 @@ namespace GlCore
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//thread id of the thread which is allowed to modify m_Chunks
 	extern std::atomic_bool g_SerializationRunning;
-	extern std::map<std::string, std::thread::id> g_ThreadPool;
 	//Basic normals
 	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
 	static constexpr glm::vec3 g_NegX{ -1.0f,	0.0f,	0.0f };
@@ -38,15 +37,11 @@ namespace GlCore
 	extern glm::vec3 g_FramebufferPlayerOffset;
 	extern glm::mat4 g_DepthSpaceMatrix;
 
-	//For debug purposes
-	extern u32 g_Drawcalls;
-
 	void DispatchBlockRendering(glm::vec3*& position_buf, u32*& texture_buf, u32& count);
 	void DispatchDepthRendering(glm::vec3*& position_buf, u32& count);
 
 	class Renderer
 	{
-		class Fetcher;
 	public:
 		static void Init();
 		static Renderer& GetInstance();
@@ -54,12 +49,10 @@ namespace GlCore
 		static void Render(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model);
 		//Chunk optimized rendering
 		static void RenderInstanced(u32 count);
-		static void WaitForAsyncGpu(const std::vector<GLsync>& fences);
 	private:
 		Renderer();
 		~Renderer();
 		void IRender(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model);
 		void IRenderInstanced(u32 count);
-		void IWaitForAsyncGpu(const std::vector<GLsync>& fences);
 	};
 }

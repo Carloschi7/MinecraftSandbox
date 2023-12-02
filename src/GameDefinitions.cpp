@@ -108,7 +108,7 @@ namespace Defs
         if (dist > 10.0f)
             return HitDirection::None;
 
-        static f32 half_cube_diag = 0.5f;
+        f32 half_cube_diag = 0.5f;
         glm::vec3 cube_min = block_pos - glm::vec3(half_cube_diag);
         glm::vec3 cube_max = block_pos + glm::vec3(half_cube_diag);
 

@@ -61,7 +61,7 @@ void Application::OnUserRun()
         state.game_window = &m_Window;
         state.camera = &m_Camera;
         state.memory_arena = mem_arena;
-        static bool state_switch = false;
+        bool state_switch = false;
 
         //Initialize OpenGL meshes
         GlCore::MeshStorage mesh_storage = GlCore::AllocateMeshStorage(mem_arena);
@@ -120,13 +120,9 @@ void Application::OnUserRun()
             }
         };
 
-        if constexpr (GlCore::g_MultithreadedRendering)
-        {
+        if constexpr (GlCore::g_MultithreadedRendering) {
             //this line starts the thread btw
             m_AppThreads.emplace_back(logic_thread_impl);
-            //Populate thread pool with static threads (currently unused)
-            GlCore::g_ThreadPool.insert({ "Renderer thread", std::this_thread::get_id() });
-            GlCore::g_ThreadPool.insert({ "Logic thread", m_AppThreads[0].get_id() });
         }
 
         //Set blending function

@@ -36,7 +36,7 @@ namespace Defs
 		WoodPickaxe
 	};
 
-	static inline bool IsBlock(Item sprite) {
+	static bool IsBlock(Item sprite) {
 		return !(sprite >= Item::WoodStick);
 	}
 

@@ -3,7 +3,7 @@
 #include "Chunk.h"
 
 //For block normal handling
-static const std::array<u8, 6> bitshifts = {
+const std::array<u8, 6> bitshifts = {
     (1 << 0), //pos x
     (1 << 1), //neg x
     (1 << 2), //pos y

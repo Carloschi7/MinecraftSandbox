@@ -10,12 +10,9 @@ namespace GlCore
 {
 	std::atomic_bool g_LogicThreadShouldRun = true;
 	std::atomic_bool g_SerializationRunning = false;
-	std::map<std::string, std::thread::id> g_ThreadPool;
 
 	glm::vec3 g_FramebufferPlayerOffset = glm::vec3(0.0f, 50.0f, 0.0f);
 	glm::mat4 g_DepthSpaceMatrix(1.0f);
-
-	u32 g_Drawcalls = 0;
 
 	Renderer::Renderer()
 	{
@@ -46,11 +43,6 @@ namespace GlCore
 		GetInstance().IRenderInstanced(count);
 	}
 
-	void Renderer::WaitForAsyncGpu(const std::vector<GLsync>& fences)
-	{
-		GetInstance().IWaitForAsyncGpu(fences);
-	}
-
 	void Renderer::IRender(Shader* shd, const VertexManager& vm, CubeMap* cubemap, const glm::mat4& model)
 	{
 		shd->Use();
@@ -71,20 +63,10 @@ namespace GlCore
 	}
 	void Renderer::IRenderInstanced(u32 count)
 	{
+		//This function is used only to draw block meshes in this application
+		//so leave the static interval (0, 36)
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 36, count);
 	}
-
-	void Renderer::IWaitForAsyncGpu(const std::vector<GLsync>& fences)
-	{
-		for (u32 i = 0; i < fences.size(); i++)
-		{
-			GLenum waitResult = GL_UNSIGNALED;
-			while (waitResult != GL_ALREADY_SIGNALED && waitResult != GL_CONDITION_SATISFIED) {
-				waitResult = glClientWaitSync(fences[i], GL_SYNC_FLUSH_COMMANDS_BIT, 1);
-			}
-		}
-	}
-
 
 	void DispatchBlockRendering(glm::vec3*& position_buf, u32*& texture_buf, u32& count)
 	{
@@ -100,7 +82,6 @@ namespace GlCore
 		position_buf = static_cast<glm::vec3*>(block_vm->InstancedAttributePointer(0));
 		texture_buf = static_cast<u32*>(block_vm->InstancedAttributePointer(1));
 
-		g_Drawcalls++;
 		count = 0;
 	}
 	void DispatchDepthRendering(glm::vec3*& position_buf, u32& count)
@@ -114,7 +95,6 @@ namespace GlCore
 		GlCore::Renderer::RenderInstanced(count);
 		position_buf = static_cast<glm::vec3*>(depth_vm->InstancedAttributePointer(0));
 		
-		g_Drawcalls++;
 		count = 0;
 	}
 }
