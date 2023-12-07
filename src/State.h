@@ -2,7 +2,6 @@
 #include <memory>
 #include <vector>
 #include "Texture.h"
-#include "Memory.h"
 #include "Vertices.h"
 
 class Window;

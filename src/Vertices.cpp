@@ -1,4 +1,5 @@
 #include "Vertices.h"
+#include "Memory.h"
 
 namespace GlCore
 {

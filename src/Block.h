@@ -2,7 +2,6 @@
 #include <iostream>
 #include <mutex>
 #include "GlStructure.h"
-#include "Renderer.h"
 
 class Chunk;
 

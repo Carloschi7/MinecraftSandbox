@@ -1,9 +1,8 @@
 #pragma once
-#include "glm/glm.hpp"
-#include "State.h"
-#include "GameDefinitions.h"
 #include <optional>
 #include <array>
+#include "glm/glm.hpp"
+#include "GameDefinitions.h"
 #include "TextRenderer.h"
 
 struct InventoryEntry

@@ -5,6 +5,7 @@
 #include "Camera.h"
 #include "Shader.h"
 #include "FrameBuffer.h"
+#include "Memory.h"
 
 namespace GlCore
 {

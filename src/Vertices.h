@@ -2,7 +2,10 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include "VertexManager.h"
-#include "Memory.h"
+
+namespace Memory {
+    struct Arena;
+}
 
 namespace GlCore
 {

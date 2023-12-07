@@ -6,6 +6,7 @@
 #include <format>
 #include <functional>
 #include "utils/types.h"
+#include "State.h"
 
 //Used to refer to the virtual space address created by the memory mapped_space
 //no direct access to the physycal memory space is granted because of 
@@ -136,14 +137,3 @@ namespace Memory
 		FreeUnchecked(arena, addr);
 	}
 }
-
-
-//Experimental
-#define defer(body) \
-struct DeferImpl##__FUNCTION__##__LINE__ \
-{\
-	DeferImpl##__FUNCTION__##__LINE__(const std::function<void()>& _func) : func(_func) {}\
-	~DeferImpl##__FUNCTION__##__LINE__() { func(); }\
-	std::function<void()> func;\
-}; \
-DeferImpl##__FUNCTION__##__LINE__ defer_impl##__FUNCTION__##__LINE__([&]() body);

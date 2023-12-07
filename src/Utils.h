@@ -51,6 +51,7 @@ namespace Utils
 	//MappedSpace vector
 	template<class T>
 	using AVector = std::vector<T, ArenaAllocator<T>>;
+	
 
 	//Thread safe vector
 	//This class is pseudo-safe, locking a mutex each of the many accesses in the TSvector
