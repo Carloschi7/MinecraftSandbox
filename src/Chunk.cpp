@@ -439,29 +439,31 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 		const glm::vec3 block_pos = ToWorld(m_LocalBlocks[i].position);
 		glm::vec3 diff = position - block_pos;
 		glm::vec3 abs_diff = glm::abs(diff);
-		if (abs_diff.x < clip_threshold && abs_diff.y < clip_threshold && abs_diff.z < clip_threshold) {
+		//Adjusting the y collision components because the player has an height of 2
+		f32 y_halved = diff.y < 0.0f ? abs_diff.y : abs_diff.y / 2.0f;
+		f32 y_hit_threshold = diff.y < 0.0f ? 1.0f : 2.0f;
+		if (abs_diff.x < clip_threshold && abs_diff.y < clip_threshold * y_hit_threshold && abs_diff.z < clip_threshold) {
 			//Simple collision solver
-			
 			if (Defs::g_PlayerSpeed != 0.0f) {
-				if (abs_diff.z > abs_diff.x && abs_diff.z > abs_diff.y) {
+				if (abs_diff.z > abs_diff.x && abs_diff.z > y_halved) {
 					position.z = position.z < block_pos.z ? block_pos.z - clip_threshold : block_pos.z + clip_threshold;
 					Defs::g_PlayerAxisMapping.z = 0.0f;
 				}
 
-				if (abs_diff.x > abs_diff.y && abs_diff.x > abs_diff.z) {
+				if (abs_diff.x > y_halved && abs_diff.x > abs_diff.z) {
 					position.x = position.x < block_pos.x ? block_pos.x - clip_threshold : block_pos.x + clip_threshold;
 					Defs::g_PlayerAxisMapping.x = 0.0f;
 				}
 			}
 
-			if (abs_diff.y > abs_diff.z && abs_diff.y > abs_diff.x) {
+			if (y_halved > abs_diff.z && y_halved > abs_diff.x) {
 				Defs::g_PlayerAxisMapping.y = 0.0f;
 				if (position.y < block_pos.y) {
 					position.y = block_pos.y - clip_threshold;
 					Defs::jump_data = { 0.0f, false };
 				}
 				else {
-					position.y = block_pos.y + clip_threshold;
+					position.y = block_pos.y + clip_threshold * 2.0f;
 					Defs::jump_data = { 0.0f, true };
 				}
 			}
@@ -483,7 +485,11 @@ void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
 		drop.Update(this, elapsed_time);
 		drop.UpdateModel(elapsed_time);
 
-		if (glm::length(drop.position - m_State.camera->GetPosition()) < 1.0f) {
+		//Done because the actual player is the head position, we want to grab these when we
+		//step on them
+		glm::vec3 ground_position = m_State.camera->GetPosition();
+		ground_position.y -= 1.0f;
+		if (glm::length(drop.position - ground_position) < 1.0f) {
 			inventory.AddToNewSlot(drop.Type());
 			bool last_flag = iter == std::prev(m_LocalDrops.end());
 			iter = m_LocalDrops.erase(iter);
