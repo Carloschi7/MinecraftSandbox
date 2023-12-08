@@ -67,11 +67,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	${ENGINE_PATH}/Dependencies/GLFW
 	${ENGINE_PATH}/Dependencies/GLEW)
 
-if("${VISUAL_STUDIO_DEF}" STREQUAL "Visual Studio")
-	#Pasting shared library into build dir, necessary on Windows for our current setup
-	file(COPY ${ENGINE_PATH}/Dependencies/ASSIMP/bin/assimp-vc143-mtd.dll DESTINATION ${PROJECT_BINARY_DIR})
-endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE MC_SOURCE_PATH="${CMAKE_CURRENT_LIST_DIR}")
-
+target_compile_definitions(${PROJECT_NAME} PRIVATE NO_ASSIMP)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
