@@ -4,6 +4,8 @@ This is a project that i decided to undertake some time ago to improve my knowle
 of graphics programming, using as always my very thrusted language C++ and OpenGL as the graphic API that allows direct
 communication with the GPU
 
+## Presentation
+
 This application is a very simple and basic remake of the famous Minecraft game. What was implemented was some basic generation of the
 world, limiting myself to using only two chunks (default grasslands and the desert) with also some lakes and different layers of water
 also some basic crafting was implemented, not because i wanted to offer a big variety of objects to craft, but to get a better understanding
@@ -18,6 +20,8 @@ other blocks or blocks which find themselves behind the player in that specific 
 should still be faster considering that the original Minecraft rendering is way faster, but i currently do not know how to make the application any faster
 from a purely OpenGL standpoint.
 
+## Application rendering
+
 Two main renderpasses are being computed: the default one and the depth one. The depth one is used to dinamically compute shadows in the world scene.
 It is implemented with a viewpoint that from above the player watches the scene from the top. By rendering every object the "depth camera" can see,
 a depth texture is produced. That texture is a texture with the dimensions of the depth viewport, with each pixel containing information on which is
@@ -30,9 +34,13 @@ The other renderpass is the actual render of the scene and the UI objects. The w
 draw to its own actual framebuffer. Then the computed texture gets finally drawn to the main frame with a little offset in the negative z axis to make space for 
 some 3d ui elements like the block which the player holds from the inventory. Then the held block, the crossaim and the UI elements get drawn on top of it.
 
+## Terrain generation
+
 The world is generated using the Perlin terrain generation to generate everything. Two interlaced perlin maps are used to generate the land and another one
 is used to generate the water areas. The area that is allocated to water by its perlin map is then warped downwards to create enough space to actually for the
 water. The warping is done by takin the original output of the land maps and by decreasing the height of the blocks linearly using some exponential functions
+
+## UI and crafting
 
 The UI was made manually, with a very rudiemtary but effective grid based handler that helps the player to insert and select stuff from the inventory.
 The implemented UIs are the normal player inventory and the crafting table view.
@@ -46,6 +54,8 @@ Only the following items can be currently crafted:
 Note that none of the held items, including the pickaxe, will provide any speedup effect when digging or destroying blocks, as the block durability feature
 was not implemented in this demo. Also, there are no stone blocks in the current implementation, the pickaxe was only added as a way to show this mini-engine
 i wrote can also handle 2d decal view of objects that are not blocks.
+
+## Conclusion
 
 This being said, you can still explore a potentially different and fairly simple generated world, and overall enjoy a pretty simple but integral version
 of the very very basic minecraft aspects in a manually written demo. Because, as I already mentioned, this demo is engineless, with the engine being some
