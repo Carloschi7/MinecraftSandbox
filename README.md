@@ -1,4 +1,4 @@
-#MinecraftSandbox
+# MinecraftSandbox
 
 This is a project that i decided to undertake some time ago to improve my knowledge in the hard but delightful world
 of graphics programming, using as always my very thrusted language C++ and OpenGL as the graphic API that allows direct
