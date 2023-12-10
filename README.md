@@ -48,10 +48,10 @@ The implemented UIs are the normal player inventory and the crafting table view.
 Only the following items can be currently crafted:
 
 ~~~
-Markup : - [ ] Wood planks
-         - [ ] wood sticks
-         - [ ] Crafting table
-         - [ ] Wooden pickaxe
+-> Wood planks
+-> Wood sticks
+-> Crafting table
+-> Wooden pickaxe
 ~~~
 
 Note that none of the held items, including the pickaxe, will provide any speedup effect when digging or destroying blocks, as the block durability feature
