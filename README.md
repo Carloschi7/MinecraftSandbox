@@ -33,3 +33,25 @@ some 3d ui elements like the block which the player holds from the inventory. Th
 The world is generated using the Perlin terrain generation to generate everything. Two interlaced perlin maps are used to generate the land and another one
 is used to generate the water areas. The area that is allocated to water by its perlin map is then warped downwards to create enough space to actually for the
 water. The warping is done by takin the original output of the land maps and by decreasing the height of the blocks linearly using some exponential functions
+
+The UI was made manually, with a very rudiemtary but effective grid based handler that helps the player to insert and select stuff from the inventory.
+The implemented UIs are the normal player inventory and the crafting table view.
+
+Only the following items can be currently crafted:
+-Wood planks
+-Wood sticks
+-Crafting table
+-Wooden pickaxe
+
+Note that none of the held items, including the pickaxe, will provide any speedup effect when digging or destroying blocks, as the block durability feature
+was not implemented in this demo. Also, there are no stone blocks in the current implementation, the pickaxe was only added as a way to show this mini-engine
+i wrote can also handle 2d decal view of objects that are not blocks.
+
+This being said, you can still explore a potentially different and fairly simple generated world, and overall enjoy a pretty simple but integral version
+of the very very basic minecraft aspects in a manually written demo. Because, as I already mentioned, this demo is engineless, with the engine being some
+external framework that these types of applications can rely on (This demo still relies on an external lib engine library still, which is the C7Engine, 
+but it's actually a simple OpenGL wrapper that I wrote, so this obviously does not count).
+
+This is the first major release, i may still improve this in the future by adding more contents and better terrain generation.
+
+GLHF
