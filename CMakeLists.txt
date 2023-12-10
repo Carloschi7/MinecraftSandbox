@@ -67,7 +67,13 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 	${ENGINE_PATH}/Dependencies/GLFW
 	${ENGINE_PATH}/Dependencies/GLEW)
 
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE MC_SOURCE_PATH="${CMAKE_CURRENT_LIST_DIR}")
+if(DEFINED STANDALONE)
+	#This is the build that creates an executable meant to be shipped as a standalone app
+	#this means assets will be loaded directly from the assets data in the same folder as the executable
+	target_compile_definitions(${PROJECT_NAME} PRIVATE MC_SOURCE_PATH="")
+	target_compile_definitions(${PROJECT_NAME} PRIVATE MC_STANDALONE)
+else()
+	target_compile_definitions(${PROJECT_NAME} PRIVATE MC_SOURCE_PATH="${CMAKE_CURRENT_LIST_DIR}/")
+endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE NO_ASSIMP)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)

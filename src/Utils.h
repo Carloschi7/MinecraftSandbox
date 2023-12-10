@@ -16,7 +16,7 @@
 
 #ifdef MC_SOURCE_PATH
 	//Returns absolute path of the repo directory concatenated with the input string, useful for asset loading
-	#define PATH(str) std::string(MC_SOURCE_PATH) + std::string("/") + std::string(str)
+	#define PATH(str) std::string(MC_SOURCE_PATH) + std::string(str)
 	#define CPATH(str) (PATH(str)).c_str()
 #endif
 

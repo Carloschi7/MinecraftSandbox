@@ -5,13 +5,10 @@ Inventory::Inventory(TextRenderer& text_renderer) :
     m_State(*GlCore::pstate), m_CursorIndex(0), 
     m_TextRenderer{ text_renderer }
 {
-    //TextureWater at the moment is the first non-block texture in the game assets
-    //so use this as a limit so that each block type occupies a slot in the 
-    //inventory
-    //for (u32 i = 0; i < static_cast<u32>(Defs::TextureBinding::TextureWater); i++)
-    //    m_Slots[i] = { static_cast<Defs::Item>(i), 1 };
-    
+#ifndef MC_STANDALONE
+    //This is left to debug 2d decals items, but this is not left in the standalone version
     m_Slots[27] = { static_cast<Defs::Item>(Defs::Item::WoodPickaxe), 1 };
+#endif
     //Avoid writing glm a thousand times in some of these functions
     using namespace glm;
 

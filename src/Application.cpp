@@ -200,9 +200,11 @@ void Application::OnUserRun()
                 thread1_record = elapsed_time;
                 thread1_record_timer.StartTimer();
             }
+#ifndef MC_STANDALONE
             info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", { 0, 0 });
             info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0, 40 });
             info_text_renderer.DrawString("mem:" + std::to_string(static_cast<f32>(mem_arena->mapped_space.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
+#endif
             m_Window.Update();
         }
 
