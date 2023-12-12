@@ -36,7 +36,7 @@ using Ptr = VAddr;
 namespace std{
   template <class To, class From>
   // constexpr support needs compiler magic
-  To bit_cast(const From &src) noexcept
+  constexpr To bit_cast(const From &src) noexcept
   {
       To dst;
       std::memcpy(&dst, &src, sizeof(To));
