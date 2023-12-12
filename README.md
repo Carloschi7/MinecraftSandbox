@@ -69,7 +69,7 @@ This is the first major release, i may still improve this in the future by addin
 
 GLHF
 
-# How to use (building or running
+# How to use (building or running)
 
 this application can be built and run in both Windows and Linux. Compatibility with every linux version is not guaranteed,
 but debian distros seem to build and run the code pretty well.
