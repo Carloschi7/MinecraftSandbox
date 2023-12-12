@@ -68,3 +68,16 @@ but it's actually a simple OpenGL wrapper that I wrote, so this obviously does n
 This is the first major release, i may still improve this in the future by adding more contents and better terrain generation.
 
 GLHF
+
+# How to build
+
+this application can be built and run in both Windows and Linux. Compatibility with every linux version is not guaranteed,
+but debian distros seem to build and run the code pretty well.
+
+## Windows
+there are two ways on Windows. Either you download the releaze .zip or .rar, extract it and run it, or you can build everything for yourself. In order to build it from the ground up, Visual Studio 2022 + CMake + git are mandatory. Once you have all of those applications and all the environmental path set up, just clone this repo and run the build.bat, everything sould work then
+
+For those who just download the precompiled exe and have dll problems, just try and download the c++ developmento tool from the microsoft website and try to launch the exe again
+
+## Linux
+Follow the instruction to build the C7Engine FIRST, use the packet manager to get all the required dependencies. Once the C7Engine compiles separately, then clone this repo and run build.sh, the executable should be produced.
