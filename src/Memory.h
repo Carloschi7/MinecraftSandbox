@@ -3,7 +3,12 @@
 #include <mutex>
 #include <vector>
 #include <map>
+#ifndef __linux__
 #include <format>
+#else
+#include <cstring>
+#include <condition_variable>
+#endif
 #include <functional>
 #include "utils/types.h"
 #include "State.h"
@@ -21,7 +26,24 @@ using Ptr = VAddr;
 #define MC_ASSERT(x, msg)\
 	if(!(x)){*(int*)0 = 0;}
 #define MC_CLOG(msg, ...) std::printf(msg, __VA_ARGS__)
-#define MC_LOG(msg, ...) std::printf(std::format(msg, __VA_ARGS__).c_str());
+
+#ifndef __linux__
+#	define MC_LOG(msg, ...) std::printf(std::format(msg, __VA_ARGS__).c_str())
+#else
+#	define MC_LOG(msg, ...)
+//I dont know why but for some weird reason linux won't find the bit_cast function
+//even with the <bit> header and with c++20 flags enabled, so just make a ridefinition
+namespace std{
+  template <class To, class From>
+  // constexpr support needs compiler magic
+  To bit_cast(const From &src) noexcept
+  {
+      To dst;
+      std::memcpy(&dst, &src, sizeof(To));
+      return dst;
+  }
+}
+#endif
 
 namespace Memory 
 {
@@ -98,7 +120,7 @@ namespace Memory
 	template <class T, class Underlying = typename RemoveArray<T>::type>
 	VAddr New(Arena* arena, u64 count) requires (std::is_array_v<T> && std::is_integral_v<Underlying>)
 	{
-		VAddr addr = Allocate(sizeof(Underlying) * count);
+		VAddr addr = Allocate(arena, sizeof(Underlying) * count);
 		return addr;
 	}
 
@@ -110,6 +132,7 @@ namespace Memory
 		new (addr) T{ std::forward<Args>(arguments)... };
 		return static_cast<T*>(addr);
 	}
+
 
 	template<class T>
 	void Delete(Arena* arena, VAddr addr) requires (!std::is_array_v<T>)

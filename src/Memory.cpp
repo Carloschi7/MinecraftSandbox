@@ -7,7 +7,7 @@ namespace Memory
 	Arena* InitializeArena(u64 bytes)
 	{
 		Arena* arena = new Arena;
-		MC_ASSERT(arena != nullptr);
+		MC_ASSERT(arena != nullptr, "the arena needs to be defined");
 
 		arena->mapped_space.memory = ::operator new(bytes);
 		std::memset(arena->mapped_space.memory, 0, bytes);
@@ -20,7 +20,7 @@ namespace Memory
 
 	void DestroyArena(Arena* arena)
 	{
-		MC_ASSERT(arena != nullptr);
+		MC_ASSERT(arena != nullptr, "the arena needs to be defined");
 		if (arena->mapped_space.memory) {
 			::operator delete(arena->mapped_space.memory);
 			arena->mapped_space.memory_size = 0;

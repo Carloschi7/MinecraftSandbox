@@ -33,9 +33,6 @@ else() #default linux ubuntu for now (STILL WORK IN PROGRESS)
 	set(C7ENGINE_DEPENDENCIES glfw GLEW ${UBUNTU_LIB_PATH}/libassimp.so)
 	set(C7ENGINE_LIB_PATH  ${ENGINE_BUILD_PATH}/libC7Engine.so Threads::Threads)
 
-	#add -fpermissive to linux (now removed for testing)
-	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
-
 	#Filesystem support
 	link_libraries(stdc++fs)
 endif()

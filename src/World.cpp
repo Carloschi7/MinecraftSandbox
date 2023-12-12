@@ -456,7 +456,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 
 					if (block.position.x == Chunk::s_ChunkWidthAndHeight - 1) {
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusX);
-						MC_ASSERT(adjacent_chunk_index.has_value());
+						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
 						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
 						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ 0, block.position.y, block.position.z }, bt);
 						adjacent_chunk.AddFreshNormals(emplaced_block);
@@ -472,7 +472,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 					if (block.position.x == 0) {
 						//The chunk is adjacent to the chunk we are in, should definitely be loaded
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusX);
-						MC_ASSERT(adjacent_chunk_index.has_value());
+						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
 						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
 						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ Chunk::s_ChunkWidthAndHeight - 1, block.position.y, block.position.z}, bt);
 						adjacent_chunk.AddFreshNormals(emplaced_block);
@@ -492,7 +492,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 					
 					if (block.position.z == Chunk::s_ChunkWidthAndHeight - 1) {
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusZ);
-						MC_ASSERT(adjacent_chunk_index.has_value());
+						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
 						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
 						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, 0 }, bt);
 						adjacent_chunk.AddFreshNormals(emplaced_block);
@@ -508,7 +508,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 					if (block.position.z == 0) {
 						//The chunk is adjacent to the chunk we are in, should definitely be loaded
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusZ);
-						MC_ASSERT(adjacent_chunk_index.has_value());
+						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
 						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
 						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, Chunk::s_ChunkWidthAndHeight - 1 }, bt);
 						adjacent_chunk.AddFreshNormals(emplaced_block);
@@ -520,7 +520,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 				} break;
 
 				case Defs::HitDirection::None:
-					MC_ASSERT(false);
+					MC_ASSERT(false, "Unreachable");
 					break;
 				}
 

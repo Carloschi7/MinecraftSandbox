@@ -6,6 +6,9 @@
 #include <chrono>
 #include <fstream>
 #include <utility>
+#ifdef __linux__
+#include <cstring>
+#endif
 #include "Macros.h"
 #include "Memory.h"
 #include "State.h"

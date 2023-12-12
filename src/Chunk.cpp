@@ -579,7 +579,7 @@ const std::optional<u32>& Chunk::GetLoadedChunk(const Defs::ChunkLocation& cl) c
 		return m_MinusZ;
 	}
 
-	MC_ASSERT(false);
+	MC_ASSERT(false, "Unreachable");
 	return std::nullopt;
 }
 
