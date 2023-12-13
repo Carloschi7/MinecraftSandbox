@@ -81,3 +81,5 @@ For those who just download the precompiled exe and have dll problems, just try 
 
 ## Linux
 Follow the instruction to build the C7Engine FIRST, use the packet manager to get all the required dependencies. Once the C7Engine compiles separately, then clone this repo and run build.sh, the executable should be produced.
+Also, given the rather volatile nature of linux based systems, i cannot guarantee that this will automatically build on every distro with the exact commands in the CMakeLists.txt of the engine. Debian-based distros should be fine
+though.
