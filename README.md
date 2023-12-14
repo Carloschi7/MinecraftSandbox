@@ -94,3 +94,16 @@ though.
 If the commands in the CMakeLists.txt fail though, then some minor readjustments should do the trick. One of the possible issues that could solve the problems is changing the path bound to LINUX_LIB_PATH
 to the actual path in which the required libraries like glfw,glew,assimp are being stored.
 (assimp is used by the engine in the Model.h/.cpp files, i did not mention the dependency earlier because the files which use it are actually not compiled into the game, so libassimp.so like assimp.dll is not required to build this app. So up to you if you want install it or not).
+
+
+# How to play
+~~~
+WASD -> movement
+SPACEBAR -> jump
+LCLICK -> destroy blocks
+RCLICK -> place blocks/interact with crafting table
+R -> opens/closes inventory & closes crafting table
+ESC -> terminates the application
+~~~
+
+
