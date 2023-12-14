@@ -30,7 +30,7 @@ It is implemented with a viewpoint that from above the player watches the scene 
 and depth texture is produced. That texture is a texture with the dimensions of the depth viewport, with each pixel containing information on which is
 the depth value at a given point. The more the value approaches to 0.0f (meaning the more the produces texture approaches a black color), the nearer the
 entity at that point. This texture then gets transferred to the main shader that uses the freshly computed values as a mean to understand if the specific
-pixel is shadowed or not. The depth texture is not computed every frame as that would be pointless and the texture is large enough to cover a pretty large area
+pixel is shadowed or not. The depth texture is not computed every frame, that would be pointless as the texture is large enough to cover a pretty large area
 from the player. Instead the texture is calculated when the player goes far enough from the last texture computation or if the scene is altered, 
 for example when a block is destroyed by the player.
 The other renderpass is the actual render of the scene and the UI objects. The worlds itself with all of its blocks and water layer and trees gets initially
