@@ -40,7 +40,7 @@ some 3d ui elements like the block which the player holds from the inventory. Th
 ## Terrain generation
 
 The world is generated using the Perlin terrain generation to generate everything. Two interlaced perlin maps are used to generate the land and another one
-is used to generate the water areas. The area that is allocated to water by its perlin map is then warped downwards to create enough space to actually for the
+is used to generate the water areas. The area that is allocated to water by its perlin map is then warped downwards to create enough space to actually fit the
 water. The warping is done by takin the original output of the land maps and by decreasing the height of the blocks linearly using some exponential functions
 
 ## UI and crafting
