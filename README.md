@@ -1,5 +1,8 @@
 # MinecraftSandbox
 
+![FramePicture](https://github.com/Carloschi7/MinecraftSandbox/assets/92332381/684dfa01-ec32-46f2-a490-10152f57fee5)
+
+
 This is a project that i decided to undertake some time ago to improve my knowledge in the hard but delightful world
 of graphics programming, using as always my very thrusted language C++ and OpenGL as the graphic API that allows direct
 communication with the GPU
