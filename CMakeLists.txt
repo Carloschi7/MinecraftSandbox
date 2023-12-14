@@ -33,7 +33,8 @@ else()
 	message(FATAL_ERROR "This OS is currently not supported")
 endif()
 
-
+#The .h files normally are not mandatory to be added here, but in this case adding them
+#tells Visual Studio to show them in the solution explorer
 add_executable(${PROJECT_NAME} src/Main.cpp
 		src/Application.cpp
 		src/World.cpp src/World.h
