@@ -8,7 +8,11 @@ cd ..\..
 
 set main_dir=%cd%
 mkdir build && cd build
-cmake -DENGINE_PATH=%main_dir%\dependencies\C7Engine -DENGINE_BUILD_PATH=%main_dir%\dependencies\C7Engine\build -DAPP_NAME=MinecraftSandbox ..
+if "%1" == "standalone" (
+	cmake -DENGINE_PATH=%main_dir%\dependencies\C7Engine -DENGINE_BUILD_PATH=%main_dir%\dependencies\C7Engine\build -DSTANDALONE=1 -DAPP_NAME=MinecraftSandbox ..
+) else (
+	cmake -DENGINE_PATH=%main_dir%\dependencies\C7Engine -DENGINE_BUILD_PATH=%main_dir%\dependencies\C7Engine\build -DAPP_NAME=MinecraftSandbox ..
+)
 msbuild MinecraftSandbox.sln /property:Configuration=Release 
 cd ..
 
