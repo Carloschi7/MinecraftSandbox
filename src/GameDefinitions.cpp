@@ -6,7 +6,7 @@ namespace Defs
 {
     std::atomic<ViewMode> g_ViewMode = ViewMode::WorldInteraction;
 
-    u16 g_InventoryKey = GLFW_KEY_T;
+    u16 g_InventoryKey = GLFW_KEY_R;
     MovementType g_MovementType = MovementType::Normal;
 
     u32 g_ScreenWidth = 0; 
@@ -84,11 +84,12 @@ namespace Defs
             g_PlayerSpeed = 0.0f;
         }
 
-
-#ifdef _DEBUG
-        //DEBUG issue key
-        if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
-            __debugbreak();
+#ifndef MC_STANDALONE
+    #ifdef _DEBUG
+            //DEBUG issue key
+            if (window.IsKeyboardEvent({ GLFW_KEY_P, GLFW_PRESS }))
+                 __debugbreak();
+    #endif
 #endif
     }
 
