@@ -506,7 +506,7 @@ bool Inventory::PerformCleanup(std::optional<InventoryEntry>& first, std::option
     return false;
 }
 
-void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x3>& recipes_3x3)
+void LoadRecipes(Utils::Vector<Recipe2x2>& recipes_2x2, Utils::Vector<Recipe3x3>& recipes_3x3)
 {
     recipes_2x2.clear();
     recipes_3x3.clear();

@@ -415,14 +415,46 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 			auto& blocks = local_chunk->Blocks();
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
-				const glm::vec3 position = local_chunk->ToWorld(blocks[selected_block].position);
+				const glm::u8vec3 raw_position = blocks[selected_block].position;
+				const glm::vec3 position = local_chunk->ToWorld(raw_position);
 				const Defs::Item type = blocks[selected_block].Type();
 
-				local_chunk->AddNewExposedNormals(position);
 				blocks.erase(blocks.begin() + selected_block);
 
-				//Push drop
+				Chunk& chunk_plus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusX).value());
+				Chunk& chunk_minus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusX).value());
+				Chunk& chunk_plus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusZ).value());
+				Chunk& chunk_minus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusZ).value());
+
+				if (local_chunk->lower_threshold == position.y - 1.0f) {
+					local_chunk->EmplaceLowerBlockStack(1);
+				}
+
+				//The same thing could happen while deleting blocks from other chunks
+				f32 block_stack_size = 7.0f;
+				if (chunk_plus_x.lower_threshold - 1 >= position.y && raw_position.x == 15) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_x.lower_threshold - position.y) / block_stack_size));
+					chunk_plus_x.EmplaceLowerBlockStack(stack_count);
+				}
+				if (chunk_minus_x.lower_threshold - 1 >= position.y && raw_position.x == 0) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_x.lower_threshold - position.y) / block_stack_size));
+					chunk_minus_x.EmplaceLowerBlockStack(stack_count);
+				}
+				if (chunk_plus_z.lower_threshold - 1 >= position.y && raw_position.z == 15) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_z.lower_threshold - position.y) / block_stack_size));
+					chunk_plus_z.EmplaceLowerBlockStack(stack_count);
+				}
+				if (chunk_minus_z.lower_threshold - 1 >= position.y && raw_position.z == 0) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_z.lower_threshold - position.y) / block_stack_size));
+					chunk_minus_z.EmplaceLowerBlockStack(stack_count);
+				}
+
+				local_chunk->AddNewExposedNormals(position);
 				local_chunk->PushDrop(position, type);
+
+				//Do this, it's pointless to compute block placement in the same frame
+				//of block destruction
+				return world_event;
 			}
 
 			//Push a new block

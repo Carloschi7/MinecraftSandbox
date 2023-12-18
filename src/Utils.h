@@ -51,9 +51,36 @@ namespace Utils
 		}
 	};
 
+	static u64 ChunkHasher(const glm::vec2& val)
+	{
+		static_assert(sizeof(glm::vec2) == sizeof(u64), "The implementation requires this expression to be true");
+		u64 res;
+		std::memcpy(&res, &val, sizeof(u64));
+		return res;
+	}
+
+	template <class _Kty>
+	struct Hasher 
+	{
+		static size_t _Do_hash(const _Kty& _Keyval) noexcept {
+			MC_ASSERT(false, "Should not be used");
+			return 0;
+		}
+	};
+
+	template<>
+	struct Hasher<glm::vec2>
+	{
+		static size_t _Do_hash(const glm::vec2& _Keyval) noexcept {
+			return ChunkHasher(_Keyval);
+		}
+	};
+
 	//MappedSpace vector
 	template<class T>
-	using AVector = std::vector<T, ArenaAllocator<T>>;
+	using Vector = std::vector<T, ArenaAllocator<T>>;
+	template<class Key, class Item>
+	using UnorderedMap = std::unordered_map<Key, Item, std::hash<Key>, std::equal_to<Key>, ArenaAllocator<std::pair<const Key, Item>>>;
 	
 
 	//Thread safe vector

@@ -96,7 +96,7 @@ namespace GlCore
         //Load textures
         using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
         using enum Defs::TextureBinding;
-        Utils::AVector<TextureLoaderType> textures
+        Utils::Vector<TextureLoaderType> textures
         {
             //Block textures
             {"texture_dirt",            TextureDirt},

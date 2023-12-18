@@ -36,6 +36,7 @@ public:
     //Returns the corresponding chunk index if exists
     std::optional<u32> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
     Chunk& GetChunk(u32 index);
+    inline Utils::UnorderedMap<u64, ChunkGeneration>& CollectGenerations() { return m_Generations; }
 
     Defs::WorldSeed& Seed();
     const Defs::WorldSeed& Seed() const;
@@ -51,28 +52,31 @@ private:
     
 public:
     //Vector which stores a the general area of all watermaps found up to that moment
-    Utils::AVector<Defs::WaterArea> pushed_areas;
-    Utils::AVector<glm::vec3> relative_leaves_positions;
+    Utils::Vector<Defs::WaterArea> pushed_areas;
+    Utils::Vector<glm::vec3> relative_leaves_positions;
     std::mt19937 random_engine;
 
 private:
     //Global OpenGL environment state
     GlCore::State& m_State;
-    //The AVector is a vector type that uses our allocated memory
+    //The Vector is a vector type that uses our allocated memory
     //mapped_space, in this case we do not directly allocate a heap section
-    //of contiguous chunks like in AVector<Chunk> because we want to be
+    //of contiguous chunks like in Vector<Chunk> because we want to be
     //able to be flexible in multithreading. We just store a vistual address
     //in our virtual memory space
-    Utils::AVector<Ptr<Chunk>> m_Chunks;
+    Utils::Vector<Ptr<Chunk>> m_Chunks;
+    //Keeps track of the generated terrain for each chunk, helps to optimize
+    //the number of blocks generated per chunk
+    Utils::UnorderedMap<u64, ChunkGeneration> m_Generations;
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
-    Utils::AVector<glm::vec3> m_SpawnableChunks;
+    Utils::Vector<glm::vec3> m_SpawnableChunks;
     //Last player pos, used to update the shadow texture
     glm::vec3 m_LastPos;
     //For terrain generation
     Defs::WorldSeed m_WorldSeed;
     //Handles section data
-    Utils::AVector<Defs::SectionData> m_SectionsData;  
+    Utils::Vector<Defs::SectionData> m_SectionsData;  
     //Timer used to sort the spawnable chunks vector every now and then
     //(sorting every frame would be pointless)
     Utils::Timer m_SortingTimer;

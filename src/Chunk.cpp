@@ -8,6 +8,28 @@
 f32 Chunk::s_DiagonalLenght = 0.0f;
 u32 Chunk::s_InternalSelectedBlock = static_cast<u32>(-1);
 
+ChunkGeneration ComputeGeneration(Defs::WorldSeed& seed, f32 origin_x, f32 origin_z) 
+{
+	ChunkGeneration gen;
+	gen.lower = 255;
+	for (u8 i = 0; i < Chunk::s_ChunkWidthAndHeight; i++)
+	{
+		for (u8 k = 0; k < Chunk::s_ChunkWidthAndHeight; k++)
+		{
+			f32 fx = static_cast<f32>(origin_x + (float)i), fz = static_cast<f32>(origin_z + (float)k);
+			auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fz, seed);
+			u8 final_height = (Chunk::s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
+			gen.heights[i * Chunk::s_ChunkWidthAndHeight + k] = final_height;
+			gen.biomes[i * Chunk::s_ChunkWidthAndHeight + k] = perlin_data.biome;
+			gen.in_water[i * Chunk::s_ChunkWidthAndHeight + k] = perlin_data.in_water;
+
+			if (final_height < gen.lower)
+				gen.lower = final_height;
+		}
+	}
+	return gen;
+}
+
 Chunk::Chunk(World& father, glm::vec2 origin)
 	:m_RelativeWorld(father), m_State(*GlCore::pstate),
 	m_ChunkOrigin({origin.x, 0.0f, origin.y}), m_SelectedBlock(static_cast<u32>(-1)),
@@ -24,9 +46,45 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 	}
 
 	//Chunk tree leaves if present
-	Utils::AVector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage(
+	Utils::Vector<glm::vec3> leaves_positions = Defs::GenerateRandomFoliage(
 		m_RelativeWorld.relative_leaves_positions,
 		m_RelativeWorld.random_engine);
+
+	//Create the terrain generation for this chunk if it was not already computed and
+	//figure out which is the lowest level of neighbor chunks to figure out how 
+	//many blocks need to be added
+
+
+	auto& generations = m_RelativeWorld.CollectGenerations();
+	ChunkGeneration gen;
+	if (generations.find(Hash(origin)) == generations.end()) {
+		gen = ComputeGeneration(m_RelativeWorld.Seed(), m_ChunkOrigin.x, m_ChunkOrigin.z);
+		generations[Hash(origin)] = gen;
+	}
+	else {
+		gen = generations[Hash(origin)];
+	}
+	u8 lower_height = gen.lower - 2;
+
+	glm::vec2 vecs[] = { 
+		glm::vec2(origin.x + 16.0f, origin.y), 
+		glm::vec2(origin.x - 16.0f, origin.y),
+		glm::vec2(origin.x, origin.y + 16.0f),
+		glm::vec2(origin.x, origin.y - 16.0f) };
+
+	for (u32 i = 0; i < 4; i++) {
+		if (generations.find(Hash(vecs[i])) != generations.end()) {
+			if (generations[Hash(vecs[i])].lower < lower_height)
+				lower_height = generations[Hash(vecs[i])].lower;
+		}
+		else {
+			generations[Hash(vecs[i])] = ComputeGeneration(m_RelativeWorld.Seed(), vecs[i].x, vecs[i].y);
+			if (generations[Hash(vecs[i])].lower < lower_height)
+				lower_height = generations[Hash(vecs[i])].lower;
+		}
+	}
+
+	lower_threshold = lower_height;
 
 	//Insert the y coordinates consecutively to allow the
 	//normal insertion algorithm later
@@ -35,12 +93,15 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 		for (u8 k = 0; k < s_ChunkWidthAndHeight; k++)
 		{
 			f32 fx = static_cast<f32>(m_ChunkOrigin.x + (float)i), fy = static_cast<f32>(m_ChunkOrigin.z + (float)k);
-			auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
-			u32 final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);
+			/*auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
+			u32 final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);*/
+			u8 final_height = gen.heights[i * s_ChunkWidthAndHeight + k];
+			Defs::Biome biome = gen.biomes[i * s_ChunkWidthAndHeight + k];
+			bool in_water = gen.in_water[i * s_ChunkWidthAndHeight + k];
 
-			for (u8 j = 0; j < final_height; j++)
+			for (u8 j = lower_height; j < final_height; j++)
 			{
-				switch (perlin_data.biome)
+				switch (biome)
 				{
 				case Defs::Biome::Plains:
 					m_LocalBlocks.emplace_back(glm::u8vec3(i, j, k), (j == final_height - 1) ?
@@ -52,7 +113,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 				}
 			}
 
-			if (perlin_data.in_water)
+			if (in_water)
 			{
 				f32 water_level = Defs::WaterRegionLevel(fx, fy, m_RelativeWorld.Seed(), m_RelativeWorld.pushed_areas);
 				u32 water_height = (s_ChunkDepth - 10) + std::roundf(water_level * 8.0f) - 1;
@@ -64,7 +125,7 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 			}
 
 			glm::vec3 tree_center(s_ChunkWidthAndHeight / 2, final_height + 4, s_ChunkWidthAndHeight / 2);
-			if (perlin_data.biome == Defs::Biome::Plains && i == tree_center.x && k == tree_center.z) {
+			if (biome == Defs::Biome::Plains && i == tree_center.x && k == tree_center.z) {
 				for (u32 p = 0; p < 4; p++)
 					m_LocalBlocks.emplace_back(glm::vec3(i, final_height + p, k), Defs::Item::Wood);
 
@@ -138,7 +199,6 @@ void Chunk::InitGlobalNorms()
 	//from the top block of that column an index descends assigning to each side a normal
 	//until a side block is found
 	f32 local_x = m_ChunkOrigin.x + m_LocalBlocks[0].position.x, local_z = m_ChunkOrigin.z + m_LocalBlocks[0].position.z;
-	f32 last_y = 0.0f;
 	s32 starting_index = 0;
 	//+1 because we need to parse the last column
 	for (s32 i = 0; i < m_LocalBlocks.size(); i++)
@@ -148,15 +208,12 @@ void Chunk::InitGlobalNorms()
 		//Always include the last block
 		if (i != m_LocalBlocks.size() - 1 &&
 			loc_pos.x == local_x &&
-			loc_pos.y - last_y < 1.5f &&
 			loc_pos.z == local_z)
 		{
-			last_y = m_LocalBlocks[i].position.y;
 			continue;
 		}
 
 		local_x = loc_pos.x;
-		last_y  = loc_pos.y;
 		local_z = loc_pos.z;		
 
 		u32 top_column_index = (i == m_LocalBlocks.size() - 1) ? i : i - 1;
@@ -299,7 +356,7 @@ void Chunk::InitGlobalNorms()
 			}
 		}
 		//Push a normal at the bottom
-		if(bot_block.position.y != 0.0f)
+		if(bot_block.position.y != lower_threshold)
 			bot_block.AddNormal(GlCore::g_NegY);
 
 
@@ -703,6 +760,41 @@ u32 Chunk::SectorIndex() const
 	return m_SectorIndex;
 }
 
+void Chunk::EmplaceLowerBlockStack(u16 stack_count)
+{
+	//Emplaces a new stack of some blocks
+	s16 block_stack_size = 7;
+	auto& generations = m_RelativeWorld.CollectGenerations();
+	u64 chunk_hash = Hash(glm::vec2(m_ChunkOrigin.x, m_ChunkOrigin.z));
+	for (u16 stacks_count = 0; stacks_count < stack_count; stacks_count++) {
+		//At the moment, do not create blocks below 0
+		s16 actual_size = lower_threshold >= 7 ? block_stack_size : static_cast<s16>(lower_threshold);
+		if (actual_size == 0)
+			return;
+
+		MC_ASSERT(generations.find(chunk_hash) != generations.end(), "This generation should exist");
+
+
+		auto iter = m_LocalBlocks.begin();
+		for (u32 x = 0; x < s_ChunkWidthAndHeight; x++) {
+			for (u32 z = 0; z < s_ChunkWidthAndHeight; z++) {
+				for (s16 y = static_cast<s16>(lower_threshold - 1); y >= static_cast<s16>(lower_threshold - actual_size); y--) {
+					Defs::Item type = generations[chunk_hash].biomes[x * s_ChunkWidthAndHeight + z] == Defs::Biome::Plains ?
+						Defs::Item::Dirt :
+						Defs::Item::Sand;
+
+					iter = m_LocalBlocks.emplace(iter, glm::u8vec3(x, y, z), type);
+				}
+
+				while (iter != m_LocalBlocks.end() && iter->position.x == x && iter->position.z == z)
+					iter++;
+			}
+		}
+
+		lower_threshold -= actual_size;
+	}
+}
+
 u32 Chunk::Index() const
 {
 	return m_ChunkIndex;
@@ -876,4 +968,10 @@ bool Chunk::BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 b
 	return false;
 }
 
+u64 Chunk::Hash(glm::vec2 v) 
+{
+	u64 ret;
+	std::memcpy(&ret, &v, sizeof(u64));
+	return ret;
+};
 

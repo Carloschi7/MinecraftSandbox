@@ -73,7 +73,7 @@ namespace Defs
 		//Related seeds computed from the main one, used to generate
 		//overlapping perlin noise to give a much direct sense of realism
 		//in the scene
-		Utils::AVector<u64> secundary_seeds;
+		Utils::Vector<u64> secundary_seeds;
 	};
 
 	//Handles section data
@@ -163,8 +163,8 @@ namespace Defs
 	//Given an underwater tile coordinate, determines and caches the water level for that
 	//water region. The return value is internally cached to avoid computing the value
 	//for each tile in the water region
-	f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::AVector<WaterArea>& pushed_areas);
-	Utils::AVector<glm::vec3> GenerateRandomFoliage(Utils::AVector<glm::vec3>& possible_positions, std::mt19937& rand_engine);
+	f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::Vector<WaterArea>& pushed_areas);
+	Utils::Vector<glm::vec3> GenerateRandomFoliage(Utils::Vector<glm::vec3>& possible_positions, std::mt19937& rand_engine);
 	
 	//Perlin noise related funcions namespace, very little overhead used
 	namespace PerlNoise

@@ -191,7 +191,7 @@ namespace Defs
     glm::vec2* directions = nullptr;
     glm::vec2* compass_directions = nullptr;
 
-    f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::AVector<WaterArea>& pushed_areas)
+    f32 WaterRegionLevel(f32 sx, f32 sy, const WorldSeed& seed, Utils::Vector<WaterArea>& pushed_areas)
     {
 
         static f32 watermap_unit = 1.0f / watermap_density;
@@ -339,10 +339,10 @@ namespace Defs
         return wa.water_height;
     }
 
-    Utils::AVector<glm::vec3> GenerateRandomFoliage(Utils::AVector<glm::vec3>& possible_positions, std::mt19937& rand_engine)
+    Utils::Vector<glm::vec3> GenerateRandomFoliage(Utils::Vector<glm::vec3>& possible_positions, std::mt19937& rand_engine)
     {
-        Utils::AVector<u32> selected_indices;
-        Utils::AVector<glm::vec3> ret;
+        Utils::Vector<u32> selected_indices;
+        Utils::Vector<glm::vec3> ret;
         for (u32 i = 0; i < 14; i++) {
             u32 index;
             do {

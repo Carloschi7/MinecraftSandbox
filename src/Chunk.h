@@ -9,6 +9,19 @@
 class World;
 class Inventory;
 
+struct ChunkGeneration
+{
+	u8 heights[256];
+	Defs::Biome biomes[256];
+	bool in_water[256];
+	u8 lower;
+
+	//TODO insert some flag that tells the map that stores these elements
+	//when to delete the ones that no longer serve any purpose
+};
+
+ChunkGeneration ComputeGeneration(Defs::WorldSeed& seed, f32 origin_x, f32 origin_z);
+
 class Chunk
 {
 public:
@@ -53,6 +66,8 @@ public:
 	bool IsChunkVisibleByShadow(const glm::vec3& camera_position, const glm::vec3& camera_direction) const;
 	//Removes the defined normal from all chunk blocks which border
 	void RemoveBorderNorm(const glm::vec3& norm);
+	//Add blocks when needed
+	void EmplaceLowerBlockStack(u16 stack_count);
 
 	//When loaded from the relative world, returns the indexed position of the adjacent chunks
 	const std::optional<u32>& GetLoadedChunk(const Defs::ChunkLocation& cl) const;
@@ -66,7 +81,7 @@ public:
 	inline const glm::vec2 ChunkOrigin2D() const { return {m_ChunkOrigin.x, m_ChunkOrigin.z}; }
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
 	inline glm::vec3 ToWorld(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
-	inline Utils::AVector<Block>& Blocks() { return m_LocalBlocks; }
+	inline Utils::Vector<Block>& Blocks() { return m_LocalBlocks; }
 	inline void PushDrop(const glm::vec3& position, Defs::Item type) { m_LocalDrops.emplace_back(position, type); }
 
 	//Sum this with the chunk origin to get chunk's center
@@ -80,6 +95,7 @@ public:
 	//used instead of Gd::g_SelectedChunk in multiple iterations so we
 	//access the atomic variable only once
 	static u32 s_InternalSelectedBlock;
+	u8 lower_threshold;
 
 private:
 	//Returns if there is a block at the location pos
@@ -91,6 +107,9 @@ private:
 	//Wrapper function that assigns normals to border blocks if there are no other blocks even in the confining chunk
 	bool BorderCheck(Chunk* chunk, const glm::vec3& pos, u32 top_index, u32 bot_index, bool search_dir);
 	//Converts from chunk space to real world space
+
+	//Creates a chunk hash according to its position
+	u64 Hash(glm::vec2 vec);
 private:
 	//Global OpenGL environment state
 	GlCore::State& m_State;
@@ -99,13 +118,13 @@ private:
 
 	//Chunk progressive index
 	u32 m_ChunkIndex;
-	Utils::AVector<Block> m_LocalBlocks;
+	Utils::Vector<Block> m_LocalBlocks;
 	//Drops of brokeen blocks, the chunk which originated them is the
 	//responsible for updating and drawing them
-	Utils::AVector<Drop> m_LocalDrops;
+	Utils::Vector<Drop> m_LocalDrops;
 
 	//Eventual water layer(using a shared ptr because this ptr will also be stored in world)
-	Utils::AVector<glm::vec3> m_WaterLayerPositions;
+	Utils::Vector<glm::vec3> m_WaterLayerPositions;
 	//front-bottom-left block position
 	glm::vec3 m_ChunkOrigin;
 	glm::vec3 m_ChunkCenter;

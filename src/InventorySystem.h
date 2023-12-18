@@ -136,7 +136,7 @@ struct Recipe3x3
 
 };
 
-void LoadRecipes(Utils::AVector<Recipe2x2>& recipes_2x2, Utils::AVector<Recipe3x3>& recipes_3x3);
+void LoadRecipes(Utils::Vector<Recipe2x2>& recipes_2x2, Utils::Vector<Recipe3x3>& recipes_3x3);
 
 class Inventory
 {
@@ -191,6 +191,6 @@ private:
 	Grid crafting_2x2, crafting_3x3, product_grid;
 
 	//Recipes for crafting ingredients
-	Utils::AVector<Recipe2x2> recipes_2x2;
-	Utils::AVector<Recipe3x3> recipes_3x3;
+	Utils::Vector<Recipe2x2> recipes_2x2;
+	Utils::Vector<Recipe3x3> recipes_3x3;
 };
