@@ -454,6 +454,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 
 				//Do this, it's pointless to compute block placement in the same frame
 				//of block destruction
+				Defs::g_EnvironmentChange = true;
 				return world_event;
 			}
 
@@ -494,6 +495,10 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 						block_added_to_side_chunk = true;
 					}
 					else {
+						//NOTE: the block is just emplaced at the top of the vector
+						//without caring to place it at the top of the respective xz column
+						//does not seem to be a problem at the moment but a proper insertion
+						//could be useful to keep the chunk more integral
 						blocks.emplace_back(block.position + glm::u8vec3(1,0,0), bt);
 					}
 
@@ -513,10 +518,10 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 					}
 				} break;
 				case Defs::HitDirection::PosY:
-					blocks.emplace_back(block.position + glm::u8vec3(1, 0, 0), bt);
+					blocks.emplace_back(block.position + glm::u8vec3(0, 1, 0), bt);
 					break;
 				case Defs::HitDirection::NegY:
-					blocks.emplace_back(block.position + glm::u8vec3(-1, 0, 0), bt);
+					blocks.emplace_back(block.position + glm::u8vec3(0, -1, 0), bt);
 					break;
 				case Defs::HitDirection::PosZ: {
 					if (block.position.z == Chunk::s_ChunkWidthAndHeight - 1) {
@@ -555,7 +560,6 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 				if(!block_added_to_side_chunk)
 					local_chunk->AddFreshNormals(blocks.back());
 			}
-			//Signal block has been destroyed
 			Defs::g_EnvironmentChange = true;
 		}
 	}

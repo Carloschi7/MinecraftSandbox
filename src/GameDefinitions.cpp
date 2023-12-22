@@ -494,19 +494,17 @@ namespace Physics {
         f32 clamped_y = Defs::g_PlayerAxisMapping.y;
 
         jump_data.first -= clamped_y * 50.0f * elapsed_time;
-        if (jump_data.first < -3.0f)
-            jump_data.first = -3.0f;
+        if (jump_data.first < -4.0f)
+            jump_data.first = -4.0f;
 
         //Keep the 0.0f as it interrupts the player upon hitting blocks, but remove the exponential rise until 0.12
         //this makes the jump_data more sudden
-        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.3f ? 0.3f : clamped_y;
-        //the pow function is used to make the result higher on lower elapsed_time values, to make the jump_data speed
-        //more linear as the rendering gets heavier, the exponent is arbitrary for now
-        camera.position.y += jump_data.first * directional_boost * glm::pow(elapsed_time, 1.0 / 1.4);
+        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.4f ? 0.4f : clamped_y;
+        camera.position.y += jump_data.first * directional_boost * elapsed_time * 4.0f;
     }
     void ProcessPlayerAxisMovement(f32 elapsed_time)
     {
-        f32 initial_treshold = 0.04f;
+        f32 multiplier = 5.0f;
         f32 final_threshold = 1.0f;
         for (u32 i = 0; i < 3; i++) {
             f32& cd = Defs::g_PlayerAxisMapping[i];
@@ -514,13 +512,7 @@ namespace Physics {
             if (cd >= final_threshold) {
                 cd = final_threshold;
             }
-            else if (cd > initial_treshold && cd < final_threshold) {
-                cd += (final_threshold - initial_treshold) / 16.0f;
-            }
-            else {
-                //Four frames to get there
-                cd += initial_treshold / 4.0f;
-            }
+            cd += multiplier * elapsed_time;
         }
     }
 }
