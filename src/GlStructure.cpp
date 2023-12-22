@@ -187,7 +187,7 @@ namespace GlCore
         glm::vec3 light_eye = glm::vec3(x, 600.0f, z);
 
         static glm::mat4 proj = glm::ortho(-80.0f, 80.0f, -80.0f, 80.0f, 0.1f, 650.0f);
-        glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), g_PosZ);
+        glm::mat4 view = glm::lookAt(light_eye, glm::vec3(light_eye.x, 0.0f, light_eye.z), glm::vec3(0.0f, 0.0f, 1.0f));
         g_DepthSpaceMatrix = proj * view;
 
         pstate->depth_shader->UniformMat4f(g_DepthSpaceMatrix, "lightSpace");

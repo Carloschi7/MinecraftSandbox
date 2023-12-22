@@ -26,13 +26,6 @@ namespace GlCore
 	extern std::atomic_bool g_LogicThreadShouldRun;
 	//thread id of the thread which is allowed to modify m_Chunks
 	extern std::atomic_bool g_SerializationRunning;
-	//Basic normals
-	static constexpr glm::vec3 g_PosX{	1.0f,	0.0f,	0.0f };
-	static constexpr glm::vec3 g_NegX{ -1.0f,	0.0f,	0.0f };
-	static constexpr glm::vec3 g_PosY{	0.0f,	1.0f,	0.0f };
-	static constexpr glm::vec3 g_NegY{	0.0f,  -1.0f,	0.0f };
-	static constexpr glm::vec3 g_PosZ{	0.0f,	0.0f,	1.0f };
-	static constexpr glm::vec3 g_NegZ{	0.0f,	0.0f,  -1.0f };
 	//Framebuffer data
 	extern glm::vec3 g_FramebufferPlayerOffset;
 	extern glm::mat4 g_DepthSpaceMatrix;

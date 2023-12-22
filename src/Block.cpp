@@ -170,7 +170,7 @@ void Drop::Update(Chunk* chunk, f32 elapsed_time)
 
     glm::vec3 to_find = glm::vec3(std::roundf(position.x), static_cast<s32>(position.y), std::roundf(position.z));
 
-    const auto& vec = chunk->Blocks();
+    const auto& vec = chunk->chunk_blocks;
     auto iter = std::find_if(vec.begin(), vec.end(), [chunk, to_find](const Block& b) {return chunk->ToWorld(b.position) == to_find; });
     if (iter != vec.end()) {
         position = { position.x, iter->position.y + 0.8f, position.z};

@@ -81,7 +81,6 @@ public:
 	inline const glm::vec2 ChunkOrigin2D() const { return {m_ChunkOrigin.x, m_ChunkOrigin.z}; }
 	inline const glm::vec3& ChunkCenter() const { return m_ChunkCenter; }
 	inline glm::vec3 ToWorld(glm::u8vec3 pos) const { return m_ChunkOrigin + static_cast<glm::vec3>(pos); }
-	inline Utils::Vector<Block>& Blocks() { return m_LocalBlocks; }
 	inline void PushDrop(const glm::vec3& position, Defs::Item type) { m_LocalDrops.emplace_back(position, type); }
 
 	//Sum this with the chunk origin to get chunk's center
@@ -96,6 +95,8 @@ public:
 	//access the atomic variable only once
 	static u32 s_InternalSelectedBlock;
 	u8 lower_threshold;
+
+	Utils::Vector<Block> chunk_blocks;
 
 private:
 	//Returns if there is a block at the location pos
@@ -118,7 +119,7 @@ private:
 
 	//Chunk progressive index
 	u32 m_ChunkIndex;
-	Utils::Vector<Block> m_LocalBlocks;
+
 	//Drops of brokeen blocks, the chunk which originated them is the
 	//responsible for updating and drawing them
 	Utils::Vector<Drop> m_LocalDrops;

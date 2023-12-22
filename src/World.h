@@ -35,8 +35,7 @@ public:
 
     //Returns the corresponding chunk index if exists
     std::optional<u32> IsChunk(const Chunk& chunk, const Defs::ChunkLocation& cl);
-    Chunk& GetChunk(u32 index);
-    inline Utils::UnorderedMap<u64, ChunkGeneration>& CollectGenerations() { return m_Generations; }
+    Pointer<Chunk> GetChunk(u32 index);
 
     Defs::WorldSeed& Seed();
     const Defs::WorldSeed& Seed() const;
@@ -51,6 +50,9 @@ private:
     glm::vec2 SectionCentralPosFrom(u32 index);
     
 public:
+    //Keeps track of the generated terrain for each chunk, helps to optimize
+    //the number of blocks generated per chunk
+    Utils::UnorderedMap<u64, ChunkGeneration> perlin_generations;
     //Vector which stores a the general area of all watermaps found up to that moment
     Utils::Vector<Defs::WaterArea> pushed_areas;
     Utils::Vector<glm::vec3> relative_leaves_positions;
@@ -64,10 +66,8 @@ private:
     //of contiguous chunks like in Vector<Chunk> because we want to be
     //able to be flexible in multithreading. We just store a vistual address
     //in our virtual memory space
-    Utils::Vector<Ptr<Chunk>> m_Chunks;
-    //Keeps track of the generated terrain for each chunk, helps to optimize
-    //the number of blocks generated per chunk
-    Utils::UnorderedMap<u64, ChunkGeneration> m_Generations;
+    Utils::Vector<Pointer<Chunk>> m_Chunks;
+
     //Non existing chunk which are near existing ones. They can spawn if the
     //player gets near enough
     Utils::Vector<glm::vec3> m_SpawnableChunks;
@@ -85,8 +85,8 @@ private:
     //which the player can collide with
     //Also by declaring this we minimize the amount of allocation per frame
     //in the renderer thread
-    Ptr<Chunk*> m_CollisionChunkBuffer;
-    Ptr<VAddr*> m_RemovableChunkBuffer;
+    Pointer<Chunk*> m_CollisionChunkBuffer;
+    Pointer<VAddr*> m_RemovableChunkBuffer;
 
     //Serialization threads
     std::future<void> m_SerializingFut;

@@ -18,9 +18,7 @@
 //memory locking
 typedef u64 VAddr;
 
-//Virtual pointer mapped in a Memory::Arena, VAddr alias that leaves the pointed type explicit
-template<class T>
-using Ptr = VAddr;
+
 
 //msg for now its just a warning displayed in the same line of the assert, no practical usage
 #define MC_ASSERT(x, msg)\
@@ -160,3 +158,43 @@ namespace Memory
 		FreeUnchecked(arena, addr);
 	}
 }
+
+//VAddr access wrapper
+template<class T>
+struct Pointer {
+	Pointer() : Pointer(std::nullptr_t{}) {}
+	Pointer(std::nullptr_t) : __data{ static_cast<VAddr>(-1) } {}
+	Pointer(VAddr data) : __data{ data } {}
+	T* Raw()
+	{
+		if (!Valid())
+			return nullptr;
+
+		GlCore::State& state = *GlCore::pstate;
+		return Memory::Get<T>(state.memory_arena, __data);
+	}
+
+	const T* Raw() const
+	{
+		if (!Valid())
+			return nullptr;
+
+		GlCore::State& state = *GlCore::pstate;
+		return Memory::Get<T>(state.memory_arena, __data);
+	}
+
+	T* operator->() { return Raw(); }
+	const T* operator->() const { return Raw(); }
+
+	bool Valid() const
+	{
+		return __data != static_cast<VAddr>(-1);
+	}
+
+	operator VAddr() 
+	{
+		return __data;
+	}
+
+	VAddr __data;
+};

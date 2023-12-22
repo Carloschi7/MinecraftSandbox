@@ -50,9 +50,9 @@ World::World()
 	};
 
 	//Init spawnable chunks
-	for (auto& chunk_ptr : m_Chunks)
+	for (Pointer<Chunk>& chunk_ptr : m_Chunks)
 	{
-		Chunk& chunk = *Memory::Get<Chunk>(m_State.memory_arena, chunk_ptr);
+		Chunk& chunk = *chunk_ptr.Raw();
 		const glm::vec2& chunk_pos = chunk.ChunkOrigin2D();
 
 		if (!IsChunk(chunk, ChunkLocation::PlusX).has_value())
@@ -227,7 +227,7 @@ WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 				glm::vec2 chunk_pos = { origin_chunk_pos.x, origin_chunk_pos.z };
 
 				//Generate new chunk
-				Ptr<Chunk> chunk_addr = Memory::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
+				Pointer<Chunk> chunk_addr = Memory::New<Chunk>(m_State.memory_arena, *this, chunk_pos);
 				m_Chunks.push_back(chunk_addr);
 				Chunk* this_chunk = Memory::Get<Chunk>(m_State.memory_arena, chunk_addr);
 				HandleSectionData();
@@ -238,23 +238,23 @@ WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 				//The m_Chunk.size() - 1 index is the effective index of the newly pushed chunk
 				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusX); opt.has_value())
 				{
-					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::MinusX, this_chunk->Index());
+					Pointer<Chunk> neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk->SetLoadedChunk(Defs::ChunkLocation::MinusX, this_chunk->Index());
 				}
 				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusX); opt.has_value())
 				{
-					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::PlusX, this_chunk->Index());
+					Pointer<Chunk> neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk->SetLoadedChunk(Defs::ChunkLocation::PlusX, this_chunk->Index());
 				}
 				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusZ); opt.has_value())
 				{
-					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::MinusZ, this_chunk->Index());
+					Pointer<Chunk> neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk->SetLoadedChunk(Defs::ChunkLocation::MinusZ, this_chunk->Index());
 				}
 				if (auto opt = this_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusZ); opt.has_value())
 				{
-					auto& neighbor_chunk = GetChunk(opt.value());
-					neighbor_chunk.SetLoadedChunk(Defs::ChunkLocation::PlusZ, this_chunk->Index());
+					Pointer<Chunk> neighbor_chunk = GetChunk(opt.value());
+					neighbor_chunk->SetLoadedChunk(Defs::ChunkLocation::PlusZ, this_chunk->Index());
 				}
 
 				//Pushing new spawnable vectors
@@ -412,7 +412,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 		if (Defs::g_ViewMode != Defs::ViewMode::Inventory && (left_click || right_click)) 
 		{
 			u32 selected_block = Defs::g_SelectedBlock;
-			auto& blocks = local_chunk->Blocks();
+			auto& blocks = local_chunk->chunk_blocks;
 			if (left_click && selected_block != static_cast<u32>(-1))
 			{
 				const glm::u8vec3 raw_position = blocks[selected_block].position;
@@ -421,10 +421,10 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 
 				blocks.erase(blocks.begin() + selected_block);
 
-				Chunk& chunk_plus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusX).value());
-				Chunk& chunk_minus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusX).value());
-				Chunk& chunk_plus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusZ).value());
-				Chunk& chunk_minus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusZ).value());
+				Pointer<Chunk> chunk_plus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusX).value());
+				Pointer<Chunk> chunk_minus_x = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusX).value());
+				Pointer<Chunk> chunk_plus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::PlusZ).value());
+				Pointer<Chunk> chunk_minus_z = GetChunk(IsChunk(*local_chunk, Defs::ChunkLocation::MinusZ).value());
 
 				if (local_chunk->lower_threshold == position.y - 1.0f) {
 					local_chunk->EmplaceLowerBlockStack(1);
@@ -432,21 +432,21 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 
 				//The same thing could happen while deleting blocks from other chunks
 				f32 block_stack_size = 7.0f;
-				if (chunk_plus_x.lower_threshold - 1 >= position.y && raw_position.x == 15) {
-					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_x.lower_threshold - position.y) / block_stack_size));
-					chunk_plus_x.EmplaceLowerBlockStack(stack_count);
+				if (chunk_plus_x->lower_threshold - 1 >= position.y && raw_position.x == 15) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_x->lower_threshold - position.y) / block_stack_size));
+					chunk_plus_x->EmplaceLowerBlockStack(stack_count);
 				}
-				if (chunk_minus_x.lower_threshold - 1 >= position.y && raw_position.x == 0) {
-					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_x.lower_threshold - position.y) / block_stack_size));
-					chunk_minus_x.EmplaceLowerBlockStack(stack_count);
+				if (chunk_minus_x->lower_threshold - 1 >= position.y && raw_position.x == 0) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_x->lower_threshold - position.y) / block_stack_size));
+					chunk_minus_x->EmplaceLowerBlockStack(stack_count);
 				}
-				if (chunk_plus_z.lower_threshold - 1 >= position.y && raw_position.z == 15) {
-					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_z.lower_threshold - position.y) / block_stack_size));
-					chunk_plus_z.EmplaceLowerBlockStack(stack_count);
+				if (chunk_plus_z->lower_threshold - 1 >= position.y && raw_position.z == 15) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_plus_z->lower_threshold - position.y) / block_stack_size));
+					chunk_plus_z->EmplaceLowerBlockStack(stack_count);
 				}
-				if (chunk_minus_z.lower_threshold - 1 >= position.y && raw_position.z == 0) {
-					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_z.lower_threshold - position.y) / block_stack_size));
-					chunk_minus_z.EmplaceLowerBlockStack(stack_count);
+				if (chunk_minus_z->lower_threshold - 1 >= position.y && raw_position.z == 0) {
+					u16 stack_count = static_cast<u16>(glm::ceil(static_cast<f32>(chunk_minus_z->lower_threshold - position.y) / block_stack_size));
+					chunk_minus_z->EmplaceLowerBlockStack(stack_count);
 				}
 
 				local_chunk->AddNewExposedNormals(position);
@@ -485,69 +485,65 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 				switch (hit)
 				{
 				case Defs::HitDirection::PosX: {
-
 					if (block.position.x == Chunk::s_ChunkWidthAndHeight - 1) {
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusX);
 						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
-						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
-						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ 0, block.position.y, block.position.z }, bt);
-						adjacent_chunk.AddFreshNormals(emplaced_block);
+						Pointer<Chunk> adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk->chunk_blocks.emplace_back(glm::u8vec3{ 0, block.position.y, block.position.z }, bt);
+						adjacent_chunk->AddFreshNormals(emplaced_block);
 						block_added_to_side_chunk = true;
 					}
 					else {
-						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosX), bt);
+						blocks.emplace_back(block.position + glm::u8vec3(1,0,0), bt);
 					}
 
 				} break;
 				case Defs::HitDirection::NegX: {
-
 					if (block.position.x == 0) {
 						//The chunk is adjacent to the chunk we are in, should definitely be loaded
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusX);
 						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
-						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
-						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ Chunk::s_ChunkWidthAndHeight - 1, block.position.y, block.position.z}, bt);
-						adjacent_chunk.AddFreshNormals(emplaced_block);
+						Pointer<Chunk> adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk->chunk_blocks.emplace_back(glm::u8vec3{ Chunk::s_ChunkWidthAndHeight - 1, block.position.y, block.position.z}, bt);
+						adjacent_chunk->AddFreshNormals(emplaced_block);
 						block_added_to_side_chunk = true;
 					}
 					else {
-						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegX), bt);
+						blocks.emplace_back(block.position + glm::u8vec3(-1, 0, 0), bt);
 					}
 				} break;
 				case Defs::HitDirection::PosY:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosY), bt);
+					blocks.emplace_back(block.position + glm::u8vec3(1, 0, 0), bt);
 					break;
 				case Defs::HitDirection::NegY:
-					blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegY), bt);
+					blocks.emplace_back(block.position + glm::u8vec3(-1, 0, 0), bt);
 					break;
 				case Defs::HitDirection::PosZ: {
-					
 					if (block.position.z == Chunk::s_ChunkWidthAndHeight - 1) {
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::PlusZ);
 						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
-						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
-						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, 0 }, bt);
-						adjacent_chunk.AddFreshNormals(emplaced_block);
+						Pointer<Chunk> adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk->chunk_blocks.emplace_back(glm::u8vec3{ block.position.x, block.position.y, 0 }, bt);
+						adjacent_chunk->AddFreshNormals(emplaced_block);
 						block_added_to_side_chunk = true;
 					}
 					else {
-						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_PosZ), bt);
+						blocks.emplace_back(block.position + glm::u8vec3(0, 0, 1), bt);
 					}
 					
 				} break;
 				case Defs::HitDirection::NegZ: {
-
 					if (block.position.z == 0) {
 						//The chunk is adjacent to the chunk we are in, should definitely be loaded
 						std::optional<u32> adjacent_chunk_index = local_chunk->GetLoadedChunk(Defs::ChunkLocation::MinusZ);
 						MC_ASSERT(adjacent_chunk_index.has_value(), "Error, this chunk should exist");
-						auto& adjacent_chunk = GetChunk(adjacent_chunk_index.value());
-						auto& emplaced_block = adjacent_chunk.Blocks().emplace_back(glm::u8vec3{ block.position.x, block.position.y, Chunk::s_ChunkWidthAndHeight - 1 }, bt);
-						adjacent_chunk.AddFreshNormals(emplaced_block);
+						Pointer<Chunk> adjacent_chunk = GetChunk(adjacent_chunk_index.value());
+						auto& emplaced_block = adjacent_chunk->chunk_blocks.emplace_back(glm::u8vec3{ block.position.x, block.position.y, Chunk::s_ChunkWidthAndHeight - 1 }, bt);
+						adjacent_chunk->AddFreshNormals(emplaced_block);
 						block_added_to_side_chunk = true;
 					}
 					else {
-						blocks.emplace_back(block.position + static_cast<glm::u8vec3>(GlCore::g_NegZ), bt);
+						blocks.emplace_back(block.position + glm::u8vec3(0, 0, -1), bt);
 					}
 				} break;
 
@@ -634,14 +630,13 @@ std::optional<u32> World::IsChunk(const Chunk& chunk, const Defs::ChunkLocation&
 	return std::nullopt;
 }
 
-Chunk& World::GetChunk(u32 index)
+Pointer<Chunk> World::GetChunk(u32 index)
 {
 	auto iter = std::find_if(m_Chunks.begin(), m_Chunks.end(), 
-		[this, index](Ptr<Chunk> addr) {return Memory::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
+		[this, index](Pointer<Chunk> addr) {return Memory::Get<Chunk>(m_State.memory_arena, addr)->Index() == index; });
 
 	MC_ASSERT(iter != m_Chunks.end(), "the provided variable index should be valid");
-
-	return *Memory::Get<Chunk>(m_State.memory_arena, *iter);
+	return *iter;
 }
 
 Defs::WorldSeed& World::Seed()
@@ -669,7 +664,7 @@ void World::SerializeSector(u32 index)
 		for (u32 i = 0; i < m_Chunks.size(); i++)
 			Memory::LockRegion(m_State.memory_arena, m_Chunks[i]);
 		//Rearrange all the elements so that the ones that need to be serialized are at the end
-		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [this, index](Ptr<Chunk> addr) 
+		auto iter = std::partition(m_Chunks.begin(), m_Chunks.end(), [this, index](Pointer<Chunk> addr) 
 			{
 				Chunk* chunk = Memory::Get<Chunk>(m_State.memory_arena, addr);
 				return chunk->SectorIndex() != index; 
