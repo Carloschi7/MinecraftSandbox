@@ -36,16 +36,22 @@ namespace Defs
     //Local variables for now
     f32 jump_height = 6.0f;
 
+    void ReadWasd(const Window& window, bool& w, bool& a, bool& s, bool& d)
+    {
+        w = window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS });
+        a = window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS });
+        s = window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS });
+        d = window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS });
+    }
+
     void KeyboardFunction(const Window& window, Camera* camera, f64 elapsed_time)
     {
         f32 max_speed = 12.0f;
-        f32 speed_increment_factor = 60.0f;
+        f32 speed_increment_factor = 100.0f;
 
         //Give a starting point to every null coord if necessary
-        bool mw = window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS });
-        bool ma = window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS });
-        bool ms = window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS });
-        bool md = window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS });
+        bool mw, ma, ms, md;
+        ReadWasd(window, mw, ma, ms, md);
 
         glm::vec3 front = camera->GetFront();
         if (g_MovementType != MovementType::Creative) {

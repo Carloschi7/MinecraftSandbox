@@ -149,8 +149,8 @@ namespace Defs
 
 	extern std::pair<f32, bool> jump_data;
 	
-
-	void KeyboardFunction(const Window& window, Camera* camera, double time);
+	void ReadWasd(const Window& window, bool& w, bool& a, bool& s, bool& d);
+	void KeyboardFunction(const Window& window, Camera* camera, f64 time);
     void MouseFunction(const Window& window, Camera* camera, f64 x, f64 y, f64 dpi, f64 time);
 	HitDirection ViewBlockCollision(const glm::vec3& camera_pos, const glm::vec3& camera_dir, const glm::vec3& block_pos, f32& dist);
 	//Chunks will also be assigned a value in order to be grouped

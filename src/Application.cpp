@@ -191,7 +191,7 @@ void Application::OnUserRun()
                 if (Defs::g_MovementType != Defs::MovementType::Creative)
                     Physics::HandlePlayerGravity(elapsed_time);
 
-                world_instance.CheckPlayerCollision(camera_position);
+                world_instance.CheckPlayerCollision(camera_position, elapsed_time);
             }
 
             //Timing & logging

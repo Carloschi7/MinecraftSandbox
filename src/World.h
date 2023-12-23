@@ -29,7 +29,7 @@ public:
     void Render(const Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
     [[nodiscard]] WorldEvent UpdateScene(Inventory& inventory, f32 elapsed_time);
     [[nodiscard]] WorldEvent HandleSelection(Inventory& inventory, const glm::vec3& camera_position, const glm::vec3& camera_direction);
-    void CheckPlayerCollision(const glm::vec3& position);
+    void CheckPlayerCollision(const glm::vec3& position, f32 elapsed_time);
     //Pushes setion data to eventually help with serialization
     void HandleSectionData();
 

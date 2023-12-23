@@ -54,7 +54,8 @@ public:
 
 	//Collision functions
 	[[nodiscard]] std::pair<f32, Defs::HitDirection> RayCollisionLogic(const glm::vec3& camera_position, const glm::vec3& camera_direction);
-	void BlockCollisionLogic(glm::vec3& position);
+	//Returns true if a collision happens on the xz axis
+	bool BlockCollisionLogic(glm::vec3& position);
 
 
 	void UpdateBlocks(Inventory& inventory, f32 elapsed_time);

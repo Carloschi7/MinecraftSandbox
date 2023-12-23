@@ -567,7 +567,7 @@ WorldEvent World::HandleSelection(Inventory& inventory, const glm::vec3& camera_
 	return world_event;
 }
 
-void World::CheckPlayerCollision(const glm::vec3& position)
+void World::CheckPlayerCollision(const glm::vec3& position, f32 elapsed_time)
 {
 	u16 count = 0;
 	Chunk** chunk_buffer = Memory::Get<Chunk*>(m_State.memory_arena, m_CollisionChunkBuffer);
@@ -581,8 +581,29 @@ void World::CheckPlayerCollision(const glm::vec3& position)
 	}
 
 	Camera* cam = m_State.camera;
-	for(u16 i = 0; i < count; i++)
-		chunk_buffer[i]->BlockCollisionLogic(cam->position);
+
+	//Give a starting point to every null coord if necessary
+
+	bool w, a, s, d;
+	Defs::ReadWasd(*m_State.game_window, w, a, s, d);
+	f32 fw = w ? 1.0f : 0.0f;
+	f32 fa = a ? 1.0f : 0.0f;
+	f32 fs = s ? -1.0f : 0.0f;
+	f32 fd = d ? -1.0f : 0.0f;
+
+	bool xz_collision_happened = false;
+	//Offset the position by a factor multiplied by the elapsed time. This makes it so that
+	//when there is a particularly long frame, the collision calculations can still be pretty
+	//accurate
+	glm::vec3 dir = cam->GetFront() * (glm::vec3(fw + fs, 0.0f, fa + fd) * elapsed_time);
+	cam->position += dir;
+	for (u16 i = 0; i < count; i++) {
+		if (chunk_buffer[i]->BlockCollisionLogic(cam->position))
+			xz_collision_happened = true;
+	}
+
+	if(!xz_collision_happened)
+		cam->position -= dir;
 }
 
 void World::HandleSectionData()

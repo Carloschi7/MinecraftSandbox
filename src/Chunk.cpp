@@ -489,9 +489,10 @@ std::pair<f32, Defs::HitDirection> Chunk::RayCollisionLogic(const glm::vec3& cam
 	return { closest_selected_block_dist, selection };
 }
 
-void Chunk::BlockCollisionLogic(glm::vec3& position)
+bool Chunk::BlockCollisionLogic(glm::vec3& position)
 {
 	f32 clip_threshold = 0.9f;
+	bool result = false;
 	for (u32 i = 0; i < chunk_blocks.size(); i++) {
 		if (!chunk_blocks[i].HasNormals())
 			continue;
@@ -508,11 +509,13 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 				if (abs_diff.z > abs_diff.x && abs_diff.z > y_halved) {
 					position.z = position.z < block_pos.z ? block_pos.z - clip_threshold : block_pos.z + clip_threshold;
 					Defs::g_PlayerAxisMapping.z = 0.0f;
+					result = true;
 				}
 
 				if (abs_diff.x > y_halved && abs_diff.x > abs_diff.z) {
 					position.x = position.x < block_pos.x ? block_pos.x - clip_threshold : block_pos.x + clip_threshold;
 					Defs::g_PlayerAxisMapping.x = 0.0f;
+					result = true;
 				}
 			}
 
@@ -529,6 +532,8 @@ void Chunk::BlockCollisionLogic(glm::vec3& position)
 			}
 		}
 	}
+
+	return result;
 }
 
 void Chunk::UpdateBlocks(Inventory& inventory, f32 elapsed_time)
