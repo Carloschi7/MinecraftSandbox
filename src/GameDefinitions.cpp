@@ -17,7 +17,6 @@ namespace Defs
 	const f32 g_ChunkRenderingDistance = 300.0f;
 	const f32 g_CameraCompensation = 10.0f;
 	const f32 g_RenderDistance = 1500.0f;
-    const f32 g_FramedPlayerSpeed = 80.0f;
     const f32 g_SectionDimension = 512.0f;
     u32 g_ChunkProgIndex = 0;
 	const s32 g_SpawnerBegin = -64;
@@ -37,34 +36,36 @@ namespace Defs
     //Local variables for now
     f32 jump_height = 6.0f;
 
-    void KeyboardFunction(const Window& window, Camera* camera, double time)
+    void KeyboardFunction(const Window& window, Camera* camera, f64 elapsed_time)
     {
-        f32 fScalar = 0.2f;
-        glm::vec3 old_position = camera->position;
+        f32 max_speed = 12.0f;
+        f32 speed_increment_factor = 60.0f;
 
         //Give a starting point to every null coord if necessary
-        if (g_PlayerSpeed == 0.0f)
-            g_PlayerSpeed = 0.002f;
+        bool mw = window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS });
+        bool ma = window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS });
+        bool ms = window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS });
+        bool md = window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS });
 
         glm::vec3 front = camera->GetFront();
         if (g_MovementType != MovementType::Creative) {
             front.y = 0.0f;
         }
 
-        if (window.IsKeyboardEvent({ GLFW_KEY_W, GLFW_PRESS }))
-            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
-        if (window.IsKeyboardEvent({ GLFW_KEY_S, GLFW_PRESS }))
-            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
-        if (window.IsKeyboardEvent({ GLFW_KEY_A, GLFW_PRESS }))
-            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
-        if (window.IsKeyboardEvent({ GLFW_KEY_D, GLFW_PRESS }))
-            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
+        if (mw)
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * (f32)elapsed_time;
+        if (ms)
+            camera->position += front * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)elapsed_time;
+        if (ma)
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)elapsed_time;
+        if (md)
+            camera->position += glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f))) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)elapsed_time;
 
         if (g_MovementType == MovementType::Creative) {
             if (window.IsKeyboardEvent({ GLFW_KEY_E, GLFW_PRESS }))
-                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)time;
+                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * (f32)elapsed_time;
             if (window.IsKeyboardEvent({ GLFW_KEY_C, GLFW_PRESS }))
-                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)time;
+                camera->position += glm::vec3(0.0f, 1.0f, 0.0f) * g_PlayerSpeed * g_PlayerAxisMapping * -(f32)elapsed_time;
         }
         else {
             if (window.IsKeyboardEvent({ GLFW_KEY_SPACE, GLFW_PRESS })) {
@@ -75,9 +76,9 @@ namespace Defs
         }
 
         //If the player stops, then reduce the acceleration
-        if (old_position != camera->position) {
-           if (g_PlayerSpeed < fScalar)
-               g_PlayerSpeed *= 1.5f;
+        if (mw || ma || ms || md) {
+            if (g_PlayerSpeed < max_speed)
+                g_PlayerSpeed += speed_increment_factor * elapsed_time;
         }
         else {
             //Player did not move
@@ -484,7 +485,7 @@ namespace Physics {
     {
         Camera& camera = *GlCore::pstate->camera;
         Window& window = *GlCore::pstate->game_window;
-        camera.ProcessInput(window, elapsed_time * Defs::g_FramedPlayerSpeed, 0.8);
+        camera.ProcessInput(window, elapsed_time, 0.8);
     }
     void HandlePlayerGravity(f32 elapsed_time) 
     {

@@ -121,7 +121,6 @@ namespace Defs
 	extern const f32 g_ChunkRenderingDistance;
 	extern const f32 g_CameraCompensation;
 	extern const f32 g_RenderDistance;
-	extern const f32 g_FramedPlayerSpeed;
 	extern const f32 g_SectionDimension;
 	//Personal index for each chunk
 	extern u32 g_ChunkProgIndex;
