@@ -71,6 +71,7 @@ namespace GlCore
 
     MeshStorage AllocateMeshStorage(Memory::Arena* arena) 
     {
+        //back: +0, front: +0, left: +2, right: +2, bottom: +3, top: +1
         const f32 pos_and_tex_coord_default[]
         {
             //Back
