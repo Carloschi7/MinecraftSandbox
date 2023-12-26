@@ -71,6 +71,7 @@ namespace GlCore
 
         glm::mat4 inventory_proj = glm::ortho(0.0f, (f32)wnd.Width(), (f32)wnd.Height(), 0.0f);
         state.inventory_shader->UniformMat4f(inventory_proj, "proj");
+        state.inventory_shader->Uniform1i(-1, "optional_texture_index");
 
         //and also the inventory entry VM
         elem = &stg.inventory_entry;
@@ -94,32 +95,11 @@ namespace GlCore
         state.drop_shader = Memory::NewUnchecked<Shader>(allocator, PATH("assets/shaders/basic_collectable.shader"));
 
         //Load textures
-        using TextureLoaderType = std::pair<std::string, Defs::TextureBinding>;
-        using enum Defs::TextureBinding;
-        Utils::Vector<TextureLoaderType> textures
-        {
-            //Block textures
-            {"texture_dirt",            TextureDirt},
-            {"texture_grass",           TextureGrass},
-            {"texture_sand",            TextureSand},
-            {"texture_wood",            TextureWood},
-            {"texture_wood_planks",     TextureWoodPlanks},
-            {"texture_leaves",          TextureLeaves},
-            {"texture_crafting_table",  TextureCraftingTable},
-            //Item textures
-            {"texture_wood_stick",      TextureWoodStick},
-            {"texture_wood_pickaxe",    TextureWoodPickaxe}
-        };
-
-        //The binding matches the vector position
         InitGameTextures(state.game_textures);
-        for (auto&[uniform_name, texture_type] : textures)
-        {
-            u32 tex_index = static_cast<u32>(texture_type);
-            state.game_textures[tex_index].Bind(tex_index);
-            state.block_shader->Uniform1i(tex_index, uniform_name);
-            state.drop_shader->Uniform1i(tex_index, uniform_name);
-        }
+        const u32 global_texture_index = static_cast<u32>(Defs::TextureBinding::GlobalTexture);
+        state.game_textures[global_texture_index].Bind(global_texture_index);
+        state.block_shader->Uniform1i(global_texture_index, "global_texture");
+        state.drop_shader->Uniform1i(global_texture_index, "global_texture");
 
         //Create instance buffer for positions and texindices
         instanced_layout_element = { 3, GL_FLOAT, GL_FALSE, sizeof(f32) * 3, 0 };
@@ -208,16 +188,7 @@ namespace GlCore
 
     void InitGameTextures(std::vector<Texture>& textures)
     {
-        textures.emplace_back(CPATH("assets/textures/dirt.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/grass.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/sand.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/wood.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/wood_planks.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/leaves.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/crafting_table.png"), false, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/wood_stick.png"), true, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/wood_pickaxe.png"), true, TextureFilter::Nearest);
-        textures.emplace_back(CPATH("assets/textures/water.png"), false, TextureFilter::Nearest);
+        textures.emplace_back(CPATH("assets/textures/blocks_and_items.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/inventory.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/crafting_table_inventory.png"), false, TextureFilter::Nearest);
         textures.emplace_back(CPATH("assets/textures/ScreenInventory.png"), true, TextureFilter::Nearest);

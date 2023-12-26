@@ -53,16 +53,7 @@ void main()
 #shader fragment
 #version 330 core
 
-uniform sampler2D texture_dirt;
-uniform sampler2D texture_grass;
-uniform sampler2D texture_sand;
-uniform sampler2D texture_wood;
-uniform sampler2D texture_wood_planks;
-uniform sampler2D texture_leaves;
-uniform sampler2D texture_crafting_table;
-uniform sampler2D texture_wood_stick;
-uniform sampler2D texture_wood_pickaxe;
-
+uniform sampler2D global_texture;
 uniform sampler2D texture_depth;
 
 in vec2 TexCoords;
@@ -72,49 +63,43 @@ in vec4 LightSpacePos;
 
 out vec4 OutColor;
 
-vec4 choose_tex(int index)
+vec2 get_offset(int index)
 {	
+	//blocks per row
+	float bpr = 16.0f;
+	index -= index >= 256 ? 256 : 0;
 	switch (index)
 	{
 	case 0:
-		return texture(texture_dirt, TexCoords);
+		//Dirt
+		return vec2(0.0f, 0.0f);
 	case 1:
-		return texture(texture_grass, TexCoords);
+		//Grass
+		return vec2(4.0f / bpr, 0.0f);
 	case 2:
-		return texture(texture_sand, TexCoords);
+		//Sand
+		return vec2(8.0f / bpr, 0.0f);
 	case 3:
-		return texture(texture_wood, TexCoords);
+		//Wood
+		return vec2(4.0f / bpr, 1.0f / bpr);
 	case 4:
-		return texture(texture_wood_planks, TexCoords);
+		//Wood planks
+		return vec2(8.0f / bpr, 1.0f / bpr);
 	case 5:
-		return texture(texture_leaves, TexCoords);
+		//Leaves
+		return vec2(12.0f / bpr, 0.0f);
 	case 6:
-		return texture(texture_crafting_table, TexCoords);
+		//Crafting table
+		return vec2(12.0f / bpr, 1.0f / bpr);
 	case 7:
-		return texture(texture_wood_stick, TexCoords);
+		//Wood stick
+		return vec2(0.0f, 2.0f / bpr);
 	case 8:
-		return texture(texture_wood_pickaxe, TexCoords);
-	case 256 + 0:
-		return texture(texture_dirt, TexCoords) * 0.4f;
-	case 256 + 1:
-		return texture(texture_grass, TexCoords) * 0.4f;
-	case 256 + 2:
-		return texture(texture_sand, TexCoords) * 0.4f;
-	case 256 + 3:
-		return texture(texture_wood, TexCoords) * 0.4f;
-	case 256 + 4:
-		return texture(texture_wood_planks, TexCoords) * 0.4f;
-	case 256 + 5:
-		return texture(texture_leaves, TexCoords) * 0.4f;
-	case 256 + 6:
-		return texture(texture_crafting_table, TexCoords) * 0.4f;	
-	case 256 + 7:
-		return texture(texture_wood_stick, TexCoords) * 0.4f;
-	case 256 + 8:
-		return texture(texture_wood_pickaxe, TexCoords) * 0.4f;
+		//Wood pickaxe
+		return vec2(4.0f / bpr, 2.0f / bpr);
 	}
 
-	return vec4(0.0f);
+	return vec2(-1.0f);
 }
 
 void main()
@@ -124,7 +109,9 @@ void main()
 	float darkness_value = 0.4f;
 	float dot_value = dot(Norm, -light_direction);
 	float diff = max(dot_value, darkness_value);
-	OutColor = choose_tex(int(TexIndex)) * diff;
+	OutColor = texture(global_texture, TexCoords + get_offset(int(TexIndex))) * diff;
+	OutColor *= int(TexIndex) >= 256 ? 0.4f : 1.0f;
+
 	//If the fragment is out of the light space, discard the fragment
 	if (LightSpacePos.x < -1.0f || LightSpacePos.y < -1.0f || LightSpacePos.x > 1.0f || LightSpacePos.y > 1.0f)
 		return;

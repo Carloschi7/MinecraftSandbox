@@ -71,51 +71,57 @@ namespace GlCore
 
     MeshStorage AllocateMeshStorage(Memory::Arena* arena) 
     {
-        //back: +0, front: +0, left: +2, right: +2, bottom: +3, top: +1
+
+        //TODO creating an array on the CPU and sending it to the GPU for the individual texture offset
+        //needs to be done, so that we are not defining a function for each shader that needs to compute the offset
+
+        //blocks per row
+        f32 bpr = 16.0f;
+
         const f32 pos_and_tex_coord_default[]
         {
             //Back
-            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
-             0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
-            -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    2.0f * one_third,
-            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
+            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,           1.0f / bpr,
+             0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,            0.0f,
+             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    0.0f,
+             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    0.0f,
+            -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    1.0f / bpr,
+            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,           1.0f / bpr,
             //Front                 
-            -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,     2.0f * one_third,
-             0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,     one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.25f,    one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.25f,    one_third,
-            -0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.25f,    2.0f * one_third,
-            -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,     2.0f * one_third,
+            -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,        1.0f / bpr,
+             0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,        0.0f,
+             0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   1.0f / bpr,    0.0f,
+             0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   1.0f / bpr,    0.0f,
+            -0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   1.0f / bpr,    1.0f / bpr,
+            -0.5f, -0.5f,  0.5f,    0.0f, 0.0f, 1.0f,   0.0f,           1.0f / bpr,
             //Left                  
-            -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   0.5f,     2.0f * one_third,
-            -0.5f,  0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   0.5f,     one_third,
-            -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   0.75f,    one_third,
-            -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   0.75f,    one_third,
-            -0.5f, -0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   0.75f,    2.0f * one_third,
-            -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   0.5f,     2.0f * one_third,
+            -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   2.0f / bpr,     1.0f / bpr,
+            -0.5f,  0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   2.0f / bpr,     0.0f,
+            -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   3.0f / bpr,    0.0f,
+            -0.5f, -0.5f, -0.5f,    -1.0f, 0.0f, 0.0f,   3.0f / bpr,    0.0f,
+            -0.5f, -0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   3.0f / bpr,    1.0f / bpr,
+            -0.5f,  0.5f,  0.5f,    -1.0f, 0.0f, 0.0f,   2.0f / bpr,     1.0f / bpr,
             //Right                 
-             0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   0.5f,     2.0f * one_third,
-             0.5f,  0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   0.5f,     one_third,
-             0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   0.75f,    one_third,
-             0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   0.75f,    one_third,
-             0.5f, -0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   0.75f,    2.0f * one_third,
-             0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   0.5f,     2.0f * one_third,
+             0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   2.0f / bpr,     1.0f / bpr,
+             0.5f,  0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   2.0f / bpr,     0.0f,
+             0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   3.0f / bpr,    0.0f,
+             0.5f, -0.5f, -0.5f,    1.0f, 0.0f, 0.0f,   3.0f / bpr,    0.0f,
+             0.5f, -0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   3.0f / bpr,    1.0f / bpr,
+             0.5f,  0.5f,  0.5f,    1.0f, 0.0f, 0.0f,   2.0f / bpr,     1.0f / bpr,
              //Bottom               
-            -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   0.75f,    one_third,
-             0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   1.0f,     one_third,
-             0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   1.0f,     2.0f * one_third,
-             0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   1.0f,     2.0f * one_third,
-            -0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   0.75f,    2.0f * one_third,
-            -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   0.75f,    one_third,
+            -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   3.0f / bpr,    0.0f,
+             0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   4.0f / bpr,     0.0f,
+             0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   4.0f / bpr,     1.0f / bpr,
+             0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   4.0f / bpr,     1.0f / bpr,
+            -0.5f, -0.5f,  0.5f,    0.0f, -1.0f, 0.0f,   3.0f / bpr,    1.0f / bpr,
+            -0.5f, -0.5f, -0.5f,    0.0f, -1.0f, 0.0f,   3.0f / bpr,    0.0f,
             //Top                   
-            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
-            -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    2.0f * one_third,
-            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
+            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    0.0f,
+             0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    0.0f,
+             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    1.0f / bpr,
+             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    1.0f / bpr,
+            -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    1.0f / bpr,
+            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    0.0f,
         };
 
         const f32 pos_and_tex_coord_depth[]
@@ -164,15 +170,16 @@ namespace GlCore
             -0.5f,  0.5f, -0.5f,
         };
 
+        //Needs
         const f32 pos_and_tex_coords_decal2d[]
         {
             //Back
-            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
-             0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    one_third,
-            -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.25f,    2.0f * one_third,
-            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f,     2.0f * one_third,
+            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    1.0f / bpr,
+             0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f / bpr,    1.0f / bpr,
+             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f / bpr,    0.0f / bpr,
+             0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   0.0f / bpr,    0.0f / bpr,
+            -0.5f,  0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    0.0f / bpr,
+            -0.5f, -0.5f, -0.5f,    0.0f, 0.0f, -1.0f,   1.0f / bpr,    1.0f / bpr,
         };
 
         const f32 pos_and_tex_coords_screen[]
@@ -186,14 +193,15 @@ namespace GlCore
             -1.0f, -1.0f, 0.0f, 0.0f
         };
 
+        //Needs
         const f32 water_layer[]
         {
-            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
-             0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
-             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.50f,    2.0f * one_third,
-            -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    2.0f * one_third,
-            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   0.25f,    one_third,
+            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    1.0f / bpr,
+             0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    1.0f / bpr,
+             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    2.0f / bpr,
+             0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   2.0f / bpr,    2.0f / bpr,
+            -0.5f,  0.5f,  0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    2.0f / bpr,
+            -0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f,   1.0f / bpr,    1.0f / bpr,
         };
 
         const f32 crossaim[]
@@ -218,17 +226,18 @@ namespace GlCore
             -0.5f, -0.5f,   0.0f, 0.0f,
         };
 
+        //Needs
         const f32 inventory_entry[]
         {
             // The 0.01f padding adjust the item image perfectly to the center,
             // that probably does not happen by default because of unfortunate
             // float rounding
-            -0.5f, -0.5f,   0.25f, 2.0f * one_third - 0.01f,
-             0.5f, -0.5f,   0.50f, 2.0f * one_third - 0.01f,
-             0.5f,  0.5f,   0.50f, one_third,
-             0.5f,  0.5f,   0.50f, one_third,
-            -0.5f,  0.5f,   0.25f, one_third,
-            -0.5f, -0.5f,   0.25f, 2.0f * one_third - 0.01f,
+            -0.5f, -0.5f,   1.0f / bpr, 0.0f / bpr,
+             0.5f, -0.5f,   2.0f / bpr, 0.0f / bpr,
+             0.5f,  0.5f,   2.0f / bpr, 1.0f / bpr,
+             0.5f,  0.5f,   2.0f / bpr, 1.0f / bpr,
+            -0.5f,  0.5f,   1.0f / bpr, 1.0f / bpr,
+            -0.5f, -0.5f,   1.0f / bpr, 0.0f / bpr,
         };
 
         MeshStorage result{};

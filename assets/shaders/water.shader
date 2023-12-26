@@ -30,7 +30,7 @@ void main()
 #shader fragment
 #version 330 core
 
-uniform sampler2D texture_water;
+uniform sampler2D global_texture;
 
 in vec2 TexCoords;
 in vec3 Norm;
@@ -38,6 +38,5 @@ out vec4 OutColor;
 
 void main()
 {
-	OutColor = texture(texture_water, TexCoords);
-	//OutColor = vec4(0.3f, 0.4f, 0.1f, 1.0f);
+	OutColor = texture(global_texture, TexCoords);
 }

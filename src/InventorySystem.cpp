@@ -297,10 +297,14 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
         glEnable(GL_BLEND);
         m_TextRenderer.DrawString(std::to_string(entry.item_count), num_transform);
         glDisable(GL_BLEND);
+
+        //Reset the optional index uniform
+        m_State.inventory_shader->Uniform1i(-1, "optional_texture_index");
     };
 
     //Drawing actual block
-    m_State.inventory_shader->Uniform1i(static_cast<u32>(entry.item_type), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<s32>(Defs::TextureBinding::GlobalTexture), "texture_inventory");
+    m_State.inventory_shader->Uniform1i(static_cast<s32>(entry.item_type), "optional_texture_index");
     switch (entry_type) {
     case EntryType::Default: {
             auto [icon_transform, num_transform] = SlotTransform(binding_index, entry.item_count >= 10);
@@ -338,6 +342,8 @@ void Inventory::RenderEntry(EntryType entry_type, InventoryEntry entry, u32 bind
             glm::ivec2 number_padding(2, 2);
             m_TextRenderer.DrawString(std::to_string(entry.item_count), glm::ivec2(dx + factor, dy) + number_padding);
             glDisable(GL_BLEND);
+
+            m_State.inventory_shader->Uniform1i(-1, "optional_texture_index");
         } return;
     }
 }

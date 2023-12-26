@@ -71,9 +71,9 @@ World::World()
 	GlCore::UniformProjMatrix();
 
 	//Load water texture
-	u32 water_binding = static_cast<u32>(Defs::TextureBinding::TextureWater);
-	m_State.game_textures[water_binding].Bind(water_binding);
-	m_State.water_shader->Uniform1i(water_binding, "texture_water");
+	const u32 global_texture_index = static_cast<u32>(Defs::TextureBinding::GlobalTexture);
+	m_State.game_textures[global_texture_index].Bind(global_texture_index);
+	m_State.water_shader->Uniform1i(global_texture_index, "global_texture");
 }
 
 World::~World()

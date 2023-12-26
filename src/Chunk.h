@@ -15,9 +15,6 @@ struct ChunkGeneration
 	Defs::Biome biomes[256];
 	bool in_water[256];
 	u8 lower;
-
-	//TODO insert some flag that tells the map that stores these elements
-	//when to delete the ones that no longer serve any purpose
 };
 
 ChunkGeneration ComputeGeneration(Defs::WorldSeed& seed, f32 origin_x, f32 origin_z);

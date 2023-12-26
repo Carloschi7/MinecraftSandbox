@@ -47,16 +47,7 @@ namespace Defs
 
 	enum class TextureBinding : u8
 	{
-		TextureDirt = 0,
-		TextureGrass,
-		TextureSand,
-		TextureWood,
-		TextureWoodPlanks,
-		TextureLeaves,
-		TextureCraftingTable,
-		TextureWoodStick,
-		TextureWoodPickaxe,
-		TextureWater,
+		GlobalTexture = 0,
 		TextureInventory,
 		TextureCraftingTableInventory,
 		TextureScreenInventory,
