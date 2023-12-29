@@ -3,6 +3,10 @@
 #include <mutex>
 #include "GlStructure.h"
 
+namespace Utils {
+    class Serializer;
+}
+
 class Chunk;
 
 class Block

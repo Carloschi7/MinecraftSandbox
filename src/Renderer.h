@@ -6,7 +6,6 @@
 #include "MainIncl.h"
 #include "GameDefinitions.h"
 #include "Vertices.h"
-#include "Utils.h"
 
 //Preferred singleton implementation
 namespace GlCore

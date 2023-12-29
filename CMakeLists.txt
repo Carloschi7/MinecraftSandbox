@@ -47,7 +47,7 @@ add_executable(${PROJECT_NAME} src/Main.cpp
 		src/Memory.h src/Memory.cpp
 		src/State.h src/State.cpp
 		src/Macros.h
-		src/Utils.h
+		src/Utils.h src/Utils.cpp
 		src/Vertices.h src/Vertices.cpp
 		)
 

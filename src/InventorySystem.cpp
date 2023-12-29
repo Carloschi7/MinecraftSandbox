@@ -1,5 +1,6 @@
 #include "InventorySystem.h"
 #include "GlStructure.h"
+#include "Renderer.h"
 
 Inventory::Inventory(TextRenderer& text_renderer) :
     m_State(*GlCore::pstate), m_CursorIndex(0), 

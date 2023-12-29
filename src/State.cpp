@@ -9,6 +9,8 @@
 
 namespace GlCore
 {
+
+
 	State::~State()
 	{
 		//Free all the objects

@@ -349,9 +349,9 @@ WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			{
 				auto parallel_serialization = [&]()
 				{
-					MC_LOG("() => Deserializing: {}", m_Chunks.size());
+					MC_LOG("() => Deserializing: {}\n", m_Chunks.size());
 					DeserializeSector(data.index);
-					MC_LOG("Deserialized: {}", m_Chunks.size());
+					MC_LOG("Deserialized: {}\n", m_Chunks.size());
 					GlCore::g_SerializationRunning = false;
 				};
 
@@ -361,9 +361,9 @@ WorldEvent World::UpdateScene(Inventory& inventory, f32 elapsed_time)
 			}
 			else
 			{
-				MC_LOG("() => Deserializing: {}", m_Chunks.size());
+				MC_LOG("() => Deserializing: {}\n", m_Chunks.size());
 				DeserializeSector(data.index);
-				MC_LOG("Deserialized: {}", m_Chunks.size());
+				MC_LOG("Deserialized: {}\n", m_Chunks.size());
 			}
 		}
 	}

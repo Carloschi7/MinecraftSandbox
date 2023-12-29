@@ -2,6 +2,7 @@
 #include <optional>
 #include "glm/glm.hpp"
 
+#include "GameDefinitions.h"
 #include "Block.h"
 #include "State.h"
 #include "Memory.h"

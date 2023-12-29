@@ -1,6 +1,10 @@
+#include <array>
+#include "Shader.h"
 #include "Block.h"
 #include "Vertices.h"
 #include "Chunk.h"
+#include "Utils.h"
+
 
 //For block normal handling
 const std::array<u8, 6> bitshifts = {

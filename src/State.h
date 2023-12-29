@@ -15,6 +15,8 @@ namespace Memory {
 
 namespace GlCore
 {
+
+
 	struct State
 	{
 		State() = default;
