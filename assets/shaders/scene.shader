@@ -55,6 +55,7 @@ void main()
 
 uniform sampler2D global_texture;
 uniform sampler2D texture_depth;
+uniform vec2 item_offsets[9];
 
 in vec2 TexCoords;
 flat in uint TexIndex;
@@ -63,45 +64,6 @@ in vec4 LightSpacePos;
 
 out vec4 OutColor;
 
-vec2 get_offset(int index)
-{	
-	//blocks per row
-	float bpr = 16.0f;
-	index -= index >= 256 ? 256 : 0;
-	switch (index)
-	{
-	case 0:
-		//Dirt
-		return vec2(0.0f, 0.0f);
-	case 1:
-		//Grass
-		return vec2(4.0f / bpr, 0.0f);
-	case 2:
-		//Sand
-		return vec2(8.0f / bpr, 0.0f);
-	case 3:
-		//Wood
-		return vec2(4.0f / bpr, 1.0f / bpr);
-	case 4:
-		//Wood planks
-		return vec2(8.0f / bpr, 1.0f / bpr);
-	case 5:
-		//Leaves
-		return vec2(12.0f / bpr, 0.0f);
-	case 6:
-		//Crafting table
-		return vec2(12.0f / bpr, 1.0f / bpr);
-	case 7:
-		//Wood stick
-		return vec2(0.0f, 2.0f / bpr);
-	case 8:
-		//Wood pickaxe
-		return vec2(4.0f / bpr, 2.0f / bpr);
-	}
-
-	return vec2(-1.0f);
-}
-
 void main()
 {
 	vec3 light_direction = vec3(0.0f, -1.0f, 0.0f);
@@ -109,7 +71,7 @@ void main()
 	float darkness_value = 0.4f;
 	float dot_value = dot(Norm, -light_direction);
 	float diff = max(dot_value, darkness_value);
-	OutColor = texture(global_texture, TexCoords + get_offset(int(TexIndex))) * diff;
+	OutColor = texture(global_texture, TexCoords + item_offsets[int(TexIndex) % 256]) * diff;
 	OutColor *= int(TexIndex) >= 256 ? 0.4f : 1.0f;
 
 	//If the fragment is out of the light space, discard the fragment

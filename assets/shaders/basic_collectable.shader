@@ -23,50 +23,13 @@ in vec2 TexCoords;
 
 uniform int drop_texture_index;
 uniform sampler2D global_texture;
+uniform vec2 item_offsets[9];
 
 out vec4 OutColor;
 
-vec2 get_offset(int index)
-{
-	//blocks per row
-	float bpr = 16.0f;
-	switch (index)
-	{
-	case 0:
-		//Dirt
-		return vec2(0.0f, 0.0f);
-	case 1:
-		//Grass
-		return vec2(4.0f / bpr, 0.0f);
-	case 2:
-		//Sand
-		return vec2(8.0f / bpr, 0.0f);
-	case 3:
-		//Wood
-		return vec2(4.0f / bpr, 1.0f / bpr);
-	case 4:
-		//Wood planks
-		return vec2(8.0f / bpr, 1.0f / bpr);
-	case 5:
-		//Leaves
-		return vec2(4.0f / bpr, 0.0f);
-	case 6:
-		//Crafting table
-		return vec2(12.0f / bpr, 1.0f / bpr);
-	case 7:
-		//Wood stick
-		return vec2(0.0f, 2.0f / bpr);
-	case 8:
-		//Wood pickaxe
-		return vec2(4.0f / bpr, 2.0f / bpr);
-	}
-
-	return vec2(-1.0f);
-}
-
 void main() 
 {
-	OutColor = texture(global_texture, TexCoords + get_offset(drop_texture_index));
+	OutColor = texture(global_texture, TexCoords + item_offsets[drop_texture_index]);
 	//OutColor = vec4(get_offset(drop_texture_index), 0.0f, 1.0f);
 }
 

@@ -71,10 +71,6 @@ namespace GlCore
 
     MeshStorage AllocateMeshStorage(Memory::Arena* arena) 
     {
-
-        //TODO creating an array on the CPU and sending it to the GPU for the individual texture offset
-        //needs to be done, so that we are not defining a function for each shader that needs to compute the offset
-
         //blocks per row
         f32 bpr = 16.0f;
 
@@ -311,5 +307,22 @@ namespace GlCore
             return 24;
         if (vec == glm::vec3(0.0f, 1.0f, 0.0f))
             return 30;
+    }
+    TextureOffsets LoadGlobalTextureOffsets()
+    {
+        TextureOffsets ret;
+        f32 bpr = 16.0f;
+
+        ret.offsets[0] = {0.0f  / bpr, 0.0f / bpr};
+        ret.offsets[1] = {4.0f  / bpr, 0.0f / bpr};
+        ret.offsets[2] = {8.0f  / bpr, 0.0f / bpr};
+        ret.offsets[3] = {4.0f  / bpr, 1.0f / bpr};
+        ret.offsets[4] = {8.0f  / bpr, 1.0f / bpr};
+        ret.offsets[5] = {12.0f / bpr, 0.0f / bpr};
+        ret.offsets[6] = {12.0f / bpr, 1.0f / bpr};
+        ret.offsets[7] = {0.0f  / bpr, 2.0f / bpr};
+        ret.offsets[8] = {4.0f  / bpr, 2.0f / bpr};
+
+        return ret;
     }
 }

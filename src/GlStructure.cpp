@@ -109,6 +109,15 @@ namespace GlCore
         instanced_layout_element = { 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(u32), 0 };
         state.block_vm->PushInstancedAttribute(nullptr, sizeof(u32) * g_MaxRenderedObjCount,
             state.block_shader->GetAttributeLocation("tex_index"), instanced_layout_element);
+
+        TextureOffsets global_texture_offsets = LoadGlobalTextureOffsets();
+        auto& offsets = global_texture_offsets.offsets;
+
+        for (u32 i = 0; i < global_texture_offsets_count; i++) {
+            state.block_shader->UniformVec2f(offsets[i], "item_offsets[" + std::to_string(i) + "]");
+            state.drop_shader->UniformVec2f(offsets[i], "item_offsets[" + std::to_string(i) + "]");
+            state.inventory_shader->UniformVec2f(offsets[i], "item_offsets[" + std::to_string(i) + "]");
+        }
     }
 
 

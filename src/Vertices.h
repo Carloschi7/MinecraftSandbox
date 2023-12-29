@@ -14,6 +14,7 @@ namespace GlCore
     //are being rendered
     using DrawableData = std::pair<std::array<u8, 3>, u8>;
     static constexpr f32 one_third = 1.0f / 3.0f;
+    static constexpr u32 global_texture_offsets_count = 9;
 
     //TODO is this a good idea? moving everything to a struct
     struct MeshElement
@@ -21,6 +22,11 @@ namespace GlCore
         f32* data;
         uint32_t count;
         Layout lyt;
+    };
+
+    struct TextureOffsets
+    {
+        glm::vec2 offsets[global_texture_offsets_count];
     };
 
     struct MeshStorage 
@@ -49,4 +55,6 @@ namespace GlCore
     MeshStorage AllocateMeshStorage(Memory::Arena* arena);
     void FreeMeshStorage(MeshStorage& storage, Memory::Arena* arena);
     u8 GetNormVertexBegin(const glm::vec3& vec);
+
+    TextureOffsets LoadGlobalTextureOffsets();
 }
