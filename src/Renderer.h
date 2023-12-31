@@ -18,6 +18,7 @@ namespace GlCore
 #else
 	static constexpr bool g_MultithreadedRendering = false;
 #endif
+	static constexpr f32 g_FovDegrees = 60.0f;
 	static constexpr u32 g_MaxRenderedObjCount = 200000;
 	static constexpr u32 g_MaxWaterLayersCount = 200000;
 	static constexpr u32 g_DepthMapWidth = 1024;

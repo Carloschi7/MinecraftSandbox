@@ -19,7 +19,7 @@ namespace GlCore
         glm::vec3 spawn_coordinates(0.0f, 115.0f, 0.0f);
 
         cam.SetVectors(spawn_coordinates, glm::vec3(0.0f, 0.0f, -1.0f));
-        cam.SetPerspectiveValues(glm::radians(45.0f), f32(wnd.Width()) / f32(wnd.Height()), 0.1f, Defs::g_RenderDistance);
+        cam.SetPerspectiveValues(glm::radians(g_FovDegrees), f32(wnd.Width()) / f32(wnd.Height()), 0.1f, Defs::g_RenderDistance);
         cam.SetKeyboardFunction(Defs::KeyboardFunction);
         cam.SetMouseFunction(Defs::MouseFunction);
         
@@ -148,7 +148,7 @@ namespace GlCore
         cur->BindVertexArray();
 
         //Rotate the block selected to the bottom-right section of the player view
-        f32 theta = is_block ? glm::radians(35.0f) : glm::radians(20.0f);
+        f32 theta = Utils::PerspectiveItemRotation(g_FovDegrees, is_block);
         f32 extra_rotation = is_block ? 0.0f : glm::radians(-75.0f);
 
         glm::vec3 relative_up = camera.ComputeRelativeUp();
@@ -160,6 +160,7 @@ namespace GlCore
         //rotation to the view perspective
         position_mat = glm::rotate(position_mat, camera.RotationY(), glm::cross(camera.GetFront(), relative_up));
         position_mat = glm::rotate(position_mat, -camera.RotationX() + extra_rotation, glm::vec3(0.0f, 1.0f, 0.0f));
+
         position_mat = glm::scale(position_mat, glm::vec3(0.5f));
         state.drop_shader->UniformMat4f(position_mat, "model");
 

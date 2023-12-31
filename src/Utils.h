@@ -22,7 +22,7 @@ namespace Utils
 {
 	std::string CompletePath(const char* str);
 	u64 ChunkHasher(const glm::vec2& val);
-
+	f32 PerspectiveItemRotation(f32 fov_degrees, bool is_block);
 	//Custom allocator for dynamic arrays such as vectors so that they can use the memory mapped_space
 	template <typename T>
 	class ArenaAllocator {

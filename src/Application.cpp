@@ -52,6 +52,7 @@ void Application::OnUserRun()
     //Init memory mapped_space
     //We will use 800mb of ram for this program
     Memory::Arena* mem_arena = Memory::InitializeArena(800 * 1024 * 1024);
+    std::atomic_bool display_settings_f11 = false;
 
     {
         //Init global vars
@@ -102,6 +103,8 @@ void Application::OnUserRun()
                 //The gamemode check is here because the key state update is reqwuired by the logic thread
                 if (m_Window.IsKeyPressed(Defs::g_InventoryKey))
                     switch_game_state();
+                if (m_Window.IsKeyPressed(GLFW_KEY_F11))
+                    display_settings_f11 = !display_settings_f11;
 
                 WorldEvent world_event = world_instance.UpdateScene(game_inventory, elapsed_time);
                 if (world_event.crafting_table_open_command) {
@@ -200,15 +203,17 @@ void Application::OnUserRun()
                 thread1_record = elapsed_time;
                 thread1_record_timer.StartTimer();
             }
-#ifndef MC_STANDALONE
-            info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", { 0, 0 });
-            info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0, 40 });
-            info_text_renderer.DrawString("mem:" + std::to_string(static_cast<f32>(mem_arena->mapped_space.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
-            glm::vec3& pos = m_Camera.position;
-            info_text_renderer.DrawString("x:" + std::to_string(pos.x) + ", "
-                "y:" + std::to_string(pos.y) + ", " +
-                "z:" + std::to_string(pos.z), {0,120});
-#endif
+
+            if (display_settings_f11) {
+                info_text_renderer.DrawString("Thread-1:" + std::to_string(thread1_record * 1000.0f) + "ms", { 0, 0 });
+                info_text_renderer.DrawString("Thread-2:" + std::to_string(thread2_record * 1000.0f) + "ms", { 0, 40 });
+                info_text_renderer.DrawString("Heap memory:" + std::to_string(static_cast<f32>(mem_arena->mapped_space.memory_used) / (1024.f * 1024.f)) + "MB", { 0,80 });
+                glm::vec3& pos = m_Camera.position;
+                info_text_renderer.DrawString("x:" + std::to_string(pos.x) + ", "
+                    "y:" + std::to_string(pos.y) + ", " +
+                    "z:" + std::to_string(pos.z), { 0,120 });
+            }
+
             m_Window.Update();
         }
 

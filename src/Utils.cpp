@@ -20,6 +20,15 @@ namespace Utils
 		return res;
 	}
 
+	f32 PerspectiveItemRotation(f32 fov_degrees, bool is_block)
+	{
+		//These constants seem to work
+		constexpr f32 block_ratio = 45.0f / 70.0f;
+		constexpr f32 item_ratio = 30.0f / 70.0f;
+
+		return is_block ? glm::radians(fov_degrees * block_ratio) : glm::radians(fov_degrees * item_ratio);
+	}
+
 
 	Serializer::Serializer(const std::string& filename, const char* mode)
 	{
