@@ -26,6 +26,7 @@ namespace Defs
 		//Blocks
 		Dirt = 0,
 		Grass,
+		Stone,
 		Sand,
 		Wood,
 		WoodPlanks,

@@ -74,14 +74,15 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 		glm::vec2(origin.x, origin.y - 16.0f) };
 
 	for (u32 i = 0; i < 4; i++) {
-		if (generations.find(Hash(vecs[i])) != generations.end()) {
-			if (generations[Hash(vecs[i])].lower < lower_height)
-				lower_height = generations[Hash(vecs[i])].lower;
+		u64 current_hash = Hash(vecs[i]);
+		if (generations.find(current_hash) != generations.end()) {
+			if (generations[current_hash].lower < lower_height)
+				lower_height = generations[current_hash].lower;
 		}
 		else {
-			generations[Hash(vecs[i])] = ComputeGeneration(m_RelativeWorld.Seed(), vecs[i].x, vecs[i].y);
-			if (generations[Hash(vecs[i])].lower < lower_height)
-				lower_height = generations[Hash(vecs[i])].lower;
+			generations[current_hash] = ComputeGeneration(m_RelativeWorld.Seed(), vecs[i].x, vecs[i].y);
+			if (generations[current_hash].lower < lower_height)
+				lower_height = generations[current_hash].lower;
 		}
 	}
 
@@ -789,7 +790,7 @@ void Chunk::EmplaceLowerBlockStack(u16 stack_count)
 			for (u32 z = 0; z < s_ChunkWidthAndHeight; z++) {
 				for (s16 y = static_cast<s16>(lower_threshold - 1); y >= static_cast<s16>(lower_threshold - actual_size); y--) {
 					Defs::Item type = generations[chunk_hash].biomes[x * s_ChunkWidthAndHeight + z] == Defs::Biome::Plains ?
-						Defs::Item::Dirt :
+						Defs::Item::Stone :
 						Defs::Item::Sand;
 
 					iter = chunk_blocks.emplace(iter, glm::u8vec3(x, y, z), type);

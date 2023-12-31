@@ -19,7 +19,7 @@ void main()
 
 uniform sampler2D texture_inventory;
 uniform int optional_texture_index;
-uniform vec2 item_offsets[9];
+uniform vec2 item_offsets[10];
 
 in vec2 TexCoords;
 out vec4 OutColor;

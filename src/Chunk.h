@@ -138,5 +138,5 @@ private:
 public:
 	static f32 s_DiagonalLenght;
 	static constexpr u32 s_ChunkWidthAndHeight = 16;
-	static constexpr u32 s_ChunkDepth = 50;
+	static constexpr u32 s_ChunkDepth = 110;
 };

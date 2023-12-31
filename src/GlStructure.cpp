@@ -15,7 +15,10 @@ namespace GlCore
         MeshStorage& stg = *state.mesh_storage;
         Memory::Arena* allocator = state.memory_arena;
 
-        cam.SetVectors(glm::vec3(0.0f, 50.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+
+        glm::vec3 spawn_coordinates(0.0f, 115.0f, 0.0f);
+
+        cam.SetVectors(spawn_coordinates, glm::vec3(0.0f, 0.0f, -1.0f));
         cam.SetPerspectiveValues(glm::radians(45.0f), f32(wnd.Width()) / f32(wnd.Height()), 0.1f, Defs::g_RenderDistance);
         cam.SetKeyboardFunction(Defs::KeyboardFunction);
         cam.SetMouseFunction(Defs::MouseFunction);

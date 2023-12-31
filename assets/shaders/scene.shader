@@ -55,7 +55,7 @@ void main()
 
 uniform sampler2D global_texture;
 uniform sampler2D texture_depth;
-uniform vec2 item_offsets[9];
+uniform vec2 item_offsets[10];
 
 in vec2 TexCoords;
 flat in uint TexIndex;

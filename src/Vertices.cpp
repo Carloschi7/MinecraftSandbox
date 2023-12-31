@@ -315,13 +315,14 @@ namespace GlCore
 
         ret.offsets[0] = {0.0f  / bpr, 0.0f / bpr};
         ret.offsets[1] = {4.0f  / bpr, 0.0f / bpr};
-        ret.offsets[2] = {8.0f  / bpr, 0.0f / bpr};
-        ret.offsets[3] = {4.0f  / bpr, 1.0f / bpr};
-        ret.offsets[4] = {8.0f  / bpr, 1.0f / bpr};
-        ret.offsets[5] = {12.0f / bpr, 0.0f / bpr};
-        ret.offsets[6] = {12.0f / bpr, 1.0f / bpr};
-        ret.offsets[7] = {0.0f  / bpr, 2.0f / bpr};
-        ret.offsets[8] = {4.0f  / bpr, 2.0f / bpr};
+        ret.offsets[2] = {8.0f  / bpr, 2.0f / bpr};
+        ret.offsets[3] = {8.0f  / bpr, 0.0f / bpr};
+        ret.offsets[4] = {4.0f  / bpr, 1.0f / bpr};
+        ret.offsets[5] = {8.0f  / bpr, 1.0f / bpr};
+        ret.offsets[6] = {12.0f / bpr, 0.0f / bpr};
+        ret.offsets[7] = {12.0f / bpr, 1.0f / bpr};
+        ret.offsets[8] = {0.0f  / bpr, 2.0f / bpr};
+        ret.offsets[9] = {4.0f  / bpr, 2.0f / bpr};
 
         return ret;
     }

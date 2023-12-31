@@ -23,7 +23,7 @@ in vec2 TexCoords;
 
 uniform int drop_texture_index;
 uniform sampler2D global_texture;
-uniform vec2 item_offsets[9];
+uniform vec2 item_offsets[10];
 
 out vec4 OutColor;
 

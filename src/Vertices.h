@@ -14,7 +14,7 @@ namespace GlCore
     //are being rendered
     using DrawableData = std::pair<std::array<u8, 3>, u8>;
     static constexpr f32 one_third = 1.0f / 3.0f;
-    static constexpr u32 global_texture_offsets_count = 9;
+    static constexpr u32 global_texture_offsets_count = 10;
 
     //TODO is this a good idea? moving everything to a struct
     struct MeshElement
