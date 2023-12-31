@@ -504,10 +504,12 @@ namespace Physics {
         if (jump_data.first < -4.0f)
             jump_data.first = -4.0f;
 
-        //Keep the 0.0f as it interrupts the player upon hitting blocks, but remove the exponential rise until 0.12
-        //this makes the jump_data more sudden
-        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.4f ? 0.4f : clamped_y;
-        camera.position.y += jump_data.first * directional_boost * elapsed_time * 4.0f;
+        //clamped_y, which is the same thing as the current allowed y velocity of the
+        //player in this specific frame will increase linearly over time.
+        //We extract a rounded fixed factor of 0.6f while the actual value is lower
+        //to make the jump more sudden and natural
+        f32 directional_boost = clamped_y > 0.0f && clamped_y < 0.6f ? 0.6f : clamped_y;
+        camera.position.y += jump_data.first * directional_boost * elapsed_time * 2.5f;
     }
     void ProcessPlayerAxisMovement(f32 elapsed_time)
     {

@@ -95,8 +95,6 @@ Chunk::Chunk(World& father, glm::vec2 origin)
 		for (u8 k = 0; k < s_ChunkWidthAndHeight; k++)
 		{
 			f32 fx = static_cast<f32>(m_ChunkOrigin.x + (float)i), fy = static_cast<f32>(m_ChunkOrigin.z + (float)k);
-			/*auto perlin_data = Defs::PerlNoise::GetBlockAltitude(fx, fy, m_RelativeWorld.Seed());
-			u32 final_height = (s_ChunkDepth - 10) + std::roundf(perlin_data.altitude * 8.0f);*/
 			u8 final_height = gen.heights[i * s_ChunkWidthAndHeight + k];
 			Defs::Biome biome = gen.biomes[i * s_ChunkWidthAndHeight + k];
 			bool in_water = gen.in_water[i * s_ChunkWidthAndHeight + k];
